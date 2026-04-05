@@ -1,4 +1,4 @@
-# User Acceptance Tests — Story #6
+# User Acceptance Tests — Story #1
 
 ## As a user, I want to register and log in via a third-party identity provider, so that my account is secure.
 
