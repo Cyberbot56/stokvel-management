@@ -1,1 +1,1 @@
-# stokvel-management
+# Stokvel Management Platorm
