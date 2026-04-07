@@ -8,8 +8,8 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(dbgenerated("newid()"))
-  providerId String   @unique
+  id         String   @id @default(dbgenerated("newid()")) // id is in string for security reasons like IDOR
+  providerId String   @unique // this is auth0's id for tracking its users not primary key
   email      String   @unique
   name       String
   createdAt  DateTime @default(now())
