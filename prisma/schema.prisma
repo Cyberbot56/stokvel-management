@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model users {
   id         String   @id @default(dbgenerated("newid()")) // id is in string for security reasons like IDOR
   providerId String   @unique // this is auth0's id for tracking its users not primary key
   email      String   @unique
