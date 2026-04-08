@@ -1,9 +1,9 @@
 let auth0Client=null;
 
 const config={
-    domain:"your-tenant.auth0.com",
-    clientId:"http://localhost:5173", 
-    audience :"https://api.stokvel.app",
+    domain:"dev-hwccoku5xvsxv2op.eu.auth0.com",
+    clientId:"4ylzMiMqrtbYYZRhYZHZHs56ZZxfgQsO", 
+    audience :"https://api.stokvel.app/",
 };
 
 const configureClient = async()=>{
@@ -29,8 +29,8 @@ const processLoginState = async()=>{
     const isAuthenticated = await auth0Client.isAuthenticated();
     if(isAuthenticated){
         console.log("user is logged in");
-        const taken = await auth0Client.getTokenSilently();
-        console.log("Your Access Token:", taken);
+        const token = await auth0Client.getTokenSilently();
+        console.log("Your Access Token:", token);
     }
 };
 
