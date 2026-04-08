@@ -2,11 +2,11 @@ const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize({
   dialect:  'mssql',
-  host:     'group-management.database.windows.net',
-  port:      1433,
-  database: 'group_management',
-  username: 'Admin_Stokvel',
-  password: 'Management@6',
+  host:     process.env.DB_HOST,
+  port:     Number(process.env.DB_PORT),
+  database: process.env.DB_NAME,
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
   dialectOptions: {
     options: {
       encrypt: true,
@@ -16,13 +16,11 @@ const sequelize = new Sequelize({
   logging: false,
 });
 
-// import each model and pass in the sequelize connection
 const User         = require('../common/models/User')(sequelize);
 const Group        = require('../common/models/Group')(sequelize);
 const Member       = require('../common/models/Member')(sequelize);
 const Contribution = require('../common/models/Contribution')(sequelize);
 
-// define relationships
 User.hasMany(Member);
 Member.belongsTo(User);
 Group.hasMany(Member);
