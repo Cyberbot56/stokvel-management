@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const { requireAuth, requireRole, requireGroupMember } = require('./middleware/auth');
+const { requireAuth } = require('./middleware/auth');
 
 const app = express();
 
@@ -22,17 +22,7 @@ app.get('/health', (_, res) => res.json({ status: 'ok' }));
 // requireAuth verifies token and upserts user in DB
 app.get('/me', requireAuth, (req, res) => res.json({ user: req.user }));
 
-// Admin only route — requireRole blocks anyone who isn't ADMIN
-app.get('/admin', requireAuth, requireRole('ADMIN'), (req, res) => 
-  res.json({ message: 'Admin area' })
-);
-
-// Group route — requireGroupMember checks user belongs to this group
-app.get('/groups/:groupId', requireAuth, requireGroupMember(), (req, res) => 
-  res.json({ message: 'Group area' })
-);
-
-// Global error handler — catches any errors from middleware
+// Global error handler
 app.use((err, req, res, next) => {
   res.status(err.status ?? 500).json({ error: err.message ?? 'Server error' });
 });

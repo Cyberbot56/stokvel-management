@@ -7,32 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id          String       @id @default(dbgenerated("newid()"))
-  providerId  String       @unique
-  email       String       @unique
-  name        String
-  role        String       @default("MEMBER")
-  createdAt   DateTime     @default(now())
-  memberships Membership[]
-}
-
-model Group {
-  id          String       @id @default(dbgenerated("newid()"))
-  name        String
-  description String?
-  createdAt   DateTime     @default(now())
-  memberships Membership[]
-}
-
-model Membership {
-  id       String   @id @default(dbgenerated("newid()"))
-  userId   String
-  groupId  String
-  role     String   @default("MEMBER")
-  joinedAt DateTime @default(now())
-  user     User     @relation(fields: [userId], references: [id])
-  group    Group    @relation(fields: [groupId], references: [id])
-
-  @@unique([userId, groupId])
+model users {
+  id         String   @id @default(dbgenerated("newid()")) // id is in string for security reasons like IDOR
+  providerId String   @unique // this is auth0's id for tracking its users not primary key
+  email      String   @unique // Jus email
+  name       String
+  createdAt  DateTime @default(now())
 }
