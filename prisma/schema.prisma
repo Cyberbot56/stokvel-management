@@ -7,10 +7,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model group_audit_log {
+  group_audit_logId Int      @id(map: "PK_group_audit_log") @default(autoincrement())
+  TFKgroupId        Int
+  field             String   @db.VarChar(15)
+  oldValue          String?  @db.Text
+  newValue          String?  @db.Text
+  changedAt         DateTime @db.Date
+  changedBy         Int
+  users             users    @relation(fields: [changedBy], references: [userId], onUpdate: NoAction, map: "changedBy")
+  groups            groups   @relation(fields: [TFKgroupId], references: [groupId], onUpdate: NoAction, map: "TFKgroupId")
+}
+
+model group_invites {
+  group_inviteId Int      @id(map: "PK_group_invites") @default(autoincrement())
+  SFKgroupId     Int
+  token          String   @db.VarChar(150)
+  email          String?  @db.VarChar(150)
+  createdBy      Int
+  createdAt      DateTime @db.Date
+  expiresAt      DateTime @db.Date
+  status         String   @db.VarChar(10)
+  users          users    @relation(fields: [createdBy], references: [userId], onUpdate: NoAction, map: "createdBy")
+  groups         groups   @relation(fields: [SFKgroupId], references: [groupId], onUpdate: NoAction, map: "SFKgroupId")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model group_members {
+  group_memberId Int      @id(map: "PK_group_members") @default(autoincrement())
+  FgroupId       Int
+  SuserId        Int
+  role           String   @db.VarChar(10)
+  joinedAt       DateTime @db.Date
+  groups         groups   @relation(fields: [FgroupId], references: [groupId], onUpdate: NoAction, map: "FgroupId")
+  users          users    @relation(fields: [SuserId], references: [userId], onUpdate: NoAction, map: "SuserId")
+
+  
+}
+
+model groups {
+  groupId            Int               @id(map: "PK_groups") @default(autoincrement())
+  name               String            @db.VarChar(50)
+  description        String?           @db.Text
+  contributionAmount Int
+  cycleType          String            @db.VarChar(15)
+  payoutOrder        String            @db.VarChar(50)
+  startDate          DateTime          @db.Date
+  status             String            @db.VarChar(15)
+  createdBy          Int
+  FiuserId           Int
+  group_audit_log    group_audit_log[]
+  group_invites      group_invites[]
+  group_members      group_members[]
+  users              users             @relation(fields: [FiuserId], references: [userId], onUpdate: NoAction, map: "FiuserId")
+}
+
 model users {
-  id         String   @id @default(dbgenerated("newid()")) // id is in string for security reasons like IDOR
-  providerId String   @unique // this is auth0's id for tracking its users not primary key
-  email      String   @unique // Jus email
-  name       String
-  createdAt  DateTime @default(now())
+  userId          Int               @id(map: "Id") @default(autoincrement())
+  providerId      String            @unique(map: "User_providerId_key")
+  email           String            @unique(map: "User_email_key")
+  name            String
+  createdAt       DateTime          @default(now(), map: "User_createdAt_df") @db.Date
+  group_audit_log group_audit_log[]
+  group_invites   group_invites[]
+  group_members   group_members[]
+  groups          groups[]
 }
