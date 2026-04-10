@@ -2,12 +2,19 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 require('dotenv').config(); 
 
+
+const crypto = require('crypto');
+
 const express = require('express');
 const path = require('path');
 const app = express();
 
 app.use(express.json());
 app.use(express.static('.'));
+
+function generateUniqueToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
 
 
 // This is the endpoint for registering a new user. It will be used by dev1 and dev2 to create new users in the database when they log in with Google for the first time. The providerId is the unique identifier from Google, and it will be used to check if the user already exists in the database. If the user already exists, we can skip creating a new user and just return the existing user data.
@@ -110,6 +117,232 @@ app.post('/api/groups', async (req, res) => {
     res.status(400).json({ error: "Failed to create the group", details: error.message });
   }
 });
+
+//This is for invites, I'm generating a rondom unique token to use for sending invites to users.
+//creating a new invite using post.
+app.post('/api/invites', async (req, res) => {
+  const { groupId, email, createdBy } = req.body;
+  
+  // Validate required fields
+  if (!groupId || !email || !createdBy) {
+    return res.status(400).json({ 
+      error: "Missing required fields",
+      required: ["groupId", "email", "createdBy"]
+    });
+  }
+
+  // Validate email format
+  if (!email.includes('@')) {
+    return res.status(400).json({ error: "Invalid email format" });
+  }
+
+  try {
+    // Check if group exists
+    const group = await prisma.groups.findUnique({
+      where: { groupId: parseInt(groupId) }
+    });
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    // Check if user exists (createdBy)
+    const user = await prisma.users.findUnique({
+      where: { userId: parseInt(createdBy) }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Generate unique token (simpler approach without checking uniqueness)
+    const generateToken = () => {
+      return crypto.randomBytes(32).toString('hex');
+    };
+    
+    let token = generateToken();
+
+    // Calculate expiration date (7 days from now)
+    const createdAt = new Date();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    // Create the invite
+    const newInvite = await prisma.group_invites.create({
+      data: {
+        SFKgroupId: parseInt(groupId),
+        token: token,
+        email: email,
+        createdBy: parseInt(createdBy),
+        createdAt: createdAt,
+        expiresAt: expiresAt,
+        status: "active"
+      }
+    });
+
+    res.status(201).json({
+      message: "Invite sent successfully",
+      invite: newInvite,
+      inviteLink: `http://localhost:3000/join?token=${token}`
+    });
+  } catch (error) {
+    console.error("Error creating invite:", error);
+    res.status(400).json({ error: "Failed to create invite", details: error.message });
+  }
+});
+
+//Getting all the invites for a specific group.
+app.get('/api/invites/group/:groupId', async (req, res) => {
+  const { groupId } = req.params;
+
+  try {
+    const invites = await prisma.group_invites.findMany({
+      where: { 
+        SFKgroupId: parseInt(groupId) 
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      include: {
+        users: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      groupId: parseInt(groupId),
+      count: invites.length,
+      invites: invites
+    });
+  } catch (error) {
+    console.error("Error fetching invites:", error);
+    res.status(500).json({ error: "Failed to fetch invites", details: error.message });
+  }
+});
+
+//This is for admin purpose, we will get all the invites in the system.
+app.get('/api/invites', async (req, res) => {
+  try {
+    const invites = await prisma.group_invites.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      },
+      include: {
+        groups: {
+          select: {
+            name: true
+          }
+        },
+        users: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      count: invites.length,
+      invites: invites
+    });
+  } catch (error) {
+    console.error("Error fetching all invites:", error);
+    res.status(500).json({ error: "Failed to fetch invites", details: error.message });
+  }
+});
+
+//If a member uses an invite they can join the group.
+app.post('/api/invites/join', async (req, res) => {
+  const { token, userId } = req.body;
+
+  if (!token || !userId) {
+    return res.status(400).json({ 
+      error: "Missing required fields",
+      required: ["token", "userId"]
+    });
+  }
+
+  try {
+    // Find the invite
+    const invite = await prisma.group_invites.findUnique({
+      where: { token: token }
+    });
+
+    if (!invite) {
+      return res.status(404).json({ error: "Invalid invite token" });
+    }
+
+    // Check if invite is expired
+    const now = new Date();
+    if (invite.expiresAt < now) {
+      return res.status(400).json({ error: "Invite has expired" });
+    }
+
+    // Check if invite is still active 
+    if (invite.status !== "active") {
+      return res.status(400).json({ error: "Invite has been revoked" });
+    }
+
+    // Check if user already in group
+    const existingMember = await prisma.group_members.findFirst({
+      where: {
+        FgroupId: invite.SFKgroupId,
+        SuserId: parseInt(userId)
+      }
+    });
+
+    if (existingMember) {
+      return res.status(400).json({ error: "User is already a member of this group" });
+    }
+
+    // Add user to group members
+    const newMember = await prisma.group_members.create({
+      data: {
+        FgroupId: invite.SFKgroupId,
+        SuserId: parseInt(userId),
+        role: "member",
+        joinedAt: now
+      }
+    });
+
+
+    res.status(201).json({
+      message: "Successfully joined the group",
+      groupId: invite.SFKgroupId,
+      member: newMember
+    });
+  } catch (error) {
+    console.error("Error joining group:", error);
+    res.status(400).json({ error: "Failed to join group", details: error.message });
+  }
+});
+
+//If the admin wants to revoke the invite.
+app.delete('/api/invites/:inviteId', async (req, res) => {
+  const { inviteId } = req.params;
+
+  try {
+    // Update invite status to revoked instead of deleting
+    const revokedInvite = await prisma.group_invites.update({
+      where: { group_inviteId: parseInt(inviteId) },
+      data: { status: "revoked" }
+    });
+
+    res.json({
+      message: "Invite revoked successfully",
+      invite: revokedInvite
+    });
+  } catch (error) {
+    console.error("Error revoking invite:", error);
+    res.status(400).json({ error: "Failed to revoke invite", details: error.message });
+  }
+});
+
 
 //The port is from the .env file, if not found it defaults to 3000.
 const PORT = process.env.PORT || 3000; 
