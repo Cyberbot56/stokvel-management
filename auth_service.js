@@ -3,7 +3,7 @@ let auth0Client=null;
 const config={
     domain:"dev-hwccoku5xvsxv2op.eu.auth0.com",
     clientId:"4ylzMiMqrtbYYZRhYZHZHs56ZZxfgQsO", 
-    audience :"https://api.stokvel.app/",
+    audience :"https://api.stokvel.app",
 };
 
 const configureClient = async()=>{
@@ -28,9 +28,24 @@ const processLoginState = async()=>{
     }
     const isAuthenticated = await auth0Client.isAuthenticated();
     if(isAuthenticated){
-        console.log("user is logged in");
         const token = await auth0Client.getTokenSilently();
-        console.log("Your Access Token:", token);
+
+        const response = await fetch('/api/auth/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const dbUser = await response.json();
+        
+        //Store userId in the localStorage
+        localStorage.setItem('userId', dbUser.userId);
+        localStorage.setItem('userName', dbUser.name); 
+        localStorage.setItem('Email', dbUser.email); 
+
+        if (!window.location.pathname.includes("dashboard.html")) {
+            window.location.href = "dashboard.html";
+        }
     }
 };
 
@@ -49,6 +64,5 @@ window.onload =async() =>{
             authorizationParams: { connection: 'apple' }
         });
     };
-
 };
 

@@ -1,0 +1,38 @@
+<!--Dashboard display groups member has, buttonViewAllGroups-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <header>
+        <h1>My Stokvel Groups</h1>
+    </header>
+
+    <section class="actions">
+            <button id="buttonViewAllGroups">View All Groups</button>
+    </section>
+
+    <main>
+        <!--If user has no groups yet-->
+        <a id="noGroups" hidden>You don't have any group yet.</a>
+
+        <!--Display groups in a grid view-->
+        <section class="groups-grid" hidden>
+            <!--Dynamically generated-->
+            <article class="group-card">
+                <h2 class="groupName"> Name</h2>
+                <button btnViewGroup>view Group</button>
+            </article>
+  
+        </section>
+    </main>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>

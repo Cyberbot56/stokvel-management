@@ -1,0 +1,43 @@
+<!--Dashboard display AllGroups as list, buttonViewYourGroups, buttonCreateGroup-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <header>
+        <h1>All Stokvel Groups</h1>
+    </header>
+
+    <section class="actions">
+            <button id="buttonMyGroups">My Groups</button>
+            <button id="buttonCreateGroup">Create Group</button>
+    </section>
+
+    <main>
+        <a id="noGroups" >No groups yet.</a>
+
+        <section class="groups-grid" hidden>
+            <!--Dynamically generated-->
+            <article class="group-card">
+                <h2 class="groupName"> Name</h2>
+                <button btnViewGroup>view Group</button>
+            </article>
+  
+        </section>
+
+        <nav class="toggle-view" hidden>
+            <button id="viewAll">View All</button>
+            <button id="viewLess" hidden>View Less</button>
+        </nav>
+    </main>
+
+    <script src="allGroups.js"></script>
+</body>
+
+
+</html>
