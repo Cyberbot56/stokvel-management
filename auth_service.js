@@ -30,7 +30,7 @@ const processLoginState = async()=>{
     if(isAuthenticated){
         const token = await auth0Client.getTokenSilently();
 
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch('http://localhost:3000/api/auth/me', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
