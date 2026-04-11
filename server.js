@@ -62,6 +62,8 @@ app.get('/api/users', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
 app.get('/api/groups', async (req, res) => {
   try {
     const groups = await prisma.groups.findMany(); 
@@ -117,6 +119,87 @@ app.post('/api/groups', async (req, res) => {
     res.status(400).json({ error: "Failed to create the group", details: error.message });
   }
 });
+
+//This will get groups a particular member belongs to.
+app.get('/api/groups_members/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Get all groups the user belongs to
+    const memberships = await prisma.group_members.findMany({
+      where: { SuserId: parseInt(userId) },
+      include: {
+        groups: {
+          include: {
+            users: {  // This gets the creator info (createdBy relation) using their userId
+              select: {
+                userId: true,
+                name: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // For each group, fetch all members with their user info
+    const enrichedGroups = await Promise.all(
+      memberships.map(async (membership) => {
+        const groupId = membership.groups.groupId;
+        
+        // Get all members of this group with their user details
+        const groupMembers = await prisma.group_members.findMany({
+          where: { FgroupId: groupId },
+          include: {
+            users: {  // This gets the member's user info
+              select: {
+                userId: true,
+                name: true,
+                email: true
+              }
+            }
+          }
+        });
+
+    
+        const members = groupMembers.map(member => ({
+          userId: member.SuserId,
+          name: member.users.name,
+          email: member.users.email,
+          role: member.role,
+          joinedAt: member.joinedAt
+        }));
+
+      
+        return {
+          groupId: membership.groups.groupId,
+          name: membership.groups.name,
+          description: membership.groups.description,
+          contributionAmount: membership.groups.contributionAmount,
+          cycleType: membership.groups.cycleType,
+          payoutOrder: membership.groups.payoutOrder,
+          startDate: membership.groups.startDate,
+          status: membership.groups.status,
+          createdBy: {
+            userId: membership.groups.users.userId,
+            name: membership.groups.users.name,
+            email: membership.groups.users.email
+          },
+          userRole: membership.role,  
+          members: members,  
+          totalMembers: members.length
+        };
+      })
+    );
+
+    res.json(enrichedGroups);
+  } catch (error) {
+    console.error("Error fetching groups for user:", error);
+    res.status(500).json({ error: "Failed to fetch groups for user", details: error.message });
+  }
+});
+
 
 //This is for invites, I'm generating a rondom unique token to use for sending invites to users.
 //creating a new invite using post.
