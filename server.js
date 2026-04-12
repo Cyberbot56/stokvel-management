@@ -89,8 +89,6 @@ app.get('/api/groups', async (req, res) => {
   }
 });
 
-
-
 // Inserting a new group using post
 app.post('/api/groups', async (req, res) => {
   const { name, description, contributionAmount, cycleType, payoutOrder, startDate, status, createdBy, FiuserId } = req.body; 

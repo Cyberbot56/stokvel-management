@@ -154,6 +154,11 @@ function fillReview() {
 
 // ── Submit ───────────────────────────────────
 async function submitGroup() {
+  const currentUserId = localStorage.getItem('userId');
+  if (!currentUserId) {
+    alert("Error: You must be logged in to create a group.");
+    return;
+  }
   const groupData = {
     name: savedName,
     description: savedDescription || null,
@@ -161,8 +166,8 @@ async function submitGroup() {
     cycleType: savedCycle,
     payoutOrder: "random",
     status: "active",
-    createdBy: 1,  //Used the userid 1 as default for now, we will change this later
-    FiuserId: 1    // 
+    createdBy: parseInt(currentUserId),  //Used the userid 1 as default for now, we will change this later
+    FiuserId: parseInt(currentUserId)    // 
   };
 
   try {
