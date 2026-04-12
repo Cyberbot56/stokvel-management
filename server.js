@@ -120,6 +120,84 @@ app.post('/api/groups', async (req, res) => {
   }
 });
 
+//Creating an api endpoint where an admin can add an email then onboard a new member. It will take in an email of a member and a groupId then checks using the email if the user exists and gets their userId then adds the user on the group_members table where they will use the groupId and userId then add the member to the grpup member table with their role assigned as memebr.
+//I should also check if the user has an account using their email. 
+//We also have to check if the user is already a member of the group before adding them to avoid duplicates.
+app.post('/api/groups/add-member', async (req, res) => {
+  const { email, groupId } = req.body;
+
+  // Validate required fields
+  //I have to get the groupId and email from the request body.
+  if (!email || !groupId) {
+    return res.status(400).json({ 
+      error: "Missing required fields",
+      required: ["email", "groupId"]
+    });
+  }
+
+  try {
+    // Check if the user exists using email we will check from the users table.
+    const user = await prisma.users.findUnique({
+      where: { email: email }
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        error: "User not found. Please ask the user to create an account first." 
+      });
+    }
+
+    // Check if the user is already a member of the group by using their userId that I got using their email from the users table.
+    const existingMembership = await prisma.group_members.findFirst({
+      where: {
+        FgroupId: parseInt(groupId),
+        SuserId: user.userId
+      }
+    });
+
+    if (existingMembership) {
+      return res.status(400).json({ 
+        error: "User is already a member of the group",
+        membershipDetails: {
+          role: existingMembership.role,
+          joinedAt: existingMembership.joinedAt
+        }
+      });
+    }
+
+    // Add the user to the group as a member
+    const newMember = await prisma.group_members.create({
+      data: {
+        FgroupId: parseInt(groupId),
+        SuserId: user.userId,
+        role: "member",
+        joinedAt: new Date() //This is set as default there is no need to manually set it or parse it.
+      }
+    });
+
+    //Using the groups name for the response that I will send back
+    const group = await prisma.groups.findUnique({
+      where: { groupId: parseInt(groupId) },
+      select: { name: true }
+    });
+
+      
+    res.status(201).json({ 
+      message: "Member added successfully",
+      member: {
+        groupName: group?.name,
+        userEmail: user.email,
+        userName: user.name,
+        role: newMember.role,
+        joinedAt: newMember.joinedAt
+      }
+    });
+  } catch (error) {
+    console.error("Error adding member to group:", error);
+    res.status(500).json({ error: "Failed to add member to group", details: error.message });
+  }
+});
+
 //This will get groups a particular member belongs to.
 app.get('/api/groups_members/:userId', async (req, res) => {
   const { userId } = req.params;
