@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Group Admin – Stokvel App</title>
+  <link rel="stylesheet" href="group-overview.css" />
+  <style>
+    /* ── Admin-specific styles ── */
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Add member form ── */
+    .add-member-form {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .add-member-form input {
+      flex: 1;
+      min-width: 200px;
+      padding: 9px 12px;
+      border: 1.5px solid rgba(14, 148, 144, 0.25);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      color: #0f172a;
+      background: white;
+    }
+
+    .add-member-form input:focus {
+      border-color: #0e9490;
+      box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+    }
+
+    .add-member-form input.input-error {
+      border-color: #ef4444;
+    }
+
+    .btn-add {
+      padding: 9px 20px;
+      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-add:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
+    }
+
+    .btn-add:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .form-feedback {
+      width: 100%;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+
+    .form-feedback.success {
+      background: #e0f7f6;
+      color: #034e52;
+      border-left: 3px solid #0e9490;
+    }
+
+    .form-feedback.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border-left: 3px solid #ef4444;
+    }
+
+    /* ── Members table ── */
+    .members-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .members-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1.5px solid #e0f7f6;
+    }
+
+    .members-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #f0fafa;
+      color: #0f172a;
+      vertical-align: middle;
+    }
+
+    .members-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .members-table tr:hover td {
+      background: #f0fafa;
+    }
+
+    .member-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .member-initials {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #e0f7f6;
+      color: #034e52;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .member-name-text {
+      font-weight: 600;
+      color: #034e52;
+    }
+
+    .member-email-text {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 1px;
+    }
+
+    .role-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .role-badge.admin  { background: #e0f7f6; color: #034e52; }
+    .role-badge.member { background: #f0fafa; color: #64748b; }
+
+    .joined-date {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* ── Group stats strip ── */
+    .group-stats-strip {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0.75rem 0;
+      border-top: 1px solid #e0f7f6;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .strip-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .strip-stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .strip-stat-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: #034e52;
+    }
+
+    .strip-divider {
+      width: 1px;
+      height: 28px;
+      background: #e0f7f6;
+    }
+
+    /* ── Empty state ── */
+    .empty-members {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* ── Back link ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #0e9490;
+      font-weight: 600;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0;
+      margin-bottom: 1.25rem;
+      transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: #034e52;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-logo">
+      <div class="logo-mark"></div>
+      <span>STOKVEL</span>
+    </div>
+    <span class="header-title">Group Admin</span>
+    <div class="header-avatar" id="avatar"></div>
+  </header>
+
+  <main class="page">
+
+    <button class="back-link" id="back-btn">← Back to my groups</button>
+
+    <p id="status-banner" class="status-banner" hidden></p>
+
+    <!-- ── Group header card ── -->
+    <article class="card" id="group-header-card">
+      <header class="group-title-row">
+        <div>
+          <h1 id="group-name"></h1>
+          <p id="group-desc" class="group-desc" style="margin-top: 4px; margin-bottom: 0;"></p>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
+          <span id="status-badge" class="badge"></span>
+          <span class="admin-badge">Admin</span>
+        </div>
+      </header>
+      <div class="group-stats-strip">
+        <div class="strip-stat">
+          <span class="strip-stat-label">Members</span>
+          <span class="strip-stat-value" id="stat-members"></span>
+        </div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat">
+          <span class="strip-stat-label">Contribution</span>
+          <span class="strip-stat-value" id="stat-amount"></span>
+        </div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat">
+          <span class="strip-stat-label">Cycle</span>
+          <span class="strip-stat-value" id="stat-cycle"></span>
+        </div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat">
+          <span class="strip-stat-label">Start date</span>
+          <span class="strip-stat-value" id="stat-start"></span>
+        </div>
+      </div>
+    </article>
+
+    <!-- ── Add member card ── -->
+    <article class="card">
+      <div class="section-header">
+        <h2 class="card-title" style="margin-bottom: 0;">Onboard a new member</h2>
+      </div>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 1rem;">
+        Enter the email address of a registered user to add them to this group.
+      </p>
+      <div class="add-member-form">
+        <input
+          type="email"
+          id="member-email"
+          placeholder="member@example.com"
+          autocomplete="off"
+        />
+        <button class="btn-add" id="btn-add-member">Add member</button>
+        <p class="form-feedback" id="add-feedback" hidden></p>
+      </div>
+    </article>
+
+    <!-- ── Members list card ── -->
+    <article class="card">
+      <div class="section-header">
+        <h2 class="card-title" style="margin-bottom: 0;">Members</h2>
+        <span id="member-count" style="font-size: 12px; color: #64748b; font-weight: 600;"></span>
+      </div>
+      <div id="members-container">
+        <p class="empty-members">Loading members...</p>
+      </div>
+    </article>
+
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="../auth_service.js"></script>
+  <script src="group-admin.js"></script>
+</body>
+</html>

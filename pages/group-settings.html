@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Settings — Stokvel App</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+  <!-- Site navigation -->
+  <nav>
+    <span class="logo">STOKVEL</span>
+    <span class="nav-page-name">Group settings</span>
+  </nav>
+
+
+  <main class="page">
+
+    <header class="page-header">
+      <h1>Group settings</h1>
+      <p class="subtitle" id="group-name-subtitle"></p>
+    </header>
+
+
+    <!-- Unsaved changes bar — hidden until user edits something -->
+    <aside class="save-bar" id="save-bar" hidden>
+      <p>You have unsaved changes</p>
+      <p class="save-bar-actions">
+        <button type="button" class="btn outline sm" onclick="discardChanges()">Discard</button>
+        <button type="button" class="btn cyan sm"    onclick="saveChanges()">Save changes</button>
+      </p>
+    </aside>
+
+
+    <article class="card">
+
+      <!-- Tab buttons -->
+      <nav class="tab-nav" aria-label="Settings sections">
+        <button
+          type="button"
+          class="tab active"
+          id="tab-btn-general"
+          onclick="switchTab('general')"
+          aria-selected="true"
+        >
+          General
+        </button>
+        <button
+          type="button"
+          class="tab"
+          id="tab-btn-audit"
+          onclick="switchTab('audit')"
+          aria-selected="false"
+        >
+          Audit log
+        </button>
+      </nav>
+
+
+      <!-- ══════════════════════
+           GENERAL TAB
+           ══════════════════════ -->
+      <section id="tab-general" role="tabpanel">
+        <form novalidate>
+
+          <fieldset>
+            <legend>Editable settings</legend>
+
+            <p class="field">
+              <label for="s-name">Group name</label>
+              <input
+                type="text"
+                id="s-name"
+                name="s-name"
+                oninput="markDirty()"
+              >
+            </p>
+
+            <p class="field">
+              <label for="s-desc">Description</label>
+              <input
+                type="text"
+                id="s-desc"
+                name="s-desc"
+                oninput="markDirty()"
+              >
+            </p>
+
+            <p class="field">
+              <label for="s-amount">Contribution amount (ZAR)</label>
+              <input
+                type="number"
+                id="s-amount"
+                name="s-amount"
+                min="1"
+                oninput="markDirty()"
+              >
+            </p>
+
+            <p class="field">
+              <label for="s-cycle">Cycle type</label>
+              <select id="s-cycle" name="s-cycle" onchange="markDirty()">
+                <option value="monthly" selected></option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </p>
+
+          </fieldset>
+
+
+          <fieldset>
+            <legend>Locked settings</legend>
+            <p class="field-note">
+              These cannot be changed once the group is active.
+            </p>
+
+            <p class="field">
+              <span class="field-label">Start date</span>
+              <output class="readonly-field"></output>
+            </p>
+
+            <p class="field">
+              <span class="field-label">Payout order</span>
+              <output class="readonly-field">Rotation (ordered)</output>
+            </p>
+
+          </fieldset>
+
+        </form>
+
+
+        <!-- Danger zone — close group only -->
+        <section class="danger-zone">
+          <h2>Danger zone</h2>
+          <p>Closing the group is permanent and cannot be undone.</p>
+          <button type="button" class="btn danger" onclick="openCloseModal()">
+            Close group
+          </button>
+        </section>
+
+      </section>
+      <!-- end general tab -->
+
+
+      <!-- ══════════════════════
+           AUDIT LOG TAB
+           (empty for now — coming in Sprint 2)
+           ══════════════════════ -->
+      <section id="tab-audit" role="tabpanel" hidden>
+        <p class="empty-tab-msg">
+          Audit log is coming in Sprint 2.
+        </p>
+      </section>
+
+    </article>
+
+  </main>
+
+
+  <!-- ══════════════════════════════════════
+       CLOSE GROUP MODAL
+       Using <dialog> — the semantic HTML5
+       way to do modals (no div needed)
+       ══════════════════════════════════════ -->
+  <dialog id="close-modal">
+
+    <h2>Close this group?</h2>
+    <p>This cannot be undone. Type the group name below to confirm.</p>
+
+    <form method="dialog" novalidate>
+
+      <p class="field">
+        <label for="confirm-name">Type group name to confirm</label>
+        <input
+          type="text"
+          id="confirm-name"
+          name="confirm-name"
+          placeholder="Letsema Savings Circle"
+        >
+        <span class="error-msg" id="err-confirm">
+          Name does not match — please try again
+        </span>
+      </p>
+
+      <p class="btn-row">
+        <button type="button" class="btn outline" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn danger"  onclick="confirmClose()">Close group</button>
+      </p>
+
+    </form>
+
+  </dialog>
+
+
+  <script src="../js/settings.js"></script>
+
+</body>
+</html>

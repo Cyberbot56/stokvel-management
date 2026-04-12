@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Groups — Stokvel</title>
+    <link rel="stylesheet" href="../dashboard.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-logo">
+            <div class="logo-mark"></div>
+            <h1>STOKVEL</h1>
+        </div>
+        <span class="header-title">My Groups</span>
+        <div class="avatar" id="avatar"></div>
+    </header>
+
+    <section class="actions">
+        <button id="buttonViewAllGroups">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            All Groups
+        </button>
+        <button id="buttonCreateGroup">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Group
+        </button>
+    </section>
+
+    <main>
+        <p id="noGroups" hidden>You are not a member of any groups yet.</p>
+        <p id="loadError" class="state-message" hidden>Error loading your groups. Please try again later.</p>
+
+        <section class="groups-grid" hidden>
+            <!--Dynamically generated-->
+        </section>
+    </main>
+
+    <script src="../config.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+    <script src="../auth_service.js"></script>
+    <script src="../dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0fafa;
+    color: #0f172a;
+}
+
+/* ── Header ── */
+header {
+    background: linear-gradient(120deg, #a8ede8 0%, #3cc8c0 35%, #0e9490 70%, #034e52 100%);
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(14, 148, 144, 0.25);
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-mark {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-mark::before {
+    content: '';
+    display: block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid white;
+    border-radius: 3px;
+    transform: rotate(16deg);
+}
+
+header h1 {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.header-title {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* ── Actions ── */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 1.5rem 2rem 0.5rem;
+}
+
+button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+button svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+#buttonMyGroups {
+    background: white;
+    color: #0e9490;
+    border: 1.5px solid #2dd4bf;
+    box-shadow: none;
+}
+
+#buttonMyGroups:hover {
+    background: #e0f7f6;
+    transform: translateY(-1px);
+}
+
+#buttonCreateGroup {
+    background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+}
+
+#buttonCreateGroup:hover {
+    background: linear-gradient(135deg, #0e9490 0%, #034e52 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
+}
+
+/* ── Main ── */
+main {
+    padding: 0.5rem 2rem 2rem;
+}
+
+/* ── Empty state ── */
+#noGroups {
+    display: block;
+    text-align: center;
+    margin: 4rem auto;
+    font-size: 1rem;
+    font-style: italic;
+    color: #64748b;
+}
+
+/* ── Grid ── */
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+    padding-top: 1rem;
+}
+
+/* ── Card ── */
+.group-card {
+    background: white;
+    border-radius: 14px;
+    padding: 1.25rem;
+    border: 1px solid rgba(14, 148, 144, 0.12);
+    box-shadow: 0 4px 16px rgba(14, 148, 144, 0.08), 0 1px 4px rgba(0,0,0,0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.group-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20px; right: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #2dd4bf, transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.group-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(14, 148, 144, 0.16), 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.group-card:hover::before {
+    opacity: 1;
+}
+
+.card-icon {
+    width: 38px;
+    height: 38px;
+    background: #e0f7f6;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.card-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.group-card h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #034e52;
+    margin: 0;
+}
+
+.group-desc {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+    flex: 1;
+}
+
+.card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid #e0f7f6;
+    font-size: 11px;
+}
+
+.meta-members {
+    color: #64748b;
+}
+
+.meta-amount {
+    font-weight: 700;
+    color: #0e9490;
+}
+
+.btnViewGroup {
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+    padding: 8px;
+    background: #f0fafa;
+    color: #0e9490;
+    border: 1.5px solid rgba(14, 148, 144, 0.25);
+    font-size: 12px;
+    box-shadow: none;
+}
+
+.btnViewGroup:hover {
+    background: #e0f7f6;
+    border-color: #0e9490;
+    transform: none;
+    box-shadow: none;
+}
+
+[hidden] {
+    display: none !important;
+}

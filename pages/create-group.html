@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Group — Stokvel App</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+  <nav>
+    <div class="logo">
+      <div class="logo-mark"></div>
+      STOKVEL
+    </div>
+    <span class="nav-page-name">Create new group</span>
+  </nav>
+
+  <main class="page">
+
+    <header class="page-header">
+      <h1>Create a new group</h1>
+      <p class="subtitle">Fill in 4 short steps to set up your stokvel</p>
+    </header>
+
+    <article class="card">
+
+      <ol class="progress-bar">
+        <li class="step-pill active" id="pill-1">1 · Basics</li>
+        <li class="step-pill"        id="pill-2">2 · Rules</li>
+        <li class="step-pill"        id="pill-3">3 · Payout</li>
+        <li class="step-pill"        id="pill-4">4 · Review</li>
+      </ol>
+
+
+      <!-- ══════════════════════
+           STEP 1: Basics
+           ══════════════════════ -->
+      <section id="step-1">
+        <form novalidate>
+
+          <fieldset>
+            <legend>Group basics</legend>
+
+            <p class="field">
+              <label for="group-name">
+                Group name <span class="req">*</span>
+              </label>
+              <input
+                type="text"
+                id="group-name"
+                name="group-name"
+                placeholder="e.g. Letsema Savings Circle"
+                autocomplete="off"
+              >
+              <span class="error-msg" id="err-name">
+                Name must be 3 to 60 characters
+              </span>
+            </p>
+
+            <p class="field">
+              <label for="group-desc">
+                Description
+                <span class="hint">(optional, max 300 chars)</span>
+              </label>
+              <textarea
+                id="group-desc"
+                name="group-desc"
+                rows="3"
+                placeholder="What is this group for?"
+                oninput="updateCharCount()"
+              ></textarea>
+              <span class="char-count" id="desc-count">0 / 300</span>
+            </p>
+
+          </fieldset>
+
+          <p class="btn-row">
+            <button type="button" class="btn cyan" onclick="nextStep()">
+              Continue →
+            </button>
+          </p>
+
+        </form>
+      </section>
+
+
+      <!-- ══════════════════════
+           STEP 2: Rules
+           ══════════════════════ -->
+      <section id="step-2" hidden>
+        <form novalidate>
+
+          <fieldset>
+            <legend>Contribution rules</legend>
+
+            <p class="field">
+              <label for="contribution-amount">
+                Contribution amount (ZAR) <span class="req">*</span>
+              </label>
+              <input
+                type="number"
+                id="contribution-amount"
+                name="contribution-amount"
+                placeholder="500"
+                min="1"
+              >
+              <span class="error-msg" id="err-amount">
+                Amount must be more than R0
+              </span>
+            </p>
+
+            <p class="field">
+              <span class="field-label">Cycle type</span>
+              <span class="radio-group">
+                <button type="button" class="radio-pill selected" id="pill-monthly" onclick="selectCycle('monthly')">
+                  Monthly
+                </button>
+                <button type="button" class="radio-pill" id="pill-weekly" onclick="selectCycle('weekly')">
+                  Weekly
+                </button>
+              </span>
+            </p>
+
+            <p class="field">
+              <label for="start-date">
+                Start date <span class="req">*</span>
+              </label>
+              <input
+                type="date"
+                id="start-date"
+                name="start-date"
+              >
+              <span class="error-msg" id="err-date">
+                Start date must be in the future
+              </span>
+            </p>
+
+          </fieldset>
+
+          <p class="btn-row">
+            <button type="button" class="btn outline" onclick="prevStep()">← Back</button>
+            <button type="button" class="btn cyan"    onclick="nextStep()">Continue →</button>
+          </p>
+
+        </form>
+      </section>
+
+
+      <!-- ══════════════════════
+           STEP 3: Payout Order
+           ══════════════════════ -->
+      <section id="step-3" hidden>
+        <form novalidate>
+
+          <fieldset>
+            <legend>Payout order</legend>
+
+            <p class="field">
+              <span class="field-label">Payout order</span>
+              <span class="radio-pill selected">
+                Rotation (ordered)
+              </span>
+            </p>
+
+            <p class="field">
+              Payout order will be managed after members are added.
+            </p>
+
+          </fieldset>
+
+          <p class="btn-row">
+            <button type="button" class="btn outline" onclick="prevStep()">← Back</button>
+            <button type="button" class="btn cyan"    onclick="nextStep()">Continue →</button>
+          </p>
+
+        </form>
+      </section>
+
+
+      <!-- ══════════════════════
+           STEP 4: Review
+           ══════════════════════ -->
+      <section id="step-4" hidden>
+
+        <p class="review-intro">
+          Check everything looks right before creating the group.
+        </p>
+
+        <table class="review-box">
+          <caption class="sr-only">Group settings summary</caption>
+          <tbody>
+            <tr><th scope="row">Group name</th>  <td id="rev-name"></td></tr>
+            <tr><th scope="row">Description</th> <td id="rev-desc"></td></tr>
+            <tr><th scope="row">Contribution</th><td id="rev-amount"></td></tr>
+            <tr><th scope="row">Cycle</th>        <td id="rev-cycle"></td></tr>
+            <tr><th scope="row">Start date</th>   <td id="rev-date"></td></tr>
+            <tr><th scope="row">Payout order</th> <td id="rev-payout"></td></tr>
+          </tbody>
+        </table>
+
+        <p class="btn-row">
+          <button type="button" class="btn outline" onclick="prevStep()">← Back</button>
+          <button type="button" class="btn cyan"    onclick="submitGroup()">Create group</button>
+        </p>
+
+      </section>
+
+    </article>
+
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="../auth_service.js"></script>
+  <script src="../js/wizard.js"></script>
+
+</body>
+</html>

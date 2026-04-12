@@ -1,0 +1,52 @@
+<header class="page-header">
+  <p class="subtitle" id="invites-group-name"></p>
+  <link rel="stylesheet" href="../css/main.css">
+</header>
+<nav>
+    <span class="logo">STOKVEL</span>
+    <span class="nav-page-name">Invite members</span>
+  </nav>
+<!-- Send invite card -->
+<article class="card">
+  <form novalidate>
+    <fieldset>
+      <legend>Send an invite</legend>
+      <p class="field">
+        <label for="invite-email">Email address <span class="req">*</span></label>
+        <input type="email" id="invite-email" name="invite-email" autocomplete="off">
+        <span class="error-msg" id="err-email">Please enter a valid email address</span>
+      </p>
+    </fieldset>
+    <p class="btn-row">
+      <button type="button" class="btn cyan" onclick="sendInvite()">Send invite</button>
+    </p>
+  </form>
+  <!-- Shareable link row -->
+  <p class="copy-link-row">
+    <span class="link-url">stokvel.app/invite/abc123</span>
+    <button type="button" class="btn outline sm" onclick="copyLink()">Copy link</button>
+    <span class="copied-msg" id="copied-msg" hidden>Copied!</span>
+  </p>
+</article>
+<!-- Invite list card -->
+<article class="card">
+  <h2 class="card-title">Sent invites</h2>
+  <p class="empty-state" id="invite-empty">
+    No invites sent yet.
+  </p>
+  <table class="invite-table" id="invite-table" hidden>
+    <thead>
+      <tr>
+        <th scope="col">Email</th>
+        <th scope="col">Status</th>
+        <th scope="col">Sent</th>
+        <th scope="col">Action</th>
+      </tr>
+    </thead>
+    <tbody id="invite-body">
+    </tbody>
+  </table>
+</article>
+
+
+<script src="../js/invites.js"></script>

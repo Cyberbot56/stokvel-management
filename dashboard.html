@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-logo">
+            <div class="logo-mark"></div>
+            <h1>STOKVEL</h1>
+        </div>
+        <span class="header-title">All Groups</span>
+        <!-- FIXED: added id so allGroups.js can set initials dynamically -->
+        <div class="avatar" id="avatar"></div>
+    </header>
+
+    <section class="actions">
+        <button id="buttonMyGroups">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            My Groups
+        </button>
+        <button id="buttonCreateGroup">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Group
+        </button>
+    </section>
+
+    <main>
+        <p id="noGroups" hidden>No stokvel groups found.</p>
+        <p id="loadError" class="state-message" hidden>Error loading groups. Please try again later.</p>
+
+        <section class="groups-grid" hidden>
+            <!--Dynamically generated-->
+        </section>
+    </main>
+
+    <!-- FIXED: config.js and auth_service.js must load before allGroups.js
+         so that config.apiBase and auth0Client are available -->
+    <script src="config.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+    <script src="auth_service.js"></script>
+    <script src="allGroups.js"></script>
+</body>
+</html>
