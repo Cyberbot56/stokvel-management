@@ -5,7 +5,7 @@ async function loadMyGroups() {
     const userId = localStorage.getItem('userId');
 
     try {
-        const response = await fetch(`/api/groups_members/:${userId}`);
+        const response = await fetch(`/api/groups_members/${userId}`);
         const Groups = await response.json(); 
 
         if (Groups.length === 0) {
