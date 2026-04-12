@@ -27,7 +27,8 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
   res.json({
     userId: req.user.userId,
     name: req.user.name,
-    email: req.user.email
+    email: req.user.email,
+    rawTokenPayload: req.auth.payload
   });
 });
 

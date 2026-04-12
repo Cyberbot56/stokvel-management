@@ -14,6 +14,8 @@ function requireAuth(req, res, next) {
   verifyToken(req, res, async (err) => {
     if (err) return next(err);
 
+    console.log("Token Payload:", req.auth.payload);
+
     const { sub, email, name } = req.auth.payload;
 
     try {
