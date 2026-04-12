@@ -1,7 +1,7 @@
 // Function to fetch all groups from the backend
 async function loadMyGroups() {
     const grid = document.querySelector('.groups-grid');
-    const noGroupsMessage = document.getElementById('noGroups');
+    //const noGroupsMessage = document.getElementById('noGroups');
     const userId = localStorage.getItem('userId');
 
     try {
@@ -9,14 +9,14 @@ async function loadMyGroups() {
         const Groups = await response.json(); 
 
         if (Groups.length === 0) {
-            noGroupsMessage.hidden = false;
+            //noGroupsMessage.hidden = false;
             grid.hidden = true;
             return;
         }
 
         grid.innerHTML = ''; 
         grid.hidden = false;
-        noGroupsMessage.hidden = true;
+        //noGroupsMessage.hidden = true;
 
         Groups.forEach(group => {
             const card = document.createElement('article');
