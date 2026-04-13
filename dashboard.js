@@ -18,7 +18,7 @@ async function loadMyGroups() {
     const userId = localStorage.getItem('userId');
 
     if (!userId) {
-        console.error('No userId in localStorage — user may not be logged in.');
+        console.error('No userId found in localStorage — user may not be logged in.');
         if (loadError) loadError.hidden = false;
         return;
     }
