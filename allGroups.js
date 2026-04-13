@@ -42,17 +42,17 @@ function renderGroups(groups) {
         card.className = 'group-card';
 
         card.innerHTML = `
-            <div class="card-icon">
+            <figure class="card-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#0e9490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
                 </svg>
-            </div>
+            </figure>
             <h2 class="groupName">${sanitise(group.name)}</h2>
             <p class="group-desc">${sanitise(group.description) || 'No description provided.'}</p>
-            <div class="card-meta">
-                <span class="meta-members">${group.totalMembers ?? 0} members</span>
-                <span class="meta-amount">R${group.contributionAmount ?? 0} / ${group.cycleType ?? 'month'}</span>
-            </div>
+            <dl class="card-meta">
+                <dt class="meta-members">${group.totalMembers ?? 0} members</dt>
+                <dd class="meta-amount">R${group.contributionAmount ?? 0} / ${group.cycleType ?? 'month'}</dd>
+            </dl>
             <button class="btnViewGroup" data-id="${sanitise(group.groupId)}">View Group</button>
         `;
 
