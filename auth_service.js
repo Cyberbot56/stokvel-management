@@ -1,4 +1,4 @@
-
+// config is loaded from config.js — do not redeclare it here.
 let auth0Client = null;
 
 const configureClient = async () => {
@@ -10,8 +10,7 @@ const configureClient = async () => {
             redirect_uri: window.location.origin,
             scope: "openid profile email"
         },
-        useRefreshTokens: true,
-        cacheLocation: "localstorage"
+
     });
 };
 
@@ -58,6 +57,17 @@ const processLoginState = async () => {
     }
 };
 
+
+const logout = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    auth0Client.logout({
+        logoutParams: {
+            returnTo: window.location.origin
+        }
+    });
+};
+
 window.onload = async () => {
     try {
         await configureClient();
@@ -71,6 +81,9 @@ window.onload = async () => {
             console.error("Auth0 client failed to initialise.");
             return;
         }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.onclick = logout;
 
         const btnGoogle = document.getElementById("btnGoogle");
         if (btnGoogle) {
