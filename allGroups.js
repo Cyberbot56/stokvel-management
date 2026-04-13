@@ -50,7 +50,7 @@ function renderGroups(groups) {
             <h2 class="groupName">${sanitise(group.name)}</h2>
             <p class="group-desc">${sanitise(group.description) || 'No description provided.'}</p>
             <div class="card-meta">
-                <span class="meta-members">${group.totalMembers ?? 0} members</span>
+                // <span class="meta-members">${group.totalMembers ?? 0} members</span>
                 <span class="meta-amount">R${group.contributionAmount ?? 0} / ${group.cycleType ?? 'month'}</span>
             </div>
             <button class="btnViewGroup" data-id="${sanitise(group.groupId)}">View Group</button>
