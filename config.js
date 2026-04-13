@@ -5,5 +5,5 @@ const config = {
     audience: "https://api.stokvel.app",
     apiBase: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
         ? "http://localhost:3000"
-        : "https://stokvel-api.onrender.com" // <-- replace with your Render URL after deploying backend
+        : "https://stokvel-api.onrender.com"
 };
