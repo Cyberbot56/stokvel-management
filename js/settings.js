@@ -1,9 +1,4 @@
-// =============================================
-// settings.js — Group settings page logic
-// =============================================
- 
- 
-// ── Save bar ────────────────────────────────
+ // ── Save bar ────────────────────────────────
 // Called every time the user changes a field.
 // Shows the "unsaved changes" bar at the top.
 function markDirty() {

@@ -10,6 +10,8 @@ const configureClient = async () => {
             redirect_uri: window.location.origin,
             scope: "openid profile email"
         },
+        useRefreshTokens: true,
+        cacheLocation: "localstorage",
 
     });
 };
@@ -111,6 +113,7 @@ window.onload = async () => {
             };
         }
 
+        // FIXED: after auth is ready, call onAuthReady() if the page has defined it.
         // This allows page scripts like group-overview.js, allGroups.js, dashboard.js
         // to wait for auth0Client to be fully initialised before running.
         if (typeof onAuthReady === "function") {
