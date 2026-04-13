@@ -27,6 +27,14 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
   });
 });
 
+//This is an api for logging out a user.
+//If a user clicked log out their session will end and they will have to log in again to get a new sesssion.
+//They will be taken to the login page after logging out.
+app.post('/api/auth/logout', (req, res) => {
+  // Invalidate the session on the client side (e.g., by clearing cookies or local storage)
+  res.json({ message: "Logged out successfully" });
+  
+});
 
 // This is the endpoint for registering a new user. It will be used by dev1 and dev2 to create new users in the database when they log in with Google for the first time. The providerId is the unique identifier from Google, and it will be used to check if the user already exists in the database. If the user already exists, we can skip creating a new user and just return the existing user data.
 app.post('/api/auth/register', async (req, res) => {
@@ -135,7 +143,7 @@ app.post('/api/groups', async (req, res) => {
 //I should also check if the user has an account using their email. 
 //We also have to check if the user is already a member of the group before adding them to avoid duplicates.
 app.post('/api/groups/add-member', async (req, res) => {
-  const { email, groupId } = req.body;
+  const { email, groupId, userId } = req.body; 
 
   // Validate required fields
   //I have to get the groupId and email from the request body.
@@ -173,6 +181,18 @@ app.post('/api/groups/add-member', async (req, res) => {
           role: existingMembership.role,
           joinedAt: existingMembership.joinedAt
         }
+      });
+    }
+
+    const notAdmin = await prisma.group_members.findFirst({
+      where: {
+        SuserId: parseInt(userId),
+        role: { not: "admin" }
+      }
+    });
+    if (notAdmin) {
+      return res.status(403).json({ 
+        error: "Only admins can add members to the group" 
       });
     }
 
