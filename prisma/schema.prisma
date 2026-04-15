@@ -40,8 +40,6 @@ model group_members {
   joinedAt       DateTime @db.Date
   groups         groups   @relation(fields: [FgroupId], references: [groupId], onUpdate: NoAction, map: "FgroupId")
   users          users    @relation(fields: [SuserId], references: [userId], onUpdate: NoAction, map: "SuserId")
-
-  
 }
 
 model groups {
@@ -55,6 +53,7 @@ model groups {
   status             String            @db.VarChar(15)
   createdBy          Int
   FiuserId           Int
+  contributions      contributions[]
   group_audit_log    group_audit_log[]
   group_invites      group_invites[]
   group_members      group_members[]
@@ -67,8 +66,22 @@ model users {
   email           String            @unique(map: "User_email_key")
   name            String
   createdAt       DateTime          @default(now(), map: "User_createdAt_df") @db.Date
+  contributions   contributions[]
   group_audit_log group_audit_log[]
   group_invites   group_invites[]
   group_members   group_members[]
   groups          groups[]
+}
+
+model contributions {
+  contributionId Int       @id @default(autoincrement())
+  FgroupId       Int
+  SuserId        Int
+  amount         Float
+  dueDate        DateTime  @db.Date
+  status         String    @default("pending") @db.VarChar(10)
+  note           String?   @db.VarChar(255)
+  paidAt         DateTime?
+  groups         groups    @relation(fields: [FgroupId], references: [groupId], onUpdate: NoAction)
+  users          users     @relation(fields: [SuserId], references: [userId], onUpdate: NoAction)
 }
