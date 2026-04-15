@@ -48,7 +48,7 @@ model groups {
   groupId            Int               @id(map: "PK_groups") @default(autoincrement())
   name               String            @db.VarChar(50)
   description        String?           @db.Text
-  contributionAmount Int
+  contributionAmount Decimal           @db.Decimal(10, 2)
   cycleType          String            @db.VarChar(15)
   payoutOrder        String            @db.VarChar(50)
   startDate          DateTime          @db.Date
