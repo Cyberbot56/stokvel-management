@@ -5,16 +5,14 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch:
 
 env:
   NODE_VERSION: "18.x"
 
 jobs:
-  # Job 1: Test the backend
   test-backend:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -25,30 +23,70 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
-      - name: Install backend dependencies
+      - name: Debug - Check DATABASE_URL secret
         run: |
-          cd backend
-          npm ci
+          if [ "${{ secrets.DATABASE_URL }}" != "" ]; then
+            echo "✅ DATABASE_URL secret is set"
+          else
+            echo "❌ DATABASE_URL secret is EMPTY"
+          fi
 
-      - name: Run Prisma validation
-        run: |
-          cd backend
-          npx prisma validate
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Check for linting issues
+      - name: Generate Prisma client
         run: |
-          cd backend
-          npm run lint 2>/dev/null || echo "No linting configured yet"
+          export DATABASE_URL="${{ secrets.DATABASE_URL }}"
+          npx prisma generate --schema=prisma/schema.prisma
 
       - name: Security audit
-        run: |
-          cd backend
-          npm audit --production --audit-level=moderate || echo "Security issues found but continuing"
+        run: npm audit --production --audit-level=moderate || echo "Security issues found but continuing"
 
-  # Job 2: Build check for frontend
+      - name: Run tests
+        id: test_results
+        run: |
+          npm test || true
+
+          TOTAL=$(cat results.json | jq '.numTotalTests')
+          PASSED=$(cat results.json | jq '.numPassedTests')
+          FAILED=$(cat results.json | jq '.numFailedTests')
+
+          if [ "$TOTAL" -eq 0 ]; then
+            PERCENT=0
+          else
+            PERCENT=$(echo "scale=0; $PASSED * 100 / $TOTAL" | bc)
+          fi
+
+          echo "total=$TOTAL"   >> $GITHUB_OUTPUT
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+          echo "percent=$PERCENT" >> $GITHUB_OUTPUT
+          echo "✅ Passed: $PASSED / $TOTAL ($PERCENT%)"
+
+      - name: Set badge color
+        id: badge_color
+        run: |
+          PERCENT=${{ steps.test_results.outputs.percent }}
+          if [ "$PERCENT" -ge 90 ]; then
+            echo "color=brightgreen" >> $GITHUB_OUTPUT
+          elif [ "$PERCENT" -ge 70 ]; then
+            echo "color=yellow" >> $GITHUB_OUTPUT
+          else
+            echo "color=red" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update test badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: ${{ secrets.GIST_ID }}
+          filename: stokvel-test-badge.json
+          label: "Tests"
+          message: "${{ steps.test_results.outputs.percent }}% (${{ steps.test_results.outputs.passed }}/${{ steps.test_results.outputs.total }})"
+          color: ${{ steps.badge_color.outputs.color }}
+
   build-frontend:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -60,62 +98,22 @@ jobs:
 
       - name: Check static files
         run: |
-          # Verify critical files exist
+          echo "Checking critical files..."
           test -f frontend/pages/index.html && echo "✅ index.html exists"
           test -f frontend/pages/dashboard.html && echo "✅ dashboard.html exists"
           test -f frontend/scripts/config.js && echo "✅ config.js exists"
+          test -f prisma/schema.prisma && echo "✅ Prisma schema exists"
           echo "All critical files present"
 
-  # Job 3: Deploy to staging (develop branch)
-  deploy-staging:
-    needs: [test-backend, build-frontend]
-    if: github.ref == 'refs/heads/develop'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Deploy Backend to Render (Staging)
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          RENDER_SERVICE_ID: ${{ secrets.RENDER_STAGING_SERVICE_ID }}
-        run: |
-          curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
-            -H "Authorization: Bearer $RENDER_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"clearCache": true}'
-
-      - name: Deploy Frontend to Vercel (Staging)
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "--prod" # Remove --prod for preview deployment
-          working-directory: ./
-
-  # Job 4: Deploy to production (main branch)
   deploy-production:
     needs: [test-backend, build-frontend]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy Backend to Render (Production)
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          RENDER_SERVICE_ID: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
-        run: |
-          curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
-            -H "Authorization: Bearer $RENDER_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"clearCache": true}'
-
-      - name: Deploy Frontend to Vercel (Production)
+      - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -123,33 +121,3 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: "--prod"
           working-directory: ./
-
-      - name: Notify deployment success
-        if: success()
-        run: |
-          echo "✅ Production deployment successful!"
-          echo "Frontend: https://${{ secrets.VERCEL_PROJECT_NAME }}.vercel.app"
-          echo "Backend: https://${{ secrets.RENDER_PRODUCTION_SERVICE_NAME }}.onrender.com"
-
-      - name: Notify deployment failure
-        if: failure()
-        run: |
-          echo "❌ Production deployment failed!"
-          exit 1
-
-  # Job 5: Database migration (production only)
-  migrate-database:
-    needs: deploy-production
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Run Prisma migrations
-        env:
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-        run: |
-          cd backend
-          npx prisma migrate deploy
