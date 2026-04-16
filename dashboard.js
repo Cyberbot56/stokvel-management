@@ -24,6 +24,8 @@ async function loadMyGroups() {
     }
 
     try {
+        // FIXED: use config.apiBase instead of hardcoded localhost
+        // FIXED: send auth token with request
         const token = await auth0Client.getTokenSilently();
 
         const response = await fetch(`${config.apiBase}/api/groups_members/${userId}`, {
@@ -53,17 +55,17 @@ async function loadMyGroups() {
             card.className = 'group-card';
 
             card.innerHTML = `
-                <div class="card-icon">
+                <figure class="card-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#0e9490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
                     </svg>
-                </div>
+                </figure>
                 <h2 class="group-name">${sanitise(group.name)}</h2>
                 <p class="group-desc">${sanitise(group.description) || 'No description provided.'}</p>
-                <div class="card-meta">
-                    <span class="meta-members">${group.totalMembers ?? 0} members</span>
-                    <span class="meta-amount">R${group.contributionAmount ?? 0} / ${group.cycleType ?? 'month'}</span>
-                </div>
+                <dl class="card-meta">
+                    <dt class="meta-members">${group.totalMembers ?? 0} members</dt>
+                    <dd class="meta-amount">R${group.contributionAmount ?? 0} / ${group.cycleType ?? 'month'}</dd>
+                </dl>
                 <button class="btnViewGroup" data-id="${sanitise(group.groupId)}">View Group</button>
             `;
 
@@ -85,6 +87,7 @@ async function loadMyGroups() {
     }
 }
 
+// FIXED: button ID matches what's in my-groups.html
 const btnAll = document.getElementById('buttonViewAllGroups');
 if (btnAll) {
     btnAll.onclick = () => window.location.href = '../dashboard.html';

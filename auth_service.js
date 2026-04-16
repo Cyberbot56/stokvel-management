@@ -1,4 +1,4 @@
-
+// config is loaded from config.js — do not redeclare it here.
 let auth0Client = null;
 
 const configureClient = async () => {
@@ -11,7 +11,8 @@ const configureClient = async () => {
             scope: "openid profile email"
         },
         useRefreshTokens: true,
-        cacheLocation: "localstorage"
+        cacheLocation: "localstorage",
+
     });
 };
 
@@ -58,6 +59,17 @@ const processLoginState = async () => {
     }
 };
 
+
+const logout = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    auth0Client.logout({
+        logoutParams: {
+            returnTo: window.location.origin
+        }
+    });
+};
+
 window.onload = async () => {
     try {
         await configureClient();
@@ -71,6 +83,9 @@ window.onload = async () => {
             console.error("Auth0 client failed to initialise.");
             return;
         }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.onclick = logout;
 
         const btnGoogle = document.getElementById("btnGoogle");
         if (btnGoogle) {
@@ -98,6 +113,7 @@ window.onload = async () => {
             };
         }
 
+        // FIXED: after auth is ready, call onAuthReady() if the page has defined it.
         // This allows page scripts like group-overview.js, allGroups.js, dashboard.js
         // to wait for auth0Client to be fully initialised before running.
         if (typeof onAuthReady === "function") {

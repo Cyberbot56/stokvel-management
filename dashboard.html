@@ -10,23 +10,24 @@
 <body>
 
     <header>
-        <div class="header-logo">
-            <div class="logo-mark"></div>
+        <figure class="header-logo">
+            <i class="logo-mark"></i>
             <h1>STOKVEL</h1>
-        </div>
-        <span class="header-title">Dashboard</span>
-        <div class="avatar" id="avatar"></div>
+        </figure>
+        <p class="header-title">Dashboard</p>
+        <nav class="header-right">
+            <address class="avatar" id="avatar"></address>
+            <button class="logout-btn" id="logoutBtn">Log out</button>
+        </nav>
     </header>
 
-    <div class="welcome-banner">
-        <div class="welcome-text">
-            <p class="welcome-greeting" id="welcomeGreeting">Welcome back!</p>
-            <p class="welcome-sub">We're glad you're continuing your stokvel journey with us.</p>
-        </div>
-    </div>
+    <section class="welcome-banner">
+        <p class="welcome-greeting" id="welcomeGreeting">Welcome back!</p>
+        <p class="welcome-sub">We're glad you're continuing your stokvel journey with us.</p>
+    </section>
 
     <section class="actions">
-        <div class="toggle-group">
+        <menu class="toggle-group">
             <button id="buttonAllGroups" class="active">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 All Groups
@@ -35,13 +36,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 My Groups
             </button>
-        </div>
-        <div class="actions-right">
+        </menu>
+        <nav class="actions-right">
             <button id="buttonCreateGroup">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create Group
             </button>
-        </div>
+        </nav>
     </section>
 
     <main>

@@ -1,4 +1,7 @@
-
+/* =============================================
+   main.css — Stokvel App shared styles
+   Used by: create-group.html, group-settings.html, invites.html
+   ============================================= */
 
 :root {
     --cyan:       #0e9490;
@@ -173,7 +176,14 @@ legend {
     width: 100%;
 }
 
-section[hidden] {
+section
+/* Fix browser defaults on semantic elements used for styling */
+i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
+figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
+menu.toggle-group, menu.radio-group, menu.save-bar-actions { padding: 0; margin: 0; list-style: none; }
+b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
+
+[hidden] {
     display: none;
 }
 
@@ -372,7 +382,14 @@ aside.save-bar {
     font-size: 14px;
 }
 
-aside.save-bar[hidden] {
+aside.save-bar
+/* Fix browser defaults on semantic elements used for styling */
+i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
+figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
+menu.toggle-group, menu.radio-group, menu.save-bar-actions { padding: 0; margin: 0; list-style: none; }
+b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
+
+[hidden] {
     display: none;
 }
 
@@ -512,7 +529,14 @@ dialog::backdrop {
     font-weight: 700;
 }
 
-.copied-msg[hidden] {
+.copied-msg
+/* Fix browser defaults on semantic elements used for styling */
+i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
+figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
+menu.toggle-group, menu.radio-group, menu.save-bar-actions { padding: 0; margin: 0; list-style: none; }
+b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
+
+[hidden] {
     display: none;
 }
 
@@ -604,7 +628,14 @@ button.nav-btn.active {
     background: rgba(255, 255, 255, 0.15);
 }
 
-section.screen[hidden] {
+section.screen
+/* Fix browser defaults on semantic elements used for styling */
+i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
+figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
+menu.toggle-group, menu.radio-group, menu.save-bar-actions { padding: 0; margin: 0; list-style: none; }
+b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
+
+[hidden] {
     display: none;
 }
 
@@ -624,6 +655,13 @@ section.screen[hidden] {
     clip: rect(0,0,0,0);
     border: 0;
 }
+
+
+/* Fix browser defaults on semantic elements used for styling */
+i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
+figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
+menu.toggle-group, menu.radio-group, menu.save-bar-actions { padding: 0; margin: 0; list-style: none; }
+b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 
 [hidden] {
     display: none !important;

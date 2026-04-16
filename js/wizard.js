@@ -1,4 +1,6 @@
-
+// =============================================
+// wizard.js — Group creation wizard
+// =============================================
 
 // Which step the user is currently on
 var currentStep = 1;
@@ -149,6 +151,11 @@ function fillReview() {
 
 // ── Submit ───────────────────────────────────
 async function submitGroup() {
+  if (!auth0Client) {
+    alert('Still loading, please try again in a moment.');
+    return;
+  }
+
   const currentUserId = localStorage.getItem('userId');
   if (!currentUserId) {
     alert('Error: You must be logged in to create a group.');
@@ -167,6 +174,8 @@ async function submitGroup() {
   };
 
   try {
+    // FIXED: use config.apiBase instead of hardcoded localhost URL
+    // FIXED: send auth token with the request
     const token = await auth0Client.getTokenSilently();
 
     const response = await fetch(`${config.apiBase}/api/groups`, {
@@ -182,6 +191,8 @@ async function submitGroup() {
       const result = await response.json();
       const newGroupId = result.group.groupId;
 
+      // FIXED: redirect to group-overview.html with the new group's ID
+      // instead of sending the user back to index.html
       window.location.href = `group-admin.html?groupId=${newGroupId}`;
     } else {
       const error = await response.json();

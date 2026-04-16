@@ -8,14 +8,16 @@
 </head>
 <body>
 
-  <!-- Matching header from dashboard.html -->
   <header class="site-header">
-    <div class="header-logo">
-      <div class="logo-mark"></div>
-      <span>STOKVEL</span>
-    </div>
-    <span class="header-title">Group Overview</span>
-    <div class="header-avatar" id="avatar"></div>
+    <figure class="header-logo">
+      <i class="logo-mark"></i>
+      <h1>STOKVEL</h1>
+    </figure>
+    <p class="header-title">Group Overview</p>
+    <nav class="header-right">
+      <address class="header-avatar" id="avatar"></address>
+      <button class="logout-btn" id="logoutBtn">Log out</button>
+    </nav>
   </header>
 
   <main class="page">
@@ -32,8 +34,8 @@
 
     <article class="card" id="group-header">
       <header class="group-title-row">
-        <h1 id="group-name"></h1>
-        <span id="status-badge" class="badge"></span>
+        <h2 id="group-name"></h2>
+        <b id="status-badge" class="badge"></b>
       </header>
       <p id="group-desc" class="group-desc"></p>
       <p id="cycle-label" class="cycle-label"></p>
@@ -59,7 +61,7 @@
     <article class="card">
       <h2 class="card-title">Next payout</h2>
       <section class="payout-row">
-        <span id="payout-avatar" class="avatar"></span>
+        <b id="payout-avatar" class="avatar"></b>
         <section class="payout-info">
           <p id="payout-name" class="payout-name"></p>
           <p id="payout-date" class="payout-date"></p>
