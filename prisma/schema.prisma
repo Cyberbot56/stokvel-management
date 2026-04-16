@@ -16,6 +16,7 @@ model contributions {
   dueDate         DateTime @db.Date
   paidAt          DateTime @db.DateTime
   status          String   @db.VarChar(15)
+  note            String?  @db.VarChar(50)
   groups          groups   @relation(fields: [FKgroupId], references: [groupId], onUpdate: NoAction, map: "FKgroupId")
   users           users    @relation(fields: [FKuserId], references: [userId], onUpdate: NoAction, map: "FKuserId")
 }
