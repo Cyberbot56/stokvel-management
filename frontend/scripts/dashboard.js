@@ -87,7 +87,7 @@ async function loadMyGroups() {
 
 const btnAll = document.getElementById('buttonViewAllGroups');
 if (btnAll) {
-    btnAll.onclick = () => window.location.href = '../dashboard.html';
+    btnAll.onclick = () => window.location.href = 'dashboard.html';
 }
 
 const btnCreate = document.getElementById('buttonCreateGroup');

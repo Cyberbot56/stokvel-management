@@ -1,4 +1,3 @@
-
 let auth0Client = null;
 
 const configureClient = async () => {
@@ -7,7 +6,8 @@ const configureClient = async () => {
         clientId: config.clientId,
         authorizationParams: {
             audience: config.audience,
-            redirect_uri: window.location.origin,
+            // Always redirect back to the login page after Auth0 login
+            redirect_uri: window.location.origin + "/pages/index.html",
             scope: "openid profile email"
         },
         useRefreshTokens: true,
@@ -21,14 +21,14 @@ const processLoginState = async () => {
     const query = window.location.search;
     if (query.includes("code=") && query.includes("state=")) {
         await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/");
+        // Clean the URL but stay on the current page
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     const isAuthenticated = await auth0Client.isAuthenticated();
 
     if (isAuthenticated) {
-        // Only fetch user and redirect on the login page.
-        // Prevents being pulled back to dashboard.html from every other page.
+        // Only redirect to dashboard from the login/index page
         const onLoginPage = window.location.pathname.endsWith("index.html") ||
                             window.location.pathname === "/";
 
@@ -53,7 +53,8 @@ const processLoginState = async () => {
             localStorage.setItem("userId", dbUser.userId);
             localStorage.setItem("userName", dbUser.name);
 
-            window.location.href = "dashboard.html";
+            // Use absolute path so this works regardless of which page we're on
+            window.location.href = window.location.origin + "/pages/dashboard.html";
         }
     }
 };
@@ -98,8 +99,8 @@ window.onload = async () => {
             };
         }
 
-        // This allows page scripts like group-overview.js, allGroups.js, dashboard.js
-        // to wait for auth0Client to be fully initialised before running.
+        // Allows page scripts (allGroups.js, dashboard.js, etc.)
+        // to wait for auth0Client to be ready before running
         if (typeof onAuthReady === "function") {
             onAuthReady();
         }

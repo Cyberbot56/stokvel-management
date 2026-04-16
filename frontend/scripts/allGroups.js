@@ -58,7 +58,7 @@ function renderGroups(groups) {
 
         card.querySelector('.btnViewGroup').addEventListener('click', () => {
             const dest = group.userRole === 'admin' ? 'group-admin.html' : 'group-overview.html';
-            window.location.href = `pages/${dest}?groupId=${group.groupId}`;
+            window.location.href = `${dest}?groupId=${group.groupId}`;
         });
 
         grid.appendChild(card);
@@ -150,7 +150,7 @@ if (btnAll) btnAll.onclick = showAllGroups;
 
 const btnCreate = document.getElementById('buttonCreateGroup');
 if (btnCreate) {
-    btnCreate.onclick = () => window.location.href = 'pages/create-group.html';
+    btnCreate.onclick = () => window.location.href = 'create-group.html';
 }
 
 function onAuthReady() {

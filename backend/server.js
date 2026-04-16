@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient({
     datasources: {
@@ -7,7 +8,6 @@ const prisma = new PrismaClient({
     },
     log: ['error']
 });
-
 
 const crypto = require('crypto');
 const cors = require('cors');
@@ -24,13 +24,42 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.static('.'));
+
+// Serve the entire frontend folder as static files
+// Since server.js is now in backend/, we go up one level to reach frontend/
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 function generateUniqueToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-const { requireAuth } = require('./backend/src/middleware/auth');
+// Health check endpoint for monitoring
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV
+  });
+});
+
+// Simple status page
+app.get('/status', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>Stokvel API Status</title></head>
+      <body>
+        <h1> API is running</h1>
+        <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
+        <p>Time: ${new Date().toISOString()}</p>
+      </body>
+    </html>
+  `);
+});
+
+// Auth middleware is now in the same backend/src/middleware/auth.js — path stays the same
+const { requireAuth } = require('./src/middleware/auth');
 
 app.get('/api/auth/me', requireAuth, (req, res) => {
   res.json({
@@ -40,8 +69,7 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
   });
 });
 
-
-// This is the endpoint for registering a new user. It will be used by dev1 and dev2 to create new users in the database when they log in with Google for the first time. The providerId is the unique identifier from Google, and it will be used to check if the user already exists in the database. If the user already exists, we can skip creating a new user and just return the existing user data.
+// Register a new user (called on first Google login)
 app.post('/api/auth/register', async (req, res) => {
   const { email, name, providerId } = req.body;
   try {
@@ -60,7 +88,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-//This is for logging in a user. It will check if the user exists in the database using the email. If the user exists, it will return the user data (or 404 otherwise). After that, they can use this login endpoint to get the user data for their session.
+// Login — returns user data by email or 404
 app.post('/api/auth/login', async (req, res) => {
   const { email } = req.body;
   try {
@@ -77,7 +105,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-//This will get all the users drom the database to check if they exist and what other information we have about them.
+// Get all users (admin/debug use)
 app.get('/api/users', async (req, res) => {
   try {
     const users = await prisma.users.findMany();
@@ -87,23 +115,21 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-
+// Get all groups
 app.get('/api/groups', async (req, res) => {
   try {
-    const groups = await prisma.groups.findMany(); 
+    const groups = await prisma.groups.findMany();
     res.json(groups);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch groups" });
   }
 });
 
-// Inserting a new group using post
+// Create a new group and add creator as admin
 app.post('/api/groups', async (req, res) => {
-  const { name, description, contributionAmount, cycleType, payoutOrder, startDate, status, createdBy, FiuserId } = req.body; 
+  const { name, description, contributionAmount, cycleType, payoutOrder, startDate, status, createdBy, FiuserId } = req.body;
   try {
-    // I will start by creating the group then I'll add the information to the group members table
     const result = await prisma.$transaction(async (prisma) => {
-      // 1. Create the group
       const newGroup = await prisma.groups.create({
         data: {
           name: name,
@@ -111,14 +137,13 @@ app.post('/api/groups', async (req, res) => {
           contributionAmount: parseInt(contributionAmount),
           cycleType: cycleType,
           payoutOrder: payoutOrder,
-          startDate: new Date(), //I will automatically get the date
+          startDate: new Date(),
           status: status,
           createdBy: parseInt(createdBy),
           FiuserId: parseInt(FiuserId),
         },
       });
 
-      // Add the creator of the group as admin to group_members table
       const newMember = await prisma.group_members.create({
         data: {
           FgroupId: newGroup.groupId,
@@ -142,18 +167,17 @@ app.post('/api/groups', async (req, res) => {
   }
 });
 
-//This will get groups a particular member belongs to.
+// Get all groups a specific user belongs to (with members)
 app.get('/api/groups_members/:userId', async (req, res) => {
   const { userId } = req.params;
 
   try {
-    // Get all groups the user belongs to
     const memberships = await prisma.group_members.findMany({
       where: { SuserId: parseInt(userId) },
       include: {
         groups: {
           include: {
-            users: {  // This gets the creator info (createdBy relation) using their userId
+            users: {
               select: {
                 userId: true,
                 name: true,
@@ -165,16 +189,14 @@ app.get('/api/groups_members/:userId', async (req, res) => {
       }
     });
 
-    // For each group, fetch all members with their user info
     const enrichedGroups = await Promise.all(
       memberships.map(async (membership) => {
         const groupId = membership.groups.groupId;
-        
-        // Get all members of this group with their user details
+
         const groupMembers = await prisma.group_members.findMany({
           where: { FgroupId: groupId },
           include: {
-            users: {  // This gets the member's user info
+            users: {
               select: {
                 userId: true,
                 name: true,
@@ -184,7 +206,6 @@ app.get('/api/groups_members/:userId', async (req, res) => {
           }
         });
 
-    
         const members = groupMembers.map(member => ({
           userId: member.SuserId,
           name: member.users.name,
@@ -193,7 +214,6 @@ app.get('/api/groups_members/:userId', async (req, res) => {
           joinedAt: member.joinedAt
         }));
 
-      
         return {
           groupId: membership.groups.groupId,
           name: membership.groups.name,
@@ -208,8 +228,8 @@ app.get('/api/groups_members/:userId', async (req, res) => {
             name: membership.groups.users.name,
             email: membership.groups.users.email
           },
-          userRole: membership.role,  
-          members: members,  
+          userRole: membership.role,
+          members: members,
           totalMembers: members.length
         };
       })
@@ -222,13 +242,12 @@ app.get('/api/groups_members/:userId', async (req, res) => {
   }
 });
 
-
-
+// Add a member to a group by email
 app.post('/api/groups/add-member', async (req, res) => {
   const { email, groupId } = req.body;
 
   if (!email || !groupId) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: "Missing required fields",
       required: ["email", "groupId"]
     });
@@ -240,8 +259,8 @@ app.post('/api/groups/add-member', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ 
-        error: "User not found. Please ask the user to create an account first." 
+      return res.status(404).json({
+        error: "User not found. Please ask the user to create an account first."
       });
     }
 
@@ -253,7 +272,7 @@ app.post('/api/groups/add-member', async (req, res) => {
     });
 
     if (existingMembership) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "User is already a member of the group"
       });
     }
@@ -272,7 +291,7 @@ app.post('/api/groups/add-member', async (req, res) => {
       select: { name: true }
     });
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: "Member added successfully",
       member: {
         groupName: group?.name,
@@ -288,26 +307,22 @@ app.post('/api/groups/add-member', async (req, res) => {
   }
 });
 
-//This is for invites, I'm generating a rondom unique token to use for sending invites to users.
-//creating a new invite using post.
+// Create a new invite with a unique token (expires in 7 days)
 app.post('/api/invites', async (req, res) => {
   const { groupId, email, createdBy } = req.body;
-  
-  // Validate required fields
+
   if (!groupId || !email || !createdBy) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: "Missing required fields",
       required: ["groupId", "email", "createdBy"]
     });
   }
 
-  // Validate email format
   if (!email.includes('@')) {
     return res.status(400).json({ error: "Invalid email format" });
   }
 
   try {
-    // Check if group exists
     const group = await prisma.groups.findUnique({
       where: { groupId: parseInt(groupId) }
     });
@@ -316,7 +331,6 @@ app.post('/api/invites', async (req, res) => {
       return res.status(404).json({ error: "Group not found" });
     }
 
-    // Check if user exists (createdBy)
     const user = await prisma.users.findUnique({
       where: { userId: parseInt(createdBy) }
     });
@@ -325,19 +339,12 @@ app.post('/api/invites', async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Generate unique token (simpler approach without checking uniqueness)
-    const generateToken = () => {
-      return crypto.randomBytes(32).toString('hex');
-    };
-    
-    let token = generateToken();
+    let token = crypto.randomBytes(32).toString('hex');
 
-    // Calculate expiration date (7 days from now)
     const createdAt = new Date();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // Create the invite
     const newInvite = await prisma.group_invites.create({
       data: {
         SFKgroupId: parseInt(groupId),
@@ -361,24 +368,17 @@ app.post('/api/invites', async (req, res) => {
   }
 });
 
-//Getting all the invites for a specific group.
+// Get all invites for a specific group
 app.get('/api/invites/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
 
   try {
     const invites = await prisma.group_invites.findMany({
-      where: { 
-        SFKgroupId: parseInt(groupId) 
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
+      where: { SFKgroupId: parseInt(groupId) },
+      orderBy: { createdAt: 'desc' },
       include: {
         users: {
-          select: {
-            name: true,
-            email: true
-          }
+          select: { name: true, email: true }
         }
       }
     });
@@ -394,25 +394,14 @@ app.get('/api/invites/group/:groupId', async (req, res) => {
   }
 });
 
-//This is for admin purpose, we will get all the invites in the system.
+// Get all invites (admin)
 app.get('/api/invites', async (req, res) => {
   try {
     const invites = await prisma.group_invites.findMany({
-      orderBy: {
-        createdAt: 'desc'
-      },
+      orderBy: { createdAt: 'desc' },
       include: {
-        groups: {
-          select: {
-            name: true
-          }
-        },
-        users: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
+        groups: { select: { name: true } },
+        users: { select: { name: true, email: true } }
       }
     });
 
@@ -426,19 +415,18 @@ app.get('/api/invites', async (req, res) => {
   }
 });
 
-//If a member uses an invite they can join the group.
+// Join a group using an invite token
 app.post('/api/invites/join', async (req, res) => {
   const { token, userId } = req.body;
 
   if (!token || !userId) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: "Missing required fields",
       required: ["token", "userId"]
     });
   }
 
   try {
-    // Find the invite
     const invite = await prisma.group_invites.findUnique({
       where: { token: token }
     });
@@ -447,18 +435,15 @@ app.post('/api/invites/join', async (req, res) => {
       return res.status(404).json({ error: "Invalid invite token" });
     }
 
-    // Check if invite is expired
     const now = new Date();
     if (invite.expiresAt < now) {
       return res.status(400).json({ error: "Invite has expired" });
     }
 
-    // Check if invite is still active 
     if (invite.status !== "active") {
       return res.status(400).json({ error: "Invite has been revoked" });
     }
 
-    // Check if user already in group
     const existingMember = await prisma.group_members.findFirst({
       where: {
         FgroupId: invite.SFKgroupId,
@@ -470,7 +455,6 @@ app.post('/api/invites/join', async (req, res) => {
       return res.status(400).json({ error: "User is already a member of this group" });
     }
 
-    // Add user to group members
     const newMember = await prisma.group_members.create({
       data: {
         FgroupId: invite.SFKgroupId,
@@ -479,7 +463,6 @@ app.post('/api/invites/join', async (req, res) => {
         joinedAt: now
       }
     });
-
 
     res.status(201).json({
       message: "Successfully joined the group",
@@ -492,12 +475,11 @@ app.post('/api/invites/join', async (req, res) => {
   }
 });
 
-//If the admin wants to revoke the invite.
+// Revoke an invite (admin)
 app.delete('/api/invites/:inviteId', async (req, res) => {
   const { inviteId } = req.params;
 
   try {
-    // Update invite status to revoked instead of deleting
     const revokedInvite = await prisma.group_invites.update({
       where: { group_inviteId: parseInt(inviteId) },
       data: { status: "revoked" }
@@ -513,10 +495,13 @@ app.delete('/api/invites/:inviteId', async (req, res) => {
   }
 });
 
+// Catch-all: serve index.html for any non-API route (SPA support)
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
+});
 
-//The port is from the .env file, if not found it defaults to 3000.
-const PORT = process.env.PORT || 3000; 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  console.log(`Open http://localhost:${PORT}/index.html to view the frontend`);
+  console.log(`Frontend served from: ${path.join(__dirname, '..', 'frontend')}`);
 });

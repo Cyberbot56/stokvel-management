@@ -1,1 +1,0 @@
-# Stokvel Management Platorm

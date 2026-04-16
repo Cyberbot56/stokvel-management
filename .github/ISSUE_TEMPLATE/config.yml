@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/cyberbot56/mainstokvel/wiki
+    about: Please check our documentation first
+  - name: 💬 Discussions
+    url: https://github.com/cyberbot56/mainstokvel/discussions
+    about: Ask questions and discuss features here
