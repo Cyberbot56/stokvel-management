@@ -1,15 +1,15 @@
 # Stokvel Management Platform
 
-##  CI/CD Pipeline Status
+##  CI/CD Status
 
-| Stage | Status | Progress |
-|-------|--------|----------|
-| **Backend Tests** | [![Backend Tests](https://img.shields.io/badge/Tests-0%25-red)](https://github.com/Cyberbot56/stokvel-management/actions) |
-| **Frontend Build** | [![Frontend](https://img.shields.io/badge/Build-0%25-red)](https://github.com/Cyberbot56/stokvel-management/actions) |
-| **Deployment** | [![Deployment](https://img.shields.io/badge/Deploy-0%25-red)](https://github.com/Cyberbot56/stokvel-management/actions) |
-| **Overall** | [![Overall](https://img.shields.io/badge/Overall-0%25-red)](https://github.com/Cyberbot56/stokvel-management/actions) |
+| Status | Badge |
+|--------|-------|
+| **Deployment** | [![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel)](https://stokvel-management-cpox.vercel.app) |
+| **CI/CD Pipeline** | [![GitHub Actions](https://github.com/Cyberbot56/stokvel-management/actions/workflows/deploy.yml/badge.svg)](https://github.com/Cyberbot56/stokvel-management/actions) |
+| **Last Commit** | ![GitHub last commit](https://img.shields.io/github/last-commit/Cyberbot56/stokvel-management) |
+| **Code Size** | ![GitHub repo size](https://img.shields.io/github/repo-size/Cyberbot56/stokvel-management) |
 
-## Live Demo
+##  Live Demo
 [https://stokvel-management-cpox.vercel.app](https://stokvel-management-cpox.vercel.app)
 
 
