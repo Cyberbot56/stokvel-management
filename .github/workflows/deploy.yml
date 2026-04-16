@@ -23,10 +23,17 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
+<<<<<<< HEAD
       - name: Debug - Check DATABASE_URL secret
         run: |
           if [ "${{ secrets.DATABASE_URL }}" != "" ]; then
             echo "✅ DATABASE_URL secret is set"
+=======
+      - name: Debug - List secrets (hidden)
+        run: |
+          if [ "${{ secrets.DATABASE_URL }}" != "" ]; then
+            echo "✅ DATABASE_URL secret has value (length: ${{ secrets.DATABASE_URL }} | wc -c)"
+>>>>>>> 354986237112497adc8a13d8caa01345644b5aba
           else
             echo "❌ DATABASE_URL secret is EMPTY"
           fi
@@ -34,13 +41,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+<<<<<<< HEAD
       - name: Generate Prisma client
+=======
+      - name: Generate Prisma client (skip validation)
+>>>>>>> 354986237112497adc8a13d8caa01345644b5aba
         run: |
           export DATABASE_URL="${{ secrets.DATABASE_URL }}"
           npx prisma generate --schema=prisma/schema.prisma
 
       - name: Security audit
         run: npm audit --production --audit-level=moderate || echo "Security issues found but continuing"
+<<<<<<< HEAD
 
       - name: Run tests
         id: test_results
@@ -84,6 +96,8 @@ jobs:
           label: "Tests"
           message: "${{ steps.test_results.outputs.percent }}% (${{ steps.test_results.outputs.passed }}/${{ steps.test_results.outputs.total }})"
           color: ${{ steps.badge_color.outputs.color }}
+=======
+>>>>>>> 354986237112497adc8a13d8caa01345644b5aba
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -105,6 +119,10 @@ jobs:
           test -f prisma/schema.prisma && echo "✅ Prisma schema exists"
           echo "All critical files present"
 
+<<<<<<< HEAD
+=======
+  # Job 3: Deploy to Vercel
+>>>>>>> 354986237112497adc8a13d8caa01345644b5aba
   deploy-production:
     needs: [test-backend, build-frontend]
     if: github.ref == 'refs/heads/main'

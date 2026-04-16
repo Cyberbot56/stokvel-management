@@ -59,6 +59,7 @@ model groups {
   group_invites      group_invites[]
   group_members      group_members[]
   users              users             @relation(fields: [FiuserId], references: [userId], onUpdate: NoAction, map: "FiuserId")
+  payouts            Payout[]
 }
 
 model users {
@@ -71,4 +72,27 @@ model users {
   group_invites   group_invites[]
   group_members   group_members[]
   groups          groups[]
+  payoutsReceived Payout[]          @relation("recipientPayouts")
+  payoutsInitiated Payout[]         @relation("initiatorPayouts") 
+}
+
+model Payout {
+  payoutId       Int      @id @default(autoincrement())
+  groupId        Int      @map("FKgroupId")
+  amount         Float
+  recipientId    Int      @map("FKrecipientId")
+  recipientName  String
+  status         String   @default("pending")
+  initiatedBy    Int      @map("FKinitiatedBy")
+  initiatedAt    DateTime @default(now())
+  processedAt    DateTime?
+  transactionRef String?
+  cycleNumber    Int
+  notes          String?
+  
+  group          groups   @relation(fields: [groupId], references: [groupId], onDelete: NoAction, onUpdate: NoAction)
+  recipient      users    @relation("recipientPayouts", fields: [recipientId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+  initiator      users    @relation("initiatorPayouts", fields: [initiatedBy], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@map("payouts")
 }
