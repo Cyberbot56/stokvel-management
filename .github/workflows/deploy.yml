@@ -34,6 +34,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate --schema=prisma/schema.prisma
 
+      - name: Check server.js exists
+        run: test -f backend/server.js && echo "✅ server.js exists"
+
       - name: Security audit
         run: npm audit --production --audit-level=moderate || echo "Security issues found but continuing"
 
@@ -52,10 +55,12 @@ jobs:
 
       - name: Check static files
         run: |
+          echo "Checking critical files..."
           test -f frontend/pages/index.html && echo "✅ index.html exists"
           test -f frontend/pages/dashboard.html && echo "✅ dashboard.html exists"
           test -f frontend/scripts/config.js && echo "✅ config.js exists"
           test -f prisma/schema.prisma && echo "✅ Prisma schema exists"
+          test -f backend/server.js && echo "✅ backend server exists"
           echo "All critical files present"
 
   # Job 3: Deploy to Vercel (main branch only)
