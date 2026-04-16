@@ -1,5 +1,3 @@
-# From your project root
-cat > vercel.json << 'EOF'
 {
   "version": 2,
   "name": "stokvel-management",
@@ -48,4 +46,3 @@ cat > vercel.json << 'EOF'
     }
   ]
 }
-EOF
