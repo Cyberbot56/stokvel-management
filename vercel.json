@@ -1,0 +1,51 @@
+# From your project root
+cat > vercel.json << 'EOF'
+{
+  "version": 2,
+  "name": "stokvel-management",
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "frontend/**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/css/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/scripts/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/images/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/frontend/css/$1"
+    },
+    {
+      "src": "/scripts/(.*)",
+      "dest": "/frontend/scripts/$1"
+    },
+    {
+      "src": "/images/(.*)",
+      "dest": "/frontend/images/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/pages/$1"
+    }
+  ]
+}
+EOF
