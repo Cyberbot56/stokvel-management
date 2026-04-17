@@ -7,6 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model contributions {
+  contributionsId Int      @id(map: "PK_contributions") @default(autoincrement())
+  FKgroupId       Int
+  FKuserId        Int
+  treasurerId     Int
+  amount          Decimal  @db.Decimal(10, 2)
+  dueDate         DateTime @db.Date
+  paidAt          DateTime @db.DateTime
+  status          String   @db.VarChar(15)
+  note            String?  @db.VarChar(50)
+  groups          groups   @relation(fields: [FKgroupId], references: [groupId], onUpdate: NoAction, map: "FKgroupId")
+  users           users    @relation(fields: [FKuserId], references: [userId], onUpdate: NoAction, map: "FKuserId")
+}
+
 model group_audit_log {
   group_audit_logId Int      @id(map: "PK_group_audit_log") @default(autoincrement())
   TFKgroupId        Int
@@ -48,13 +62,14 @@ model groups {
   groupId            Int               @id(map: "PK_groups") @default(autoincrement())
   name               String            @db.VarChar(50)
   description        String?           @db.Text
-  contributionAmount Int
+  contributionAmount Decimal           @db.Decimal(10, 2)
   cycleType          String            @db.VarChar(15)
   payoutOrder        String            @db.VarChar(50)
   startDate          DateTime          @db.Date
   status             String            @db.VarChar(15)
   createdBy          Int
   FiuserId           Int
+  contributions      contributions[]
   group_audit_log    group_audit_log[]
   group_invites      group_invites[]
   group_members      group_members[]
@@ -68,6 +83,7 @@ model users {
   email           String            @unique(map: "User_email_key")
   name            String
   createdAt       DateTime          @default(now(), map: "User_createdAt_df") @db.Date
+  contributions      contributions[]
   group_audit_log group_audit_log[]
   group_invites   group_invites[]
   group_members   group_members[]
