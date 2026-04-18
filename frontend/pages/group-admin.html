@@ -7,162 +7,123 @@
   <link rel="stylesheet" href="../css/group-overview.css" />
   <style>
     .admin-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+      display: inline-flex; align-items: center; gap: 5px;
       background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-      font-style: normal;
+      color: white; font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
     }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-
-    .add-member-form {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .add-member-form { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
     .add-member-form input {
-      flex: 1;
-      min-width: 200px;
-      padding: 9px 12px;
-      border: 1.5px solid rgba(14, 148, 144, 0.25);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      color: #0f172a;
-      background: white;
+      flex: 1; min-width: 200px; padding: 9px 12px;
+      border: 1.5px solid rgba(14,148,144,0.25); border-radius: 8px;
+      font-size: 14px; font-family: 'Segoe UI', sans-serif;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s; color: #0f172a; background: white;
     }
-
-    .add-member-form input:focus {
-      border-color: #0e9490;
-      box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
-    }
-
+    .add-member-form input:focus { border-color: #0e9490; box-shadow: 0 0 0 3px rgba(14,148,144,0.1); }
     .add-member-form input.input-error { border-color: #ef4444; }
-
     .btn-add {
-      padding: 9px 20px;
-      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      cursor: pointer;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      padding: 9px 20px; background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+      color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
+      font-family: 'Segoe UI', sans-serif; cursor: pointer; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(14,148,144,0.3); transition: transform 0.2s, box-shadow 0.2s;
     }
-
-    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4); }
+    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14,148,144,0.4); }
     .btn-add:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    .form-feedback {
-      width: 100%;
-      font-size: 13px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      margin-top: 4px;
-    }
-
+    .form-feedback { width: 100%; font-size: 13px; padding: 8px 12px; border-radius: 8px; margin-top: 4px; }
     .form-feedback.success { background: #e0f7f6; color: #034e52; border-left: 3px solid #0e9490; }
-    .form-feedback.error   { background: #fef2f2; color: #991b1b; border-left: 3px solid #ef4444; }
-
+    .form-feedback.error { background: #fef2f2; color: #991b1b; border-left: 3px solid #ef4444; }
     .members-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .members-table th {
-      text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700;
-      color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: 1.5px solid #e0f7f6;
-    }
+    .members-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #e0f7f6; }
     .members-table td { padding: 11px 12px; border-bottom: 1px solid #f0fafa; color: #0f172a; vertical-align: middle; }
     .members-table tr:last-child td { border-bottom: none; }
     .members-table tr:hover td { background: #f0fafa; }
-
     .member-info { display: flex; align-items: center; gap: 10px; }
-
-    .member-initials {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: #e0f7f6; color: #034e52;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; flex-shrink: 0; font-style: normal;
-    }
-
+    .member-initials { width: 32px; height: 32px; border-radius: 50%; background: #e0f7f6; color: #034e52; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
     .member-name-text { font-weight: 600; color: #034e52; }
     .member-email-text { font-size: 12px; color: #64748b; margin-top: 1px; }
-
-    .role-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; font-style: normal; }
+    .role-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
     .role-badge.admin  { background: #e0f7f6; color: #034e52; }
     .role-badge.member { background: #f0fafa; color: #64748b; }
-
     .joined-date { font-size: 12px; color: #64748b; }
-
-    /* Stats strip as description list */
-    dl.group-stats-strip {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      padding: 0.75rem 0;
-      border-top: 1px solid #e0f7f6;
-      margin-top: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    dl.group-stats-strip dt {
-      font-size: 10px; font-weight: 700; color: #64748b;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
-
-    dl.group-stats-strip dd {
-      font-size: 15px; font-weight: 700; color: #034e52;
-      margin-left: 0;
-    }
-
-    .stat-group { display: flex; flex-direction: column; gap: 2px; }
-
-    hr.strip-divider { width: 1px; height: 28px; border: none; background: #e0f7f6; margin: 0; }
-
+    .group-stats-strip { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 0; border-top: 1px solid #e0f7f6; margin-top: 0.75rem; flex-wrap: wrap; }
+    .strip-stat { display: flex; flex-direction: column; gap: 2px; }
+    .strip-stat-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .strip-stat-value { font-size: 15px; font-weight: 700; color: #034e52; }
+    .strip-divider { width: 1px; height: 28px; background: #e0f7f6; }
     .empty-members { text-align: center; padding: 2rem; color: #64748b; font-size: 13px; font-style: italic; }
-
-    .back-link {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; color: #0e9490; font-weight: 600; cursor: pointer;
-      background: none; border: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 0; margin-bottom: 1.25rem; transition: color 0.2s ease;
-    }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #0e9490; font-weight: 600; cursor: pointer; background: none; border: none; font-family: 'Segoe UI', sans-serif; padding: 0; margin-bottom: 1.25rem; transition: color 0.2s; }
     .back-link:hover { color: #034e52; }
 
-    /* Fix italic defaults on i and address */
-    i.logo-mark, address.header-avatar { font-style: normal; }
+    /* ── Payout form ── */
+    .payout-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 600px) { .payout-form { grid-template-columns: 1fr; } }
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-group.full-width { grid-column: 1 / -1; }
+    .field-group label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
+    .payout-form select,
+    .payout-form input[type="number"],
+    .payout-form textarea {
+      padding: 9px 12px; border: 1.5px solid rgba(14,148,144,0.25); border-radius: 8px;
+      font-size: 14px; font-family: 'Segoe UI', sans-serif; color: #0f172a; background: white;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%; box-sizing: border-box;
+    }
+    .payout-form select:focus,
+    .payout-form input:focus,
+    .payout-form textarea:focus { border-color: #0e9490; box-shadow: 0 0 0 3px rgba(14,148,144,0.1); }
+    .payout-form textarea { resize: vertical; min-height: 70px; }
+    .amount-preview {
+      background: linear-gradient(135deg, #e0f7f6, #f0fafa);
+      border: 1.5px solid #0e9490; border-radius: 10px;
+      padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .amount-preview .preview-label { font-size: 12px; color: #64748b; font-weight: 600; }
+    .amount-preview .preview-value { font-size: 22px; font-weight: 800; color: #034e52; }
+    .btn-initiate {
+      padding: 11px 26px; background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+      color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
+      font-family: 'Segoe UI', sans-serif; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(14,148,144,0.3); transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-initiate:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14,148,144,0.4); }
+    .btn-initiate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ── Payouts history ── */
+    .payouts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .payouts-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #e0f7f6; }
+    .payouts-table td { padding: 11px 12px; border-bottom: 1px solid #f0fafa; vertical-align: middle; }
+    .payouts-table tr:last-child td { border-bottom: none; }
+    .payouts-table tr:hover td { background: #f0fafa; }
+    .status-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .status-pill.pending   { background: #fef9c3; color: #854d0e; }
+    .status-pill.completed { background: #dcfce7; color: #166534; }
+    .status-pill.cancelled { background: #fee2e2; color: #991b1b; }
+    .ref-text { font-size: 11px; color: #94a3b8; font-family: monospace; }
+    .empty-payouts { text-align: center; padding: 2rem; color: #64748b; font-size: 13px; font-style: italic; }
+    .btn-complete { padding: 5px 12px; font-size: 12px; font-weight: 700; background: #dcfce7; color: #166534; border: 1.5px solid #86efac; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+    .btn-complete:hover { background: #bbf7d0; }
+    .btn-cancel-payout { padding: 5px 12px; font-size: 12px; font-weight: 700; background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; border-radius: 6px; cursor: pointer; margin-left: 6px; transition: background 0.2s; }
+    .btn-cancel-payout:hover { background: #fecaca; }
+
+    /* ── Confirm modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .modal-box { background: white; border-radius: 14px; padding: 28px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-box h3 { margin: 0 0 8px; color: #034e52; font-size: 17px; }
+    .modal-box p  { margin: 0 0 20px; color: #64748b; font-size: 14px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-modal-cancel  { padding: 9px 18px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Segoe UI', sans-serif; }
+    .btn-modal-confirm { padding: 9px 18px; background: linear-gradient(135deg, #2dd4bf, #0e9490); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', sans-serif; }
   </style>
 </head>
 <body>
 
   <header class="site-header">
-    <figure class="header-logo">
-      <i class="logo-mark"></i>
-      <h1>STOKVEL</h1>
-    </figure>
-    <p class="header-title">Group Admin</p>
-    <nav class="header-right">
-      <address class="header-avatar" id="avatar"></address>
-      <button class="logout-btn" id="logoutBtn">Log out</button>
-    </nav>
+    <div class="header-logo">
+      <div class="logo-mark"></div>
+      <span>STOKVEL</span>
+    </div>
+    <span class="header-title">Group Admin</span>
+    <div class="header-avatar" id="avatar"></div>
   </header>
 
   <main class="page">
@@ -171,56 +132,89 @@
 
     <p id="status-banner" class="status-banner" hidden></p>
 
+    <!-- ── Group header ── -->
     <article class="card" id="group-header-card">
       <header class="group-title-row">
-        <section>
-          <h2 id="group-name"></h2>
-          <p id="group-desc" class="group-desc"></p>
-        </section>
-        <section class="badge-group">
-          <b id="status-badge" class="badge"></b>
-          <b class="admin-badge">Admin</b>
-        </section>
+        <div>
+          <h1 id="group-name"></h1>
+          <p id="group-desc" class="group-desc" style="margin-top:4px;margin-bottom:0;"></p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+          <span id="status-badge" class="badge"></span>
+          <span class="admin-badge">Admin</span>
+        </div>
       </header>
-
-      <dl class="group-stats-strip">
-        <section class="stat-group">
-          <dt>Members</dt>
-          <dd id="stat-members"></dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Contribution</dt>
-          <dd id="stat-amount"></dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Cycle</dt>
-          <dd id="stat-cycle"></dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Start date</dt>
-          <dd id="stat-start"></dd>
-        </section>
-      </dl>
+      <div class="group-stats-strip">
+        <div class="strip-stat"><span class="strip-stat-label">Members</span><span class="strip-stat-value" id="stat-members"></span></div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat"><span class="strip-stat-label">Contribution</span><span class="strip-stat-value" id="stat-amount"></span></div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat"><span class="strip-stat-label">Cycle</span><span class="strip-stat-value" id="stat-cycle"></span></div>
+        <div class="strip-divider"></div>
+        <div class="strip-stat"><span class="strip-stat-label">Start date</span><span class="strip-stat-value" id="stat-start"></span></div>
+      </div>
     </article>
 
+    <!-- ── Initiate Payout ── -->
     <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Onboard a new member</h2>
-      </header>
-      <p>Enter the email address of a registered user to add them to this group.</p>
-      <section class="add-member-form">
-        <input
-          type="email"
-          id="member-email"
-          placeholder="member@example.com"
-          autocomplete="off"
-        />
+      <div class="section-header">
+        <h2 class="card-title" style="margin-bottom:0;">Initiate Payout</h2>
+      </div>
+      <p style="font-size:13px;color:#64748b;margin-bottom:1.25rem;">
+        Select the member receiving this cycle's payout. The amount is automatically taken from the group's contribution amount.
+      </p>
+      <div class="payout-form">
+        <div class="field-group">
+          <label for="payout-recipient">Recipient member</label>
+          <select id="payout-recipient">
+            <option value="">— Select a member —</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="payout-cycle">Cycle number</label>
+          <input type="number" id="payout-cycle" min="1" placeholder="e.g. 1" />
+        </div>
+        <div class="field-group full-width">
+          <div class="amount-preview">
+            <span class="preview-label">Payout amount (group contribution × members)</span>
+            <span class="preview-value" id="payout-amount-display">R 0.00</span>
+          </div>
+        </div>
+        <div class="field-group full-width">
+          <label for="payout-notes">Notes <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+          <textarea id="payout-notes" placeholder="e.g. Cycle 1 payout — Letsema Savings Circle"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:1.25rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <button class="btn-initiate" id="btn-initiate-payout">Initiate Payout</button>
+        <p class="form-feedback" id="payout-feedback" hidden></p>
+      </div>
+    </article>
+
+    <!-- ── Payout History ── -->
+    <article class="card">
+      <div class="section-header">
+        <h2 class="card-title" style="margin-bottom:0;">Payout History</h2>
+        <span id="payout-count" style="font-size:12px;color:#64748b;font-weight:600;"></span>
+      </div>
+      <div id="payouts-container">
+        <p class="empty-payouts">Loading payouts...</p>
+      </div>
+    </article>
+
+    <!-- ── Add member ── -->
+    <article class="card">
+      <div class="section-header">
+        <h2 class="card-title" style="margin-bottom:0;">Onboard a new member</h2>
+      </div>
+      <p style="font-size:13px;color:#64748b;margin-bottom:1rem;">
+        Enter the email address of a registered user to add them to this group.
+      </p>
+      <div class="add-member-form">
+        <input type="email" id="member-email" placeholder="member@example.com" autocomplete="off" />
         <button class="btn-add" id="btn-add-member">Add member</button>
         <p class="form-feedback" id="add-feedback" hidden></p>
-      </section>
+      </div>
     </article>
     <article class="card">
   <header class="section-header">
@@ -239,20 +233,33 @@
    </section>
     </article>
 
+    <!-- ── Members list ── -->
     <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Members</h2>
-        <output id="member-count"></output>
-      </header>
-      <section id="members-container">
+      <div class="section-header">
+        <h2 class="card-title" style="margin-bottom:0;">Members</h2>
+        <span id="member-count" style="font-size:12px;color:#64748b;font-weight:600;"></span>
+      </div>
+      <div id="members-container">
         <p class="empty-members">Loading members...</p>
-      </section>
+      </div>
     </article>
     <footer class="action-footer">
       <button id="view-contributions-btn">View contributions</button>
     </footer>
 
   </main>
+
+  <!-- ── Confirm payout modal ── -->
+  <div class="modal-overlay" id="confirm-modal" hidden>
+    <div class="modal-box">
+      <h3>Confirm Payout</h3>
+      <p id="confirm-modal-body"></p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modal-cancel-btn">Cancel</button>
+        <button class="btn-modal-confirm" id="modal-confirm-btn">Yes, initiate payout</button>
+      </div>
+    </div>
+  </div>
 
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>

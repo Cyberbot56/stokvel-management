@@ -1,7 +1,7 @@
-// State
+// ─── State ────────────────────────────────────────────────────────────────────
 let currentGroup = null;
 
-// Helpers
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const sanitise = (str) => {
     const div = document.createElement('div');
     div.textContent = str ?? '';
@@ -14,9 +14,7 @@ function getInitials(name) {
 
 function formatCurrency(amount) {
     return new Intl.NumberFormat('en-ZA', {
-        style: 'currency',
-        currency: 'ZAR',
-        minimumFractionDigits: 2
+        style: 'currency', currency: 'ZAR', minimumFractionDigits: 2
     }).format(amount);
 }
 
@@ -27,6 +25,14 @@ function formatDate(iso) {
     });
 }
 
+function formatDateTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-ZA', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
 const setAvatar = () => {
     const name = localStorage.getItem('userName') || '';
     const initials = name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
@@ -34,8 +40,14 @@ const setAvatar = () => {
     if (avatar) avatar.textContent = initials || '?';
 };
 
+function showFeedback(elementId, message, type) {
+    const el = document.getElementById(elementId);
+    el.textContent = message;
+    el.className = 'form-feedback ' + type;
+    el.hidden = false;
+}
 
-// Render group header
+// ─── Render group header ───────────────────────────────────────────────────────
 function renderGroupHeader(group) {
     document.getElementById('group-name').textContent = sanitise(group.name);
     document.getElementById('group-desc').textContent = sanitise(group.description) || 'No description provided.';
@@ -50,12 +62,10 @@ function renderGroupHeader(group) {
     document.getElementById('stat-start').textContent = formatDate(group.startDate);
 }
 
-
-// Render members table
+// ─── Render members table ──────────────────────────────────────────────────────
 function renderMembers(members) {
     const container = document.getElementById('members-container');
     const countEl = document.getElementById('member-count');
-
     countEl.textContent = members.length + ' total';
 
     if (members.length === 0) {
@@ -64,38 +74,94 @@ function renderMembers(members) {
     }
 
     const AVATAR_COLOURS = ['av-teal', 'av-blue', 'av-purple', 'av-coral'];
-
     const rows = members.map((member, index) => {
         const colour = AVATAR_COLOURS[index % AVATAR_COLOURS.length];
-        const initials = getInitials(member.name);
-        const joined = formatDate(member.joinedAt);
-        const roleClass = member.role === 'admin' ? 'admin' : 'member';
-        const roleLabel = member.role.charAt(0).toUpperCase() + member.role.slice(1);
-
         return `
             <tr>
                 <td>
                     <div class="member-info">
-                        <div class="member-initials ${colour}">${sanitise(initials)}</div>
+                        <div class="member-initials ${colour}">${sanitise(getInitials(member.name))}</div>
                         <div>
                             <div class="member-name-text">${sanitise(member.name)}</div>
                             <div class="member-email-text">${sanitise(member.email)}</div>
                         </div>
                     </div>
                 </td>
-                <td><span class="role-badge ${roleClass}">${roleLabel}</span></td>
-                <td class="joined-date">${joined}</td>
+                <td><span class="role-badge ${member.role}">${member.role.charAt(0).toUpperCase() + member.role.slice(1)}</span></td>
+                <td class="joined-date">${formatDate(member.joinedAt)}</td>
             </tr>
         `;
     }).join('');
 
     container.innerHTML = `
         <table class="members-table">
+            <thead><tr><th>Member</th><th>Role</th><th>Joined</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
+}
+
+// ─── Populate recipient dropdown ───────────────────────────────────────────────
+function populateRecipientDropdown(members) {
+    const select = document.getElementById('payout-recipient');
+    select.innerHTML = '<option value="">— Select a member —</option>';
+    members.forEach(member => {
+        const opt = document.createElement('option');
+        opt.value = member.userId;
+        opt.dataset.name = member.name;
+        opt.textContent = `${member.name} (${member.email})`;
+        select.appendChild(opt);
+    });
+}
+
+// ─── Update payout amount preview ─────────────────────────────────────────────
+function updatePayoutPreview() {
+    if (!currentGroup) return;
+    const totalPayout = currentGroup.contributionAmount * currentGroup.totalMembers;
+    document.getElementById('payout-amount-display').textContent = formatCurrency(totalPayout);
+}
+
+// ─── Render payout history ─────────────────────────────────────────────────────
+function renderPayouts(payouts) {
+    const container = document.getElementById('payouts-container');
+    const countEl = document.getElementById('payout-count');
+    countEl.textContent = payouts.length + ' total';
+
+    if (payouts.length === 0) {
+        container.innerHTML = '<p class="empty-payouts">No payouts have been initiated yet.</p>';
+        return;
+    }
+
+    const rows = payouts.map(p => {
+        const actionBtns = p.status === 'pending'
+            ? `<button class="btn-complete" onclick="updatePayoutStatus(${p.payoutId}, 'completed')">Mark complete</button>
+               <button class="btn-cancel-payout" onclick="updatePayoutStatus(${p.payoutId}, 'cancelled')">Cancel</button>`
+            : '—';
+
+        return `
+            <tr>
+                <td><strong style="color:#034e52;">${sanitise(p.recipientName)}</strong></td>
+                <td style="font-weight:700;color:#034e52;">${formatCurrency(p.amount)}</td>
+                <td>Cycle ${p.cycleNumber}</td>
+                <td><span class="status-pill ${p.status}">${p.status.charAt(0).toUpperCase() + p.status.slice(1)}</span></td>
+                <td>${formatDateTime(p.initiatedAt)}</td>
+                <td class="ref-text">${sanitise(p.transactionRef || '—')}</td>
+                <td>${actionBtns}</td>
+            </tr>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <table class="payouts-table">
             <thead>
                 <tr>
-                    <th>Member</th>
-                    <th>Role</th>
-                    <th>Joined</th>
+                    <th>Recipient</th>
+                    <th>Amount</th>
+                    <th>Cycle</th>
+                    <th>Status</th>
+                    <th>Initiated</th>
+                    <th>Reference</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -103,27 +169,145 @@ function renderMembers(members) {
     `;
 }
 
+// ─── Load payout history ───────────────────────────────────────────────────────
+async function loadPayouts() {
+    if (!currentGroup) return;
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/payouts/group/${currentGroup.groupId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        const payouts = await response.json();
+        renderPayouts(payouts);
+    } catch (err) {
+        console.error('Error loading payouts:', err);
+        document.getElementById('payouts-container').innerHTML =
+            '<p class="empty-payouts">Error loading payout history.</p>';
+    }
+}
 
-// Add member
+// ─── Initiate payout ───────────────────────────────────────────────────────────
+async function initiatePayout() {
+    const select = document.getElementById('payout-recipient');
+    const cycleInput = document.getElementById('payout-cycle');
+    const notes = document.getElementById('payout-notes').value.trim();
+    const btn = document.getElementById('btn-initiate-payout');
+
+    const recipientId = select.value;
+    const recipientName = select.options[select.selectedIndex]?.dataset.name || '';
+    const cycleNumber = cycleInput.value;
+
+    // Validate
+    if (!recipientId) {
+        showFeedback('payout-feedback', 'Please select a recipient.', 'error');
+        return;
+    }
+    if (!cycleNumber || parseInt(cycleNumber) < 1) {
+        showFeedback('payout-feedback', 'Please enter a valid cycle number.', 'error');
+        return;
+    }
+
+    const amount = currentGroup.contributionAmount * currentGroup.totalMembers;
+
+    // Show confirm modal
+    document.getElementById('confirm-modal-body').textContent =
+        `You are about to initiate a payout of ${formatCurrency(amount)} to ${recipientName} for Cycle ${cycleNumber}. This action will be recorded and cannot be undone.`;
+    document.getElementById('confirm-modal').hidden = false;
+
+    // Handle confirm
+    document.getElementById('modal-confirm-btn').onclick = async () => {
+        document.getElementById('confirm-modal').hidden = true;
+        btn.disabled = true;
+        btn.textContent = 'Initiating...';
+        document.getElementById('payout-feedback').hidden = true;
+
+        try {
+            const token = await auth0Client.getTokenSilently();
+            const response = await fetch(`${config.apiBase}/api/payouts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    groupId: currentGroup.groupId,
+                    recipientId: parseInt(recipientId),
+                    recipientName,
+                    amount,
+                    cycleNumber: parseInt(cycleNumber),
+                    notes: notes || null
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showFeedback('payout-feedback',
+                    `Payout of ${formatCurrency(amount)} to ${recipientName} initiated successfully. Ref: ${data.payout.transactionRef}`,
+                    'success'
+                );
+                // Reset form
+                select.value = '';
+                cycleInput.value = '';
+                document.getElementById('payout-notes').value = '';
+                // Reload payout history
+                await loadPayouts();
+            } else {
+                showFeedback('payout-feedback', data.error || 'Failed to initiate payout.', 'error');
+            }
+        } catch (err) {
+            console.error('Payout error:', err);
+            showFeedback('payout-feedback', 'Something went wrong. Please try again.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Initiate Payout';
+        }
+    };
+}
+
+// ─── Update payout status ──────────────────────────────────────────────────────
+async function updatePayoutStatus(payoutId, status) {
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/payouts/${payoutId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status })
+        });
+
+        if (response.ok) {
+            await loadPayouts();
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Failed to update payout status.');
+        }
+    } catch (err) {
+        console.error('Error updating payout:', err);
+        alert('Something went wrong. Please try again.');
+    }
+}
+
+// ─── Add member ────────────────────────────────────────────────────────────────
 async function addMember() {
     const emailInput = document.getElementById('member-email');
-    const feedback = document.getElementById('add-feedback');
     const btn = document.getElementById('btn-add-member');
     const email = emailInput.value.trim();
 
-    // Reset state
     emailInput.classList.remove('input-error');
-    feedback.hidden = true;
-    feedback.className = 'form-feedback';
+    document.getElementById('add-feedback').hidden = true;
 
     if (!email || !email.includes('@')) {
         emailInput.classList.add('input-error');
-        showFeedback('Please enter a valid email address.', 'error');
+        showFeedback('add-feedback', 'Please enter a valid email address.', 'error');
         return;
     }
 
     if (!currentGroup) {
-        showFeedback('No group loaded. Please refresh the page.', 'error');
+        showFeedback('add-feedback', 'No group loaded. Please refresh the page.', 'error');
         return;
     }
 
@@ -132,53 +316,41 @@ async function addMember() {
 
     try {
         const token = await auth0Client.getTokenSilently();
-
         const response = await fetch(`${config.apiBase}/api/groups/add-member`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                email: email,
-                groupId: currentGroup.groupId
-            })
+            body: JSON.stringify({ email, groupId: currentGroup.groupId })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            showFeedback(`${data.member.userName} (${data.member.userEmail}) was added to ${data.member.groupName} successfully.`, 'success');
+            showFeedback('add-feedback',
+                `${data.member.userName} was added to ${data.member.groupName} successfully.`,
+                'success'
+            );
             emailInput.value = '';
-            // Reload group data to refresh member list
             await loadGroupData();
         } else {
-            showFeedback(data.error || 'Failed to add member.', 'error');
+            showFeedback('add-feedback', data.error || 'Failed to add member.', 'error');
         }
-
     } catch (err) {
         console.error('Add member error:', err);
-        showFeedback('Something went wrong. Please try again.', 'error');
+        showFeedback('add-feedback', 'Something went wrong. Please try again.', 'error');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Add member';
     }
 }
 
-function showFeedback(message, type) {
-    const feedback = document.getElementById('add-feedback');
-    feedback.textContent = message;
-    feedback.className = 'form-feedback ' + type;
-    feedback.hidden = false;
-}
-
-
-// ─── Load group data ──────────────────────────────────────────────────────────
+// ─── Load group data ───────────────────────────────────────────────────────────
 async function loadGroupData() {
     const userId = localStorage.getItem('userId');
     const urlParams = new URLSearchParams(window.location.search);
     const groupId = urlParams.get('groupId');
-
     const banner = document.getElementById('status-banner');
 
     if (!userId || !groupId) {
@@ -190,7 +362,6 @@ async function loadGroupData() {
 
     try {
         const token = await auth0Client.getTokenSilently();
-
         const response = await fetch(`${config.apiBase}/api/groups_members/${userId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -207,7 +378,6 @@ async function loadGroupData() {
             return;
         }
 
-        // If user is not admin, redirect to regular group overview
         if (group.userRole !== 'admin') {
             window.location.href = `group-overview.html?groupId=${groupId}`;
             return;
@@ -216,251 +386,33 @@ async function loadGroupData() {
         currentGroup = group;
         renderGroupHeader(group);
         renderMembers(group.members);
+        populateRecipientDropdown(group.members);
+        updatePayoutPreview();
+        await loadPayouts();
 
     } catch (err) {
         console.error('Load error:', err);
+        const banner = document.getElementById('status-banner');
         banner.textContent = 'Error loading group data. Please try again.';
         banner.className = 'status-banner closed';
         banner.hidden = false;
     }
 }
 
-// This is for the view contributions button.
-//The admin will use it to also view their contributions on the group.
-
-const viewContributionsBtn = document.getElementById("view-contributions-btn");
-
-async function loadAndShowContributions() {
-  // Use currentGroup instead of groupSelect (which doesn't exist in admin page)
-  const groupId = currentGroup?.groupId;
-  const userId = localStorage.getItem('userId');
-  
-  if (!groupId) {
-    alert("No group selected. Please refresh the page.");
-    return;
-  }
-  
-  if (!userId) {
-    alert("User not found. Please log in again.");
-    return;
-  }
-  
-  try {
-    const token = await auth0Client.getTokenSilently();
-    const response = await fetch(`${config.apiBase}/api/contributions/${userId}/${groupId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    if (!response.ok) throw new Error("Failed to load contributions");
-    
-    const data = await response.json();
-    displayContributionsModal(data.contributions);
-    
-  } catch (error) {
-    console.error("Error loading contributions:", error);
-    alert("Could not load contributions: " + error.message);
-  }
-}
-
-function displayContributionsModal(contributions) {
-  // Create modal if it doesn't exist
-  let modal = document.getElementById("contributions-modal");
-  
-  if (!modal) {
-    modal = document.createElement("aside");
-    modal.id = "contributions-modal";
-    modal.className = "modal-overlay";
-    modal.innerHTML = `
-      <article class="modal">
-        <header class="modal-header">
-          <h2 class="modal-title">My Contribution History</h2>
-          <button class="modal-close" aria-label="Close contributions">✕</button>
-        </header>
-        <div id="contributions-content" class="modal-section"></div>
-      </article>
-    `;
-    document.body.appendChild(modal);
-    
-    modal.querySelector(".modal-close").addEventListener("click", () => {
-      modal.hidden = true;
-    });
-    
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) modal.hidden = true;
-    });
-  }
-  
-  const content = document.getElementById("contributions-content");
-  
-  if (!contributions || contributions.length === 0) {
-    content.innerHTML = '<p style="text-align:center; padding: 2rem;">No contributions found yet.</p>';
-  } else {
-    let totalPaid = 0;
-    let html = `
-      <table style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="border-bottom:2px solid #ddd;">
-            <th style="padding:8px; text-align:left;">Date Paid</th>
-            <th style="padding:8px; text-align:left;">Amount</th>
-            <th style="padding:8px; text-align:left;">Status</th>
-            <th style="padding:8px; text-align:left;">Due Date</th>
-           </tr>
-        </thead>
-        <tbody>
-    `;
-    
-    contributions.forEach(contrib => {
-      totalPaid += parseFloat(contrib.amount);
-      const paidDate = contrib.paidAt ? new Date(contrib.paidAt).toLocaleDateString() : "—";
-      const dueDate = contrib.dueDate ? new Date(contrib.dueDate).toLocaleDateString() : "—";
-      
-      let statusColor = "#2b7e3a";
-      let statusBg = "#2b7e3a20";
-      if (contrib.status === "pending") {
-        statusColor = "#ff9800";
-        statusBg = "#ff980020";
-      } else if (contrib.status === "missed" || contrib.status === "overdue") {
-        statusColor = "#f44336";
-        statusBg = "#f4433620";
-      }
-      
-      html += `
-        <tr style="border-bottom:1px solid #eee;">
-          <td style="padding:8px;">${paidDate}</td>
-          <td style="padding:8px;">${formatCurrency(parseFloat(contrib.amount))}</td>
-          <td style="padding:8px;"><span style="background:${statusBg}; color:${statusColor}; padding:4px 12px; border-radius:20px;">${contrib.status}</span></td>
-          <td style="padding:8px;">${dueDate}</td>
-        </tr>
-      `;
-    });
-    
-    html += `
-        </tbody>
-        <tfoot>
-          <tr style="border-top:2px solid #ddd; font-weight:bold;">
-            <td style="padding:12px 8px;">Total</td>
-            <td style="padding:12px 8px;">${formatCurrency(totalPaid)}</td>
-            <td colspan="2"></td>
-          </tr>
-        </tfoot>
-      </table>
-    `;
-    
-    content.innerHTML = html;
-  }
-  
-  modal.hidden = false;
-}
-
-async function assignTreasurer() {
-    const emailInput = document.getElementById('treasurer-email');
-    const feedback = document.getElementById('assign-feedback');
-    const btn = document.getElementById('btn-assign-treasurer');
-    const email = emailInput.value.trim();
-
-    // Reset state
-    emailInput.classList.remove('input-error');
-    if (feedback) {
-        feedback.hidden = true;
-        feedback.className = 'form-feedback';
-    }
-
-    if (!email || !email.includes('@')) {
-        emailInput.classList.add('input-error');
-        showFeedbackForAssign('Please enter a valid email address.', 'error');
-        return;
-    }
-
-    if (!currentGroup) {
-        showFeedbackForAssign('No group loaded. Please refresh the page.', 'error');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Assigning...';
-
-    try {
-        const token = await auth0Client.getTokenSilently();
-
-        const response = await fetch(`${config.apiBase}/api/groups/assign-treasurer`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                email: email,
-                groupId: currentGroup.groupId
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            showFeedbackForAssign(`${data.member.userName} (${data.member.userEmail}) was assigned as treasurer for ${data.member.groupName} successfully.`, 'success');
-            emailInput.value = '';
-            // Reload group data to refresh member list
-            await loadGroupData();
-        } else {
-            showFeedbackForAssign(data.error || 'Failed to assign treasurer.', 'error');
-        }
-
-    } catch (err) {
-        console.error('Assign treasurer error:', err);
-        showFeedbackForAssign('Something went wrong. Please try again.', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Assign Treasurer';
-    }
-}
-
-function showFeedbackForAssign(message, type) {
-    const feedback = document.getElementById('assign-feedback');
-    if (!feedback) {
-        // Create feedback element if it doesn't exist
-        const formSection = document.querySelector('.add-treasurer-form');
-        const newFeedback = document.createElement('p');
-        newFeedback.id = 'assign-feedback';
-        newFeedback.className = 'form-feedback';
-        formSection.appendChild(newFeedback);
-    }
-    
-    const feedbackEl = document.getElementById('assign-feedback');
-    feedbackEl.textContent = message;
-    feedbackEl.className = 'form-feedback ' + type;
-    feedbackEl.hidden = false;
-}
-
-// Fix the event listener - change from 'assign-treasurer-btn' to 'btn-assign-treasurer'
-document.getElementById('btn-assign-treasurer').addEventListener('click', assignTreasurer);
-
-document.getElementById('treasurer-email').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') assignTreasurer();
-});
-
-
-// Added an  event listener for view contributions button
-if (viewContributionsBtn) {
-  viewContributionsBtn.addEventListener("click", loadAndShowContributions);
-}
-
-
-//Event listeners
+// ─── Event listeners ───────────────────────────────────────────────────────────
 document.getElementById('btn-add-member').addEventListener('click', addMember);
-
 document.getElementById('member-email').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addMember();
 });
-
+document.getElementById('btn-initiate-payout').addEventListener('click', initiatePayout);
+document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+    document.getElementById('confirm-modal').hidden = true;
+});
 document.getElementById('back-btn').addEventListener('click', () => {
-    window.location.href = 'dashboard.html';
+    window.location.href = '../pages/dashboard.html';
 });
 
-
-// Entry point
+// ─── Entry point ───────────────────────────────────────────────────────────────
 function onAuthReady() {
     setAvatar();
     loadGroupData();
