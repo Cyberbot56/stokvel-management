@@ -373,6 +373,68 @@ app.get('/api/contributions/:userId/:groupId', async (req, res) => {
   }
 });
 
+//This is an api to assign a treasurer to a group.
+//It will be used by the admin of the group to assign a treasurer to the group.
+//The admin will enter an email of a user that they want to assign as a treasurer.
+//The api will have to check if the user exists and if they are a member of the group.
+//The api will take the email and the groupId as parameters.
+app.post('/api/groups/assign-treasurer', async (req, res) => {
+  const { email, groupId } = req.body;  
+  if (!email || !groupId) {
+    return res.status(400).json({
+      error: "Missing required fields",
+      required: ["email", "groupId"]
+    });
+  }   
+  try {
+    const user = await prisma.users.findUnique({
+      where: { email: email }
+    });
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found. Please ask the user to create an account first."
+      });
+    }
+    
+    const membership = await prisma.group_members.findFirst({
+      where: {
+        FgroupId: parseInt(groupId),  
+        SuserId: user.userId
+      }
+    }); 
+    
+    if (!membership) {
+      return res.status(400).json({
+        error: "User is not a member of the group. Please add the user to the group first."
+      });
+    }
+    
+    
+    const updatedMembership = await prisma.group_members.update({
+      where: {
+        group_memberId: membership.group_memberId  
+      },
+      data: {
+        role: "treasurer"
+      }
+    });
+    
+    res.status(200).json({
+      message: "Treasurer assigned successfully", 
+      member: {
+        groupId: parseInt(groupId),
+        userEmail: user.email,  
+        userName: user.name,
+        groupName: membership.groups?.name || "the group",
+        role: updatedMembership.role,
+        joinedAt: updatedMembership.joinedAt
+      }
+    });
+  } catch (error) {
+    console.error("Error assigning treasurer:", error);
+    res.status(500).json({ error: "Failed to assign treasurer", details: error.message });
+  }
+});
 // Create a new invite with a unique token (expires in 7 days)
 app.post('/api/invites', async (req, res) => {
   const { groupId, email, createdBy } = req.body;

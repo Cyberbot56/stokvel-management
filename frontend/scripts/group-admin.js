@@ -355,6 +355,93 @@ function displayContributionsModal(contributions) {
   modal.hidden = false;
 }
 
+async function assignTreasurer() {
+    const emailInput = document.getElementById('treasurer-email');
+    const feedback = document.getElementById('assign-feedback');
+    const btn = document.getElementById('btn-assign-treasurer');
+    const email = emailInput.value.trim();
+
+    // Reset state
+    emailInput.classList.remove('input-error');
+    if (feedback) {
+        feedback.hidden = true;
+        feedback.className = 'form-feedback';
+    }
+
+    if (!email || !email.includes('@')) {
+        emailInput.classList.add('input-error');
+        showFeedbackForAssign('Please enter a valid email address.', 'error');
+        return;
+    }
+
+    if (!currentGroup) {
+        showFeedbackForAssign('No group loaded. Please refresh the page.', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Assigning...';
+
+    try {
+        const token = await auth0Client.getTokenSilently();
+
+        const response = await fetch(`${config.apiBase}/api/groups/assign-treasurer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                email: email,
+                groupId: currentGroup.groupId
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showFeedbackForAssign(`${data.member.userName} (${data.member.userEmail}) was assigned as treasurer for ${data.member.groupName} successfully.`, 'success');
+            emailInput.value = '';
+            // Reload group data to refresh member list
+            await loadGroupData();
+        } else {
+            showFeedbackForAssign(data.error || 'Failed to assign treasurer.', 'error');
+        }
+
+    } catch (err) {
+        console.error('Assign treasurer error:', err);
+        showFeedbackForAssign('Something went wrong. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Assign Treasurer';
+    }
+}
+
+function showFeedbackForAssign(message, type) {
+    const feedback = document.getElementById('assign-feedback');
+    if (!feedback) {
+        // Create feedback element if it doesn't exist
+        const formSection = document.querySelector('.add-treasurer-form');
+        const newFeedback = document.createElement('p');
+        newFeedback.id = 'assign-feedback';
+        newFeedback.className = 'form-feedback';
+        formSection.appendChild(newFeedback);
+    }
+    
+    const feedbackEl = document.getElementById('assign-feedback');
+    feedbackEl.textContent = message;
+    feedbackEl.className = 'form-feedback ' + type;
+    feedbackEl.hidden = false;
+}
+
+// Fix the event listener - change from 'assign-treasurer-btn' to 'btn-assign-treasurer'
+document.getElementById('btn-assign-treasurer').addEventListener('click', assignTreasurer);
+
+document.getElementById('treasurer-email').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') assignTreasurer();
+});
+
+
 // Added an  event listener for view contributions button
 if (viewContributionsBtn) {
   viewContributionsBtn.addEventListener("click", loadAndShowContributions);
