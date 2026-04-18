@@ -725,3 +725,404 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
   background: #e0f7f6;
   transform: translateY(-1px);
 }
+.treasurer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.contribution-form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.contribution-form input,
+.contribution-form select {
+  padding: 9px 12px;
+  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  background: white;
+  color: #0f172a;
+}
+
+.btn-record {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+  height: 40px;
+}
+
+.members-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.members-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  border-bottom: 1.5px solid #e0f7f6;
+}
+
+.members-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #f0fafa;
+  color: #0f172a;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-pill.paid { background: #dcfce7; color: #166534; }
+.status-pill.pending { background: #fef9c3; color: #854d0e; }
+
+.member-cell { display: flex; align-items: center; gap: 10px; }
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e0f7f6;
+  color: #034e52;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin: 0;
+}
+
+dl.group-stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e0f7f6;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stat-group { display: flex; flex-direction: column; gap: 2px; }
+
+dt {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+dd {
+  font-size: 15px;
+  font-weight: 700;
+  color: #034e52;
+  margin: 0;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #0e9490;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+}
+/* Filter buttons styled like Confirm Payment button */
+.filter-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-pill.active {
+  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+}
+
+.filter-pill:hover:not(.active) {
+  background: #e2e8f0;
+}
+
+/* Flag button styling */
+.btn-flag {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-flag:hover {
+  background: #dc2626;
+}
+/* Add these styles to your group-overview.css file */
+
+/* ── Dialog Modal Styling ── */
+dialog {
+  border: none;
+  border-radius: 14px;
+  padding: 0;
+  background: transparent;
+  max-width: 500px;
+  width: 90%;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(14, 148, 144, 0.2);
+}
+
+.modal-content h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #034e52;
+  margin-bottom: 0.75rem;
+}
+
+.modal-content p {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.modal-content label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.modal-content textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.modal-content textarea:focus {
+  border-color: #0e9490;
+  box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel {
+  padding: 8px 20px;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.btn-confirm {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-confirm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ── Flag Button in Tables ── */
+.members-table button {
+  padding: 6px 12px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.members-table button:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Style for the flag button in the Action column specifically */
+.members-table td:last-child button {
+  background: #ef4444;
+}
+
+.members-table td:last-child button:hover {
+  background: #dc2626;
+}
+
+/* ── Form Feedback Styling ── */
+.form-feedback {
+  display: block;
+  margin-top: 1rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.form-feedback.success {
+  background: #dcfce7;
+  color: #166534;
+  border-left: 3px solid #22c55e;
+}
+
+.form-feedback.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
+}
+
+/* ── Empty State Styling ── */
+.empty-state {
+  display: block;
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+/* ── Loading Message Styling ── */
+.loading-msg {
+  display: block;
+  text-align: center;
+  padding: 2rem;
+  color: #0e9490;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ── Error Banner Styling ── */
+.error-banner {
+  display: block;
+  padding: 10px 14px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 1rem;
+}
+
+/* ── Member Count Styling ── */
+#member-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0e9490;
+  background: #e0f7f6;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* ── Missed Count Badge ── */
+#missedCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ef4444;
+  background: #fee2e2;
+  padding: 2px 8px;
+  border-radius: 12px;
+}

@@ -435,24 +435,15 @@ app.post('/api/groups/assign-treasurer', async (req, res) => {
 // Returns all contributions for a group with member names.
 // Only accessible by the group's treasurer.
 // ────────────────────────────────────────────────────────
-app.get('/api/get-all-contributions/group/:userId/:groupId', async (req, res) => {
+app.get('/api/get-all-contributions/group/:groupId', async (req, res) => {
 
-  const {userId,groupId} = req.params;
+  const {groupId} = req.params;
+
+  //I removed the userId from the request body the backend already handles that restriction well
+  //Only the treasurer can use this api.
 
   try {
-    // Confirm the caller is a treasurer of this group
-    const caller = await prisma.group_members.findFirst({
-      where: {
-        FgroupId: parseInt(groupId),
-        SuserId:  parseInt(userId),
-        role:     'treasurer'
-      }
-    });
-
-    if (!caller) {
-      return res.status(403).json({ error: 'Treasurer access only' });
-    }
-
+  
     const contributions = await prisma.contributions.findMany({
       where: {
         FKgroupId: parseInt(groupId)

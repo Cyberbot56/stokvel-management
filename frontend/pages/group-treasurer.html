@@ -5,159 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Treasurer Dashboard – Stokvel App</title>
 <link rel="stylesheet" href="../css/group-overview.css" />
-
-<style>
-.treasurer-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.contribution-form {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex: 1;
-  min-width: 180px;
-}
-
-.form-group label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.contribution-form input,
-.contribution-form select {
-  padding: 9px 12px;
-  border: 1.5px solid rgba(14, 148, 144, 0.25);
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  background: white;
-  color: #0f172a;
-}
-
-.btn-record {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
-  height: 40px;
-}
-
-.members-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
-.members-table th {
-  text-align: left;
-  padding: 8px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  border-bottom: 1.5px solid #e0f7f6;
-}
-
-.members-table td {
-  padding: 11px 12px;
-  border-bottom: 1px solid #f0fafa;
-  color: #0f172a;
-}
-
-.status-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.status-pill.paid { background: #dcfce7; color: #166534; }
-.status-pill.pending { background: #fef9c3; color: #854d0e; }
-
-.member-cell { display: flex; align-items: center; gap: 10px; }
-
-.member-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #e0f7f6;
-  color: #034e52;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  margin: 0;
-}
-
-dl.group-stats-strip {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 0.75rem 0;
-  border-top: 1px solid #e0f7f6;
-  margin-top: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.stat-group { display: flex; flex-direction: column; gap: 2px; }
-
-dt {
-  font-size: 10px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-dd {
-  font-size: 15px;
-  font-weight: 700;
-  color: #034e52;
-  margin: 0;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #0e9490;
-  font-weight: 600;
-  background: none;
-  border: none;
-  cursor: pointer;
-  margin-bottom: 1.25rem;
-}
-</style>
 </head>
 
 <body>
@@ -180,11 +27,11 @@ dd {
   <article class="card" id="group-header-card">
     <header class="group-title-row">
       <section>
-        <h2 id="group-name">Savings Circle 2024</h2>
-        <p id="group-desc" class="group-desc">Monthly contribution group for year-end goals.</p>
+        <h2 id="group-name">—</h2>
+        <p id="group-desc" class="group-desc">—</p>
       </section>
       <section class="badge-group">
-        <strong id="status-badge" class="badge">Active</strong>
+        <strong id="status-badge" class="badge">—</strong>
         <strong class="treasurer-badge">Treasurer</strong>
       </section>
     </header>
@@ -192,15 +39,15 @@ dd {
     <dl class="group-stats-strip">
       <section class="stat-group">
         <dt>Total Collected</dt>
-        <dd id="stat-total-collected">R 12,500.00</dd>
+        <dd id="stat-total-collected">R 0.00</dd>
       </section>
       <section class="stat-group">
         <dt>Target</dt>
-        <dd id="stat-amount">R 500.00 / member</dd>
+        <dd id="stat-amount">—</dd>
       </section>
       <section class="stat-group">
         <dt>Cycle Progress</dt>
-        <dd id="stat-cycle">Month 4 of 12</dd>
+        <dd id="stat-cycle">—</dd>
       </section>
     </dl>
   </article>
@@ -237,7 +84,7 @@ dd {
   <article class="card">
     <header class="section-header">
       <h2 class="card-title">Payment Tracking</h2>
-      <output id="member-count">8 Members</output>
+      <output id="member-count">—</output>
     </header>
 
     <section id="members-container">
@@ -250,31 +97,66 @@ dd {
             <th>Action</th>
           </tr>
         </thead>
-
         <tbody id="member-list-body">
           <tr>
-            <td>
-              <figure class="member-cell">
-                <p class="member-avatar">TM</p>
-                <figcaption>
-                  <strong class="member-name-text">Thandi Molefe</strong>
-                  <p class="member-email-text">thandi@example.com</p>
-                </figcaption>
-              </figure>
-            </td>
-            <td><time datetime="2024-04-10">10 Apr 2024</time></td>
-            <td><strong class="status-pill paid">Paid</strong></td>
-            <td><button class="back-link">View History</button></td>
+            <td colspan="4" style="text-align: center;">Loading members...</td>
           </tr>
         </tbody>
       </table>
     </section>
   </article>
+
+  <article class="card">
+    <header class="section-header">
+      <h2 class="card-title">Missed Contributions</h2>
+      <output id="missedCount">—</output>
+    </header>
+
+    <section class="filter-group">
+      <button class="filter-pill active" id="filter-all" data-status="all">All</button>
+      <button class="filter-pill" id="filter-pending" data-status="pending">Pending</button>
+      <button class="filter-pill" id="filter-paid" data-status="paid">Paid</button>
+      <button class="filter-pill" id="filter-missed" data-status="missed">Missed</button>
+    </section>
+
+    <output id="errorBanner" class="error-banner" hidden></output>
+    <output id="loadingMsg" class="loading-msg" hidden>Loading contributions...</output>
+    <output id="emptyState" class="empty-state" hidden>No contributions found for this group.</output>
+
+    <section id="tableContainer" hidden>
+      <table class="members-table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Due Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Note</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="contributionsBody"></tbody>
+      </table>
+    </section>
+  </article>
+
+  <dialog id="flagModal">
+    <form method="dialog" class="modal-content">
+      <h3>Flag Missed Contribution</h3>
+      <p>Mark <strong id="modalMemberName"></strong>'s contribution as missed?</p>
+      <label for="flagNote">Note (optional):</label>
+      <textarea id="flagNote" rows="3" placeholder="Add reason or additional information..."></textarea>
+      <footer class="modal-actions">
+        <button type="button" class="btn-cancel">Cancel</button>
+        <button type="button" class="btn-confirm">Confirm Missed</button>
+      </footer>
+    </form>
+  </dialog>
 </main>
 
 <script src="../scripts/config.js"></script>
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 <script src="../scripts/auth_service.js"></script>
+<script src="../scripts/Missed-contributions.js"></script>
 </body>
 </html>
-
