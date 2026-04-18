@@ -1,37 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member-Payouts</title>
-    <link rel="stylesheet" href="upcomingP.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upcoming Payouts – Stokvel App</title>
+  <link rel="stylesheet" href="upcomingP.css" />
 </head>
 <body>
-  <a href="group-overview.html" class="back-link">← Back to group</a>
-  <header>UPCOMING PAYMENTS</header>
-    <section> 
-     <article class = "highlight"> <h2> 
-        YOUR NEXT PAYOUT
-     </h2>
-     <p class = "details" id ="nextPayout"></p>
-     <p class = "countdown" id = "countdown"></p>
-     </article>
 
-     <article>
-        <h2>Payment Schedule</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Member</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="payoutTable"></tbody>
-        </table>
-     </article>
-    </section>
-    <script src="payouts.js"></script>
+  <header>Upcoming Payouts</header>
+
+  <nav>
+    <a href="group-overview.html" class="back-link">← Back to group</a>
+  </nav>
+
+  <p id="error-msg" class="error-msg" hidden></p>
+
+  <section>
+
+
+    <article class="highlight">
+      <h2>Your Next Payout</h2>
+      <p class="details" id="nextPayout"></p>
+      <p class="countdown" id="countdown"></p>
+    </article>
+
+    <article>
+      <h2>Payment Schedule</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="payoutTable"></tbody>
+      </table>
+    </article>
+
+  </section>
+
+  <script src="config.js"></script>
+  <script src="auth_service.js"></script>
+  <script src="payouts.js"></script>
 </body>
 </html>
