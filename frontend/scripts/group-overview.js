@@ -129,7 +129,7 @@ const modalPenaltySection = document.getElementById("modal-penalty-section");
 const modalPenaltyRules   = document.getElementById("modal-penalty-rules");
 
 
-// Render functions
+// ─── Render functions ─────────────────────────────────────────────────────────
 
 function renderBanner(status) {
   if (status === "active") {
@@ -192,6 +192,200 @@ function renderMembers(members) {
   });
 }
 
+// ─── Role-based footer buttons ────────────────────────────────────────────────
+// Shows different buttons depending on whether user is admin, treasurer, or member
+
+function renderFooterButtons(group) {
+  const footer = document.querySelector(".action-footer");
+  const userRole = group.userRole; // 'admin', 'treasurer', or 'member'
+
+  footer.innerHTML = ""; // clear existing buttons
+
+  // Everyone gets View contributions
+  const viewContribBtn = document.createElement("button");
+  viewContribBtn.id = "view-contributions-btn";
+  viewContribBtn.textContent = "View contributions";
+  viewContribBtn.addEventListener("click", loadAndShowContributions);
+  footer.appendChild(viewContribBtn);
+
+  // Everyone gets View payouts
+  const viewPayoutsBtn = document.createElement("button");
+  viewPayoutsBtn.id = "view-payouts-btn";
+  viewPayoutsBtn.textContent = "View payouts";
+  viewPayoutsBtn.addEventListener("click", () => {
+    window.location.href = "upcompayme.html?groupId=" + groupSelect.value;
+  });
+  footer.appendChild(viewPayoutsBtn);
+
+  // Admin gets: go to admin dashboard
+  if (userRole === "admin") {
+    const adminBtn = document.createElement("button");
+    adminBtn.id = "admin-btn";
+    adminBtn.textContent = "Admin dashboard";
+    adminBtn.addEventListener("click", () => {
+      window.location.href = `group-admin.html?groupId=${group.groupId}`;
+    });
+    footer.appendChild(adminBtn);
+  }
+
+  // Treasurer gets: initiate payout button
+  if (userRole === "treasurer" || userRole === "admin") {
+    const initiateBtn = document.createElement("button");
+    initiateBtn.id = "initiate-payout-btn";
+    initiateBtn.textContent = "Initiate payout";
+    initiateBtn.style.background = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
+    initiateBtn.style.color = "white";
+    initiateBtn.style.border = "none";
+    initiateBtn.style.borderRadius = "8px";
+    initiateBtn.style.padding = "10px 20px";
+    initiateBtn.style.fontWeight = "700";
+    initiateBtn.style.cursor = "pointer";
+    initiateBtn.addEventListener("click", () => openInitiatePayoutModal(group));
+    footer.appendChild(initiateBtn);
+  }
+}
+
+
+// ─── Initiate payout modal (for treasurer/admin) ──────────────────────────────
+
+function openInitiatePayoutModal(group) {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById("initiate-payout-modal");
+
+  if (!modal) {
+    modal = document.createElement("aside");
+    modal.id = "initiate-payout-modal";
+    modal.className = "modal-overlay";
+    modal.innerHTML = `
+      <article class="modal">
+        <header class="modal-header">
+          <h2 class="modal-title">Initiate Payout</h2>
+          <button class="modal-close" id="close-payout-modal">✕</button>
+        </header>
+        <section class="modal-section">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Recipient</label>
+              <select id="payout-recipient-select" style="width:100%; padding:9px 12px; border:1.5px solid rgba(14,148,144,0.25); border-radius:8px; font-size:14px; margin-top:4px;">
+                <option value="">— Select a member —</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Cycle Number</label>
+              <input type="number" id="payout-cycle-input" min="1" placeholder="e.g. 4" style="width:100%; padding:9px 12px; border:1.5px solid rgba(14,148,144,0.25); border-radius:8px; font-size:14px; margin-top:4px; box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Payout Amount</label>
+              <p id="payout-amount-preview" style="font-size:20px; font-weight:700; color:#034e52; margin-top:4px;"></p>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Notes (optional)</label>
+              <input type="text" id="payout-notes-input" placeholder="Any notes..." style="width:100%; padding:9px 12px; border:1.5px solid rgba(14,148,144,0.25); border-radius:8px; font-size:14px; margin-top:4px; box-sizing:border-box;" />
+            </div>
+            <p id="payout-modal-feedback" style="display:none; padding:8px 12px; border-radius:8px; font-size:13px;"></p>
+            <button id="confirm-payout-btn" style="padding:10px 20px; background:linear-gradient(135deg,#2dd4bf 0%,#0e9490 100%); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">Confirm Payout</button>
+          </div>
+        </section>
+      </article>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById("close-payout-modal").addEventListener("click", () => {
+      modal.hidden = true;
+    });
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.hidden = true;
+    });
+  }
+
+  // Populate recipient dropdown with group members
+  const select = document.getElementById("payout-recipient-select");
+  select.innerHTML = '<option value="">— Select a member —</option>';
+  group.members.forEach(member => {
+    const opt = document.createElement("option");
+    opt.value = member.userId;
+    opt.dataset.name = member.name;
+    opt.textContent = `${member.name} (${member.email})`;
+    select.appendChild(opt);
+  });
+
+  // Show payout amount preview
+  const totalPayout = group.contributionAmount * group.totalMembers;
+  document.getElementById("payout-amount-preview").textContent = formatCurrency(totalPayout);
+
+  // Confirm button handler
+  document.getElementById("confirm-payout-btn").onclick = async () => {
+    const recipientId = select.value;
+    const recipientName = select.options[select.selectedIndex]?.dataset.name || "";
+    const cycleNumber = document.getElementById("payout-cycle-input").value;
+    const notes = document.getElementById("payout-notes-input").value.trim();
+    const feedbackEl = document.getElementById("payout-modal-feedback");
+
+    if (!recipientId) {
+      showPayoutFeedback("Please select a recipient.", "error");
+      return;
+    }
+    if (!cycleNumber || parseInt(cycleNumber) < 1) {
+      showPayoutFeedback("Please enter a valid cycle number.", "error");
+      return;
+    }
+
+    const btn = document.getElementById("confirm-payout-btn");
+    btn.disabled = true;
+    btn.textContent = "Processing...";
+
+    try {
+      const token = await auth0Client.getTokenSilently();
+      const response = await fetch(`${config.apiBase}/api/payouts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          groupId: group.groupId,
+          recipientId: parseInt(recipientId),
+          recipientName,
+          amount: totalPayout,
+          cycleNumber: parseInt(cycleNumber),
+          notes: notes || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showPayoutFeedback(`Payout of ${formatCurrency(totalPayout)} to ${recipientName} initiated! Ref: ${data.payout.transactionRef}`, "success");
+        // Reset form
+        select.value = "";
+        document.getElementById("payout-cycle-input").value = "";
+        document.getElementById("payout-notes-input").value = "";
+      } else {
+        showPayoutFeedback(data.error || "Failed to initiate payout.", "error");
+      }
+    } catch (err) {
+      console.error("Payout error:", err);
+      showPayoutFeedback("Something went wrong. Please try again.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Confirm Payout";
+    }
+  };
+
+  modal.hidden = false;
+}
+
+function showPayoutFeedback(message, type) {
+  const el = document.getElementById("payout-modal-feedback");
+  el.textContent = message;
+  el.style.display = "block";
+  el.style.background = type === "success" ? "#dcfce7" : "#fee2e2";
+  el.style.color = type === "success" ? "#166534" : "#991b1b";
+}
+
+
+// ─── Rules modal ──────────────────────────────────────────────────────────────
+
 function openRulesModal(group, rules) {
   modalAmount.textContent       = formatCurrency(group.contributionAmount);
   modalCycleSummary.textContent = buildCycleSummary(group.cycleType, rules.dueDayOfMonth);
@@ -242,6 +436,8 @@ function closeRulesModal() {
 }
 
 
+// ─── Group loading ────────────────────────────────────────────────────────────
+
 let userGroups = [];
 
 function getGroupById(groupId) {
@@ -263,6 +459,7 @@ async function loadGroup(groupId) {
     renderStats(group);
     renderNextPayout(nextPayout);
     renderMembers(group.members);
+    renderFooterButtons(group); // ← renders correct buttons based on role
 
   } catch (error) {
     statusBanner.textContent = "Error: " + error.message;
@@ -324,7 +521,7 @@ async function loadUserGroups() {
 }
 
 
-// Event listeners
+// ─── Event listeners ──────────────────────────────────────────────────────────
 
 groupSelect.addEventListener("change", () => {
   loadGroup(groupSelect.value);
@@ -334,12 +531,6 @@ refreshBtn.addEventListener("click", () => {
   groupSelect.innerHTML = "";
   userGroups = [];
   loadUserGroups();
-});
-
-// "View payouts" navigates to the upcoming payouts page
-// passes the groupId in the URL so the payouts page knows which group to load
-viewPayoutsBtn.addEventListener("click", () => {
-  window.location.href = "upcompayme.html?groupId=" + groupSelect.value;
 });
 
 closeModalBtn.addEventListener("click", closeRulesModal);
@@ -352,10 +543,9 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !rulesModal.hidden) closeRulesModal();
 });
 
+
+// ─── View contributions modal ─────────────────────────────────────────────────
 // This is for the view contributions button.
-
-
-const viewContributionsBtn = document.getElementById("view-contributions-btn");
 
 async function loadAndShowContributions() {
   const groupId = groupSelect.value;
@@ -471,13 +661,10 @@ function displayContributionsModal(contributions) {
   modal.hidden = false;
 }
 
-// Added an event listener for view contributions button
-if (viewContributionsBtn) {
-  viewContributionsBtn.addEventListener("click", loadAndShowContributions);
-}
 
 // ─── Initial page load ────────────────────────────────────────────────────────
 // onAuthReady is called by auth_service.js once auth0Client is fully initialised
+
 const setAvatar = () => {
     const name = localStorage.getItem('userName') || '';
     const initials = name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
@@ -488,5 +675,4 @@ const setAvatar = () => {
 function onAuthReady() {
     setAvatar();
     loadUserGroups();
-}
 }
