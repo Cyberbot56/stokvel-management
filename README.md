@@ -2,7 +2,7 @@
 
 ## CI/CD Status
 
-[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Cyberbot56/706ce37c2200dc3a55eb5e1e3ceb674e/raw/stokvel-test-badge.json)](https://github.com/Cyberbot56/stokvel-management/actions)
+[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Cyberbot56/16ba4c80de63c1e13ccd0cc391c7e861/raw/stokvel-test-badge.json)](https://github.com/Cyberbot56/stokvel-management/actions)
 
 ## Live Demo
 
