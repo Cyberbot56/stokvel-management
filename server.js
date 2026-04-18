@@ -513,6 +513,114 @@ app.delete('/api/invites/:inviteId', async (req, res) => {
   }
 });
 
+//Scelo's Endpoint for simulating payment and getting the payment status to display on the group overview
+// This endpoint checks if a member has already paid their contribution for the current cycle.
+// It works out the cycle window based on the group's cycleType (monthly or weekly).
+// The frontend uses this to decide whether to show the Pay Now button or the Paid badge.
+// It returns the contribution amount, whether they've paid, and the last payment details if they have.
+app.get('/api/payments/status/:userId/:groupId', async (req, res) => {
+  const { userId, groupId } = req.params;
+
+  try {
+    const group = await prisma.groups.findUnique({
+      where: { groupId: parseInt(groupId) },
+      select: { cycleType: true, contributionAmount: true }
+    });
+
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    // Work out when the current cycle started so we only look at contributions from this period.
+    // Monthly groups reset on the 1st, weekly groups reset on Sunday.
+    const now = new Date();
+    let cycleStart;
+
+    if (group.cycleType.toLowerCase() === 'weekly') {
+      cycleStart = new Date(now);
+      cycleStart.setDate(now.getDate() - now.getDay());
+      cycleStart.setHours(0, 0, 0, 0);
+    } else {
+      cycleStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    // Look for any paid contribution from this user in this group within the current cycle window.
+    // If we find one, the member has already paid and we don't show the Pay Now button.
+    const paid = await prisma.contributions.findFirst({
+      where: {
+        FKuserId:  parseInt(userId),
+        FKgroupId: parseInt(groupId),
+        status:    'paid',
+        paidAt:    { gte: cycleStart }
+      },
+      orderBy: { paidAt: 'desc' }
+    });
+
+    res.json({
+      userId:             parseInt(userId),
+      groupId:            parseInt(groupId),
+      cycleType:          group.cycleType,
+      contributionAmount: group.contributionAmount,
+      hasPaidThisCycle:   !!paid,
+      lastPayment:        paid
+        ? { paidAt: paid.paidAt, amount: paid.amount, transactionRef: paid.note }
+        : null
+    });
+
+  } catch (error) {
+    console.error('Error fetching payment status:', error);
+    res.status(500).json({ error: 'Failed to fetch payment status', details: error.message });
+  }
+});
+
+
+// This is the simulated payment endpoint.
+// Since the supervisor confirmed a live gateway is not required, we simulate the payment here.
+// It receives the userId, groupId, amount, and treasurerId from the frontend.
+// It generates a fake transaction reference (SIM-timestamp-userId) so we can still track it.
+// It creates a contribution record in the database marked as paid, just like a real payment would.
+// No external API is called — everything stays within our system.
+app.post('/api/payments/simulate', async (req, res) => {
+  const { userId, groupId, amount, treasurerId } = req.body;
+
+  if (!userId || !groupId || !amount || !treasurerId) {
+    return res.status(400).json({
+      error: 'Missing required fields',
+      required: ['userId', 'groupId', 'amount', 'treasurerId']
+    });
+  }
+
+  // Generate a fake but unique transaction reference for traceability.
+  // Format: SIM-{timestamp}-{userId}
+  const transactionRef = `SIM-${Date.now()}-${userId}`;
+
+  try {
+    // Create the contribution record as paid immediately.
+    // dueDate and paidAt are both set to now since this is a same-day simulated payment.
+    // The transaction ref is stored in the note field since that's what we have available.
+    const contribution = await prisma.contributions.create({
+      data: {
+        FKgroupId:   parseInt(groupId),
+        FKuserId:    parseInt(userId),
+        treasurerId: parseInt(treasurerId),
+        amount:      parseFloat(amount),
+        dueDate:     new Date(),
+        paidAt:      new Date(),
+        status:      'paid',
+        note:        transactionRef
+      }
+    });
+
+    res.status(201).json({
+      message:        'Payment simulated successfully',
+      transactionRef: transactionRef,
+      contribution:   contribution
+    });
+
+  } catch (error) {
+    console.error('Error simulating payment:', error);
+    res.status(500).json({ error: 'Failed to simulate payment', details: error.message });
+  }
+});
+
 
 //The port is from the .env file, if not found it defaults to 3000.
 const PORT = process.env.PORT || 3000; 

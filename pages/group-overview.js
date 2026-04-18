@@ -77,19 +77,14 @@ function buildCycleSummary(cycleType, dueDayOfMonth) {
 async function fetchUserGroups(userId) {
   const token = await auth0Client.getTokenSilently();
   const response = await fetch(`${config.apiBase}/api/groups_members/${userId}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
+    headers: { 'Authorization': `Bearer ${token}` }
   });
   if (!response.ok) throw new Error("Failed to load groups");
   return await response.json();
 }
 
 function getMockCycleAndPayout() {
-  return {
-    cycle: MOCK_CYCLE,
-    nextPayout: MOCK_NEXT_PAYOUT
-  };
+  return { cycle: MOCK_CYCLE, nextPayout: MOCK_NEXT_PAYOUT };
 }
 
 function fetchRules(groupId) {
@@ -98,8 +93,33 @@ function fetchRules(groupId) {
   });
 }
 
+// Checks whether the current user has already paid their contribution for the current cycle.
+async function fetchPaymentStatus(userId, groupId) {
+  const token = await auth0Client.getTokenSilently();
+  const response = await fetch(`${config.apiBase}/api/payments/status/${userId}/${groupId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error('Failed to fetch payment status');
+  return await response.json();
+}
 
-// ─── DOM references ───────────────────────────────────────────────────────────
+// Calls the simulate endpoint to record the member's contribution as paid.
+async function simulatePayment(userId, groupId, amount, treasurerId) {
+  const token = await auth0Client.getTokenSilently();
+  const response = await fetch(`${config.apiBase}/api/payments/simulate`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ userId, groupId, amount, treasurerId })
+  });
+  if (!response.ok) throw new Error('Payment failed');
+  return await response.json();
+}
+
+
+// ─── DOM references (only elements guaranteed to exist in original HTML) ──────
 
 const groupSelect         = document.getElementById("group-select");
 const refreshBtn          = document.getElementById("refresh-btn");
@@ -127,9 +147,10 @@ const modalCycleSummary   = document.getElementById("modal-cycle-summary");
 const modalPayoutOrder    = document.getElementById("modal-payout-order");
 const modalPenaltySection = document.getElementById("modal-penalty-section");
 const modalPenaltyRules   = document.getElementById("modal-penalty-rules");
+const viewContributionsBtn = document.getElementById("view-contributions-btn");
 
 
-// Render functions
+// ─── Render functions ─────────────────────────────────────────────────────────
 
 function renderBanner(status) {
   if (status === "active") {
@@ -142,13 +163,13 @@ function renderBanner(status) {
 }
 
 function renderGroupHeader(group, cycle) {
-  groupNameEl.textContent = group.name;
+  groupNameEl.textContent   = group.name;
   statusBadgeEl.textContent = group.status.charAt(0).toUpperCase() + group.status.slice(1);
   statusBadgeEl.className   = "badge " + group.status;
-  groupDescEl.textContent = group.description;
-  cycleLabelEl.textContent = "Cycle " + cycle.number + " of " + cycle.total + " · " + formatDate(group.startDate) + " – " + formatDate(cycle.endDate);
-  cycleDaysEl.textContent  = cycle.daysRemaining > 0 ? cycle.daysRemaining + " days remaining" : "Cycle ended";
-  cycleProgress.value = cycle.progressPercent;
+  groupDescEl.textContent   = group.description;
+  cycleLabelEl.textContent  = "Cycle " + cycle.number + " of " + cycle.total + " · " + formatDate(group.startDate) + " – " + formatDate(cycle.endDate);
+  cycleDaysEl.textContent   = cycle.daysRemaining > 0 ? cycle.daysRemaining + " days remaining" : "Cycle ended";
+  cycleProgress.value       = cycle.progressPercent;
 }
 
 function renderStats(group) {
@@ -190,6 +211,46 @@ function renderMembers(members) {
 
     membersGrid.appendChild(li);
   });
+}
+
+// Populates the payment status card — looks up elements inside the function
+// so it never crashes if the HTML isn't present yet.
+function renderPaymentCard(statusData) {
+  const icon  = document.getElementById("payment-status-icon");
+  const label = document.getElementById("payment-status-label");
+  const sub   = document.getElementById("payment-status-sub");
+  const ref   = document.getElementById("payment-ref");
+  const btn   = document.getElementById("pay-now-btn");
+
+  if (!icon || !label || !sub || !btn) return; // card not in HTML yet
+
+  if (statusData.hasPaidThisCycle) {
+    const paidDate = formatDate(statusData.lastPayment.paidAt);
+    icon.textContent  = "✓";
+    icon.className    = "payment-status-icon paid-icon";
+    label.textContent = "Paid";
+    label.className   = "payment-status-label paid-label";
+    sub.textContent   = `${formatCurrency(statusData.contributionAmount)} · ${paidDate}`;
+    btn.hidden        = true;
+
+    if (ref && statusData.lastPayment.transactionRef) {
+      ref.textContent = `Ref: ${statusData.lastPayment.transactionRef}`;
+      ref.hidden      = false;
+    }
+  } else {
+    icon.textContent  = "!";
+    icon.className    = "payment-status-icon unpaid-icon";
+    label.textContent = "Unpaid";
+    label.className   = "payment-status-label unpaid-label";
+    sub.textContent   = `${formatCurrency(statusData.contributionAmount)} due this cycle`;
+    if (ref) ref.hidden = true;
+    btn.hidden        = false;
+
+    btn.dataset.amount      = statusData.contributionAmount;
+    btn.dataset.groupid     = statusData.groupId;
+    btn.dataset.userid      = statusData.userId;
+    btn.dataset.treasurerid = statusData.treasurerId || statusData.userId;
+  }
 }
 
 function openRulesModal(group, rules) {
@@ -241,6 +302,64 @@ function closeRulesModal() {
   rulesModal.hidden = true;
 }
 
+// Opens the payment confirmation modal — looks up elements inside so no top-level null risk.
+function openPaymentConfirmModal(userId, groupId, amount, treasurerId) {
+  const modal      = document.getElementById("payment-confirm-modal");
+  const amountEl   = document.getElementById("confirm-amount-display");
+  const confirmBtn = document.getElementById("confirm-payment-btn");
+
+  if (!modal || !amountEl || !confirmBtn) return;
+
+  amountEl.textContent = formatCurrency(amount);
+
+  confirmBtn.dataset.userid      = userId;
+  confirmBtn.dataset.groupid     = groupId;
+  confirmBtn.dataset.amount      = amount;
+  confirmBtn.dataset.treasurerid = treasurerId;
+
+  modal.hidden = false;
+}
+
+function closePaymentModal() {
+  const modal = document.getElementById("payment-confirm-modal");
+  if (modal) modal.hidden = true;
+}
+
+// Fires when the member clicks Confirm payment in the modal.
+async function handleConfirmPayment() {
+  const confirmBtn  = document.getElementById("confirm-payment-btn");
+  if (!confirmBtn) return;
+
+  const userId      = parseInt(confirmBtn.dataset.userid);
+  const groupId     = parseInt(confirmBtn.dataset.groupid);
+  const amount      = parseFloat(confirmBtn.dataset.amount);
+  const treasurerId = parseInt(confirmBtn.dataset.treasurerid);
+
+  confirmBtn.textContent = "Processing...";
+  confirmBtn.disabled    = true;
+
+  try {
+    const result  = await simulatePayment(userId, groupId, amount, treasurerId);
+    closePaymentModal();
+
+    const updated = await fetchPaymentStatus(userId, groupId);
+    renderPaymentCard(updated);
+
+    statusBanner.textContent = `Payment successful · Ref: ${result.transactionRef}`;
+    statusBanner.className   = "status-banner success";
+    statusBanner.hidden      = false;
+    setTimeout(() => { statusBanner.hidden = true; }, 5000);
+
+  } catch (error) {
+    alert("Payment failed: " + error.message);
+  } finally {
+    confirmBtn.textContent = "Confirm payment";
+    confirmBtn.disabled    = false;
+  }
+}
+
+
+// ─── Group loading ────────────────────────────────────────────────────────────
 
 let userGroups = [];
 
@@ -263,6 +382,13 @@ async function loadGroup(groupId) {
     renderStats(group);
     renderNextPayout(nextPayout);
     renderMembers(group.members);
+
+    // Fetch and render the current user's payment status for this group
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
+      renderPaymentCard(statusData);
+    }
 
   } catch (error) {
     statusBanner.textContent = "Error: " + error.message;
@@ -296,7 +422,7 @@ async function loadUserGroups() {
     return;
   }
 
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams       = new URLSearchParams(window.location.search);
   const selectedGroupId = urlParams.get('groupId');
 
   try {
@@ -324,43 +450,179 @@ async function loadUserGroups() {
 }
 
 
-// Event listeners
+// ─── Contribution history ─────────────────────────────────────────────────────
 
-groupSelect.addEventListener("change", () => {
-  loadGroup(groupSelect.value);
-});
+async function loadAndShowContributions() {
+  const groupId = groupSelect.value;
+  const userId  = localStorage.getItem('userId');
 
-refreshBtn.addEventListener("click", () => {
-  groupSelect.innerHTML = "";
-  userGroups = [];
-  loadUserGroups();
-});
+  if (!groupId) { alert("Please select a group first"); return; }
+  if (!userId)  { alert("User not found. Please log in again."); return; }
 
-viewRulesBtn.addEventListener("click", () => {
-  loadAndOpenRules(groupSelect.value);
-});
+  try {
+    const token    = await auth0Client.getTokenSilently();
+    const response = await fetch(`${config.apiBase}/api/contributions/${userId}/${groupId}`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
 
-closeModalBtn.addEventListener("click", closeRulesModal);
+    if (!response.ok) throw new Error("Failed to load contributions");
 
-rulesModal.addEventListener("click", (event) => {
-  if (event.target === rulesModal) closeRulesModal();
-});
+    const data = await response.json();
+    renderContributionsModal(data.contributions);
 
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !rulesModal.hidden) closeRulesModal();
-});
+  } catch (error) {
+    console.error("Error loading contributions:", error);
+    alert("Could not load contributions: " + error.message);
+  }
+}
+
+// Populates the static contributions modal — looks up elements inside.
+function renderContributionsModal(contributions) {
+  const modal   = document.getElementById("contributions-modal");
+  const content = document.getElementById("contributions-content");
+
+  if (!modal || !content) return;
+
+  if (!contributions || contributions.length === 0) {
+    content.innerHTML = '<p style="text-align:center; padding: 2rem;">No contributions found yet.</p>';
+    modal.hidden = false;
+    return;
+  }
+
+  let totalPaid = 0;
+  let html = `
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:2px solid #ddd;">
+          <th style="padding:8px; text-align:left;">Date</th>
+          <th style="padding:8px; text-align:left;">Amount</th>
+          <th style="padding:8px; text-align:left;">Status</th>
+          <th style="padding:8px; text-align:left;">Due Date</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  contributions.forEach(contrib => {
+    totalPaid += parseFloat(contrib.amount);
+    const paidDate = contrib.paidAt  ? new Date(contrib.paidAt).toLocaleDateString()  : "—";
+    const dueDate  = contrib.dueDate ? new Date(contrib.dueDate).toLocaleDateString() : "—";
+
+    html += `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:8px;">${paidDate}</td>
+        <td style="padding:8px;">${formatCurrency(parseFloat(contrib.amount))}</td>
+        <td style="padding:8px;"><span style="background:#2b7e3a20; color:#2b7e3a; padding:4px 12px; border-radius:20px;">${contrib.status}</span></td>
+        <td style="padding:8px;">${dueDate}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+      <tfoot>
+        <tr style="border-top:2px solid #ddd; font-weight:bold;">
+          <td style="padding:12px 8px;">Total</td>
+          <td style="padding:12px 8px;">${formatCurrency(totalPaid)}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+
+  content.innerHTML = html;
+  modal.hidden = false;
+}
+
+
+// ─── Event listeners — registered in onAuthReady so DOM is guaranteed ready ───
+
+function setupEventListeners() {
+  groupSelect.addEventListener("change", () => loadGroup(groupSelect.value));
+
+  refreshBtn.addEventListener("click", () => {
+    groupSelect.innerHTML = "";
+    userGroups = [];
+    loadUserGroups();
+  });
+
+  viewRulesBtn.addEventListener("click", () => loadAndOpenRules(groupSelect.value));
+
+  closeModalBtn.addEventListener("click", closeRulesModal);
+
+  rulesModal.addEventListener("click", (event) => {
+    if (event.target === rulesModal) closeRulesModal();
+  });
+
+  if (viewContributionsBtn) {
+    viewContributionsBtn.addEventListener("click", loadAndShowContributions);
+  }
+
+  // New modal elements — guarded since they require updated group-overview.html
+  const closeContribBtn  = document.getElementById("close-contributions-modal");
+  const contribModal     = document.getElementById("contributions-modal");
+  const payNowBtn        = document.getElementById("pay-now-btn");
+  const closePayBtn      = document.getElementById("close-payment-modal");
+  const cancelPayBtn     = document.getElementById("cancel-payment-btn");
+  const payConfirmModal  = document.getElementById("payment-confirm-modal");
+  const confirmBtn       = document.getElementById("confirm-payment-btn");
+
+  if (closeContribBtn) {
+    closeContribBtn.addEventListener("click", () => {
+      if (contribModal) contribModal.hidden = true;
+    });
+  }
+
+  if (contribModal) {
+    contribModal.addEventListener("click", (e) => {
+      if (e.target === contribModal) contribModal.hidden = true;
+    });
+  }
+
+  if (payNowBtn) {
+    payNowBtn.addEventListener("click", () => {
+      openPaymentConfirmModal(
+        parseInt(payNowBtn.dataset.userid),
+        parseInt(payNowBtn.dataset.groupid),
+        parseFloat(payNowBtn.dataset.amount),
+        parseInt(payNowBtn.dataset.treasurerid)
+      );
+    });
+  }
+
+  if (closePayBtn)  closePayBtn.addEventListener("click", closePaymentModal);
+  if (cancelPayBtn) cancelPayBtn.addEventListener("click", closePaymentModal);
+
+  if (payConfirmModal) {
+    payConfirmModal.addEventListener("click", (e) => {
+      if (e.target === payConfirmModal) closePaymentModal();
+    });
+  }
+
+  if (confirmBtn) confirmBtn.addEventListener("click", handleConfirmPayment);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (!rulesModal.hidden) closeRulesModal();
+    if (contribModal && !contribModal.hidden) contribModal.hidden = true;
+    closePaymentModal();
+  });
+}
 
 
 // ─── Initial page load ────────────────────────────────────────────────────────
 // onAuthReady is called by auth_service.js once auth0Client is fully initialised
-const setAvatar = () => {
-    const name = localStorage.getItem('userName') || '';
-    const initials = name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
-    const avatar = document.getElementById('avatar');
-    if (avatar) avatar.textContent = initials || '?';
-};
+
+function setAvatar() {
+  const name     = localStorage.getItem('userName') || '';
+  const initials = name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
+  const avatar   = document.getElementById('avatar');
+  if (avatar) avatar.textContent = initials || '?';
+}
 
 function onAuthReady() {
-    setAvatar();
-    loadUserGroups();
+  setAvatar();
+  setupEventListeners();
+  loadUserGroups();
 }

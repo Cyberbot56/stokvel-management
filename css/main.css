@@ -176,7 +176,6 @@ legend {
     width: 100%;
 }
 
-section
 /* Fix browser defaults on semantic elements used for styling */
 i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
 figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
@@ -382,7 +381,6 @@ aside.save-bar {
     font-size: 14px;
 }
 
-aside.save-bar
 /* Fix browser defaults on semantic elements used for styling */
 i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
 figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
@@ -529,7 +527,6 @@ dialog::backdrop {
     font-weight: 700;
 }
 
-.copied-msg
 /* Fix browser defaults on semantic elements used for styling */
 i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
 figure.header-logo, figure.logo, figure.img-frame { margin: 0; }
@@ -628,7 +625,6 @@ button.nav-btn.active {
     background: rgba(255, 255, 255, 0.15);
 }
 
-section.screen
 /* Fix browser defaults on semantic elements used for styling */
 i.logo-mark, i.dot, address.avatar, address.header-avatar { font-style: normal; }
 figure.header-logo, figure.logo, figure.img-frame { margin: 0; }

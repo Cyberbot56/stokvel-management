@@ -106,53 +106,6 @@ header h1 {
     padding: 1.5rem 2rem 0.75rem;
 }
 
-/* Toggle group — All Groups + My Groups sit in a pill container */
-.toggle-group {
-    display: flex;
-    background: white;
-    border: 1.5px solid rgba(14, 148, 144, 0.2);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(14, 148, 144, 0.08);
-}
-
-.toggle-group button {
-    border-radius: 0;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 0.55rem 1.1rem;
-    gap: 6px;
-    transition: background 0.15s ease, color 0.15s ease;
-    box-shadow: none;
-}
-
-.toggle-group button:first-child {
-    border-right: 1px solid rgba(14, 148, 144, 0.15);
-}
-
-.toggle-group button svg {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-}
-
-.toggle-group button:hover {
-    background: #f0fafa;
-    color: #0e9490;
-    transform: none;
-}
-
-.toggle-group button.active {
-    background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-    color: white;
-}
-
-.toggle-group button.active svg {
-    stroke: white;
-}
 
 /* Create Group pushed to the right */
 .actions-right {

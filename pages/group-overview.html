@@ -78,8 +78,24 @@
       <ul id="members-grid" class="members-grid"></ul>
     </article>
 
-    <footer class="rules-footer">
+
+    <!-- Payment status card — JS populates paid/unpaid state and shows/hides Pay now button -->
+    <article class="card" id="payment-status-card">
+      <h2 class="card-title">My contribution this cycle</h2>
+      <section class="payment-status-row">
+        <mark id="payment-status-icon" class="payment-status-icon"></mark>
+        <section class="payment-status-body">
+          <p id="payment-status-label" class="payment-status-label"></p>
+          <p id="payment-status-sub"   class="payment-status-sub"></p>
+          <small id="payment-ref"      class="payment-ref" hidden></small>
+        </section>
+        <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+      </section>
+    </article>
+
+    <footer class="action-footer">
       <button id="view-rules-btn">View rules</button>
+      <button id="view-contributions-btn">View contributions</button>
     </footer>
 
   </main>
@@ -115,5 +131,38 @@
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="../auth_service.js"></script>
   <script src="group-overview.js"></script>
+
+  <!-- Contribution history modal -->
+  <aside id="contributions-modal" class="modal-overlay" hidden>
+    <article class="modal">
+      <header class="modal-header">
+        <h2 class="modal-title">My Contribution History</h2>
+        <button id="close-contributions-modal" class="modal-close" aria-label="Close contributions">✕</button>
+      </header>
+      <section id="contributions-content" class="modal-section"></section>
+    </article>
+  </aside>
+
+  <!-- Payment confirmation modal -->
+  <aside id="payment-confirm-modal" class="modal-overlay" hidden>
+    <article class="modal payment-modal">
+      <header class="modal-header">
+        <h2 class="modal-title">Confirm payment</h2>
+        <button id="close-payment-modal" class="modal-close" aria-label="Close payment modal">✕</button>
+      </header>
+      <section class="payment-confirm-body">
+        <p id="confirm-amount-display" class="payment-amount-display"></p>
+        <p class="payment-confirm-desc">
+          This is a simulated payment. Your contribution will be recorded
+          as paid for this cycle.
+        </p>
+      </section>
+      <footer class="modal-footer payment-modal-footer">
+        <button id="cancel-payment-btn"  class="print-btn">Cancel</button>
+        <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm payment</button>
+      </footer>
+    </article>
+  </aside>
+
 </body>
 </html>
