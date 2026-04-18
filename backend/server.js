@@ -134,7 +134,7 @@ app.post('/api/groups', async (req, res) => {
         data: {
           name: name,
           description: description,
-          contributionAmount: parseInt(contributionAmount),
+          contributionAmount: parseFloat(contributionAmount),
           cycleType: cycleType,
           payoutOrder: payoutOrder,
           startDate: new Date(),
