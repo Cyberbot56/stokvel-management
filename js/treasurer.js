@@ -9,7 +9,7 @@ async function initDashboard() {
     // Check if treasurer is logged in
     if (!treasurerId) {
         console.error("No treasurer found in localStorage. Redirecting to login...");
-        window.location.href = "/index.html";
+        window.location.href = "pages/index.html";
         return;
     }
 
