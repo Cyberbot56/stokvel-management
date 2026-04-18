@@ -631,5 +631,123 @@ app.get(/.*/, (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+<<<<<<< HEAD:backend/server.js
   console.log(`Frontend served from: ${path.join(__dirname, '..', 'frontend')}`);
+=======
+  console.log(`Open http://localhost:${PORT}/index.html to view the frontend`);
+});
+
+// =======================================================
+// TWO ROUTES FOR MISSED CONTRIBUTIONS_TREASURER -server.js
+// =======================================================
+
+
+// ── ROUTE 1 ─────────────────────────────────────────────
+// GET /contributions/group/:groupId
+// Returns all contributions for a group with member names.
+// Only accessible by the group's treasurer.
+// ────────────────────────────────────────────────────────
+app.get('/contributions/group/:groupId', async (req, res) => {
+
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: 'Not logged in' });
+  }
+
+  const groupId = parseInt(req.params.groupId);
+
+  try {
+    // Confirm the caller is a treasurer of this group
+    const caller = await prisma.group_members.findFirst({
+      where: {
+        FgroupId: groupId,
+        SuserId:  req.session.userId,
+        role:     'treasurer'
+      }
+    });
+
+    if (!caller) {
+      return res.status(403).json({ error: 'Treasurer access only' });
+    }
+
+    const contributions = await prisma.contributions.findMany({
+      where: {
+        FgroupId: groupId
+      },
+      include: {
+        users: {
+          select: {
+            name:  true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        dueDate: 'asc'
+      }
+    });
+
+    res.json(contributions);
+
+  } catch (error) {
+    console.error('Error fetching contributions:', error);
+    res.status(500).json({ error: 'Could not fetch contributions' });
+  }
+
+});
+
+
+// ── ROUTE 2 ─────────────────────────────────────────────
+// PATCH /contributions/:contributionId/flag
+// Flags a contribution as missed.
+// Only accessible by the treasurer of the contribution's group.
+// Body: { "note": "optional reason" }
+// ────────────────────────────────────────────────────────
+app.patch('/contributions/:contributionId/flag', async (req, res) => {
+
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: 'Not logged in' });
+  }
+
+  const contributionId = parseInt(req.params.contributionId);
+  const { note } = req.body;
+
+  try {
+    // Find the contribution first so we know which group it belongs to
+    const contribution = await prisma.contributions.findUnique({
+      where: { contributionId }
+    });
+
+    if (!contribution) {
+      return res.status(404).json({ error: 'Contribution not found' });
+    }
+
+    // Confirm the caller is treasurer of that group
+    const caller = await prisma.group_members.findFirst({
+      where: {
+        FgroupId: contribution.FgroupId,
+        SuserId:  req.session.userId,
+        role:     'treasurer'
+      }
+    });
+
+    if (!caller) {
+      return res.status(403).json({ error: 'Treasurer access only' });
+    }
+
+    const updated = await prisma.contributions.update({
+      where: { contributionId },
+      data: {
+        status: 'missed',
+        note:   note || null
+      }
+    });
+
+    res.json(updated);
+
+  } catch (error) {
+    console.error('Error flagging contribution:', error);
+    res.status(500).json({ error: 'Could not flag contribution' });
+  }
+
+>>>>>>> origin/Missed-contributions:server.js
 });
