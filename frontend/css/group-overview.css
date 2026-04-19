@@ -354,7 +354,7 @@ progress::-moz-progress-bar      { background: #0e9490; border-radius: 99px; }
   padding-bottom: 0.5rem;
 }
 
-#view-rules-btn {
+#view-payouts-btn {
   font-size: 13px;
   padding: 8px 24px;
   border: 1.5px solid rgba(14, 148, 144, 0.35);
@@ -367,7 +367,7 @@ progress::-moz-progress-bar      { background: #0e9490; border-radius: 99px; }
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
-#view-rules-btn:hover {
+#view-payouts-btn: hover {
   background: #e0f7f6;
   transform: translateY(-1px);
 }
