@@ -130,8 +130,8 @@ async function simulatePayment(userId, groupId, amount, treasurerId) {
 }
 
 function openPaymentConfirmModal(userId, groupId, amount, treasurerId) {
-  const modal = document.getElementById('payment-confirm-modal');
-  const amountEl = document.getElementById('confirm-amount-display');
+  const modal      = document.getElementById('payment-confirm-modal');
+  const amountEl   = document.getElementById('confirm-amount-display');
   const confirmBtn = document.getElementById('confirm-payment-btn');
 
   if (!modal || !amountEl || !confirmBtn) {
@@ -141,9 +141,9 @@ function openPaymentConfirmModal(userId, groupId, amount, treasurerId) {
 
   amountEl.textContent = formatCurrency(amount);
 
-  confirmBtn.dataset.userid = userId;
-  confirmBtn.dataset.groupid = groupId;
-  confirmBtn.dataset.amount = amount;
+  confirmBtn.dataset.userid      = userId;
+  confirmBtn.dataset.groupid     = groupId;
+  confirmBtn.dataset.amount      = amount;
   confirmBtn.dataset.treasurerid = treasurerId;
 
   modal.hidden = false;
@@ -158,13 +158,13 @@ async function handleConfirmPayment() {
   const confirmBtn = document.getElementById('confirm-payment-btn');
   if (!confirmBtn) return;
 
-  const userId = parseInt(confirmBtn.dataset.userid);
-  const groupId = parseInt(confirmBtn.dataset.groupid);
-  const amount = parseFloat(confirmBtn.dataset.amount);
+  const userId      = parseInt(confirmBtn.dataset.userid);
+  const groupId     = parseInt(confirmBtn.dataset.groupid);
+  const amount      = parseFloat(confirmBtn.dataset.amount);
   const treasurerId = parseInt(confirmBtn.dataset.treasurerid);
 
   confirmBtn.textContent = 'Processing...';
-  confirmBtn.disabled = true;
+  confirmBtn.disabled    = true;
 
   try {
     const result = await simulatePayment(userId, groupId, amount, treasurerId);
@@ -174,8 +174,8 @@ async function handleConfirmPayment() {
     // Show success banner
     const banner = document.getElementById('status-banner');
     banner.textContent = `✅ Payment successful! Reference: ${result.transactionRef}`;
-    banner.className = 'status-banner success';
-    banner.hidden = false;
+    banner.className   = 'status-banner success';
+    banner.hidden      = false;
     setTimeout(() => { banner.hidden = true; }, 5000);
 
     // Refresh contributions modal if it's open
@@ -189,7 +189,7 @@ async function handleConfirmPayment() {
     alert('Payment failed: ' + error.message);
   } finally {
     confirmBtn.textContent = 'Confirm Payment';
-    confirmBtn.disabled = false;
+    confirmBtn.disabled    = false;
   }
 }
 
@@ -232,13 +232,13 @@ function renderPaymentCard(statusData) {
     }
 
   } else {
-    icon.textContent  = '!';
-    icon.className    = 'payment-status-icon unpaid-icon';
-    label.textContent = 'Unpaid';
-    label.className   = 'payment-status-label unpaid-label';
-    sub.textContent   = formatCurrency(statusData.contributionAmount) + ' due this cycle';
-    if (ref) ref.hidden = true;
-    btn.hidden          = false;
+    icon.textContent        = '!';
+    icon.className          = 'payment-status-icon unpaid-icon';
+    label.textContent       = 'Unpaid';
+    label.className         = 'payment-status-label unpaid-label';
+    sub.textContent         = formatCurrency(statusData.contributionAmount) + ' due this cycle';
+    if (ref) ref.hidden     = true;
+    btn.hidden              = false;
     btn.dataset.amount      = statusData.contributionAmount;
     btn.dataset.groupid     = statusData.groupId;
     btn.dataset.userid      = statusData.userId;
@@ -325,13 +325,13 @@ function renderBanner(status) {
 }
 
 function renderGroupHeader(group, cycle) {
-  groupNameEl.textContent = group.name;
+  groupNameEl.textContent   = group.name;
   statusBadgeEl.textContent = group.status.charAt(0).toUpperCase() + group.status.slice(1);
   statusBadgeEl.className   = "badge " + group.status;
-  groupDescEl.textContent = group.description;
-  cycleLabelEl.textContent = "Cycle " + cycle.number + " of " + cycle.total + " · " + formatDate(group.startDate) + " – " + formatDate(cycle.endDate);
-  cycleDaysEl.textContent  = cycle.daysRemaining > 0 ? cycle.daysRemaining + " days remaining" : "Cycle ended";
-  cycleProgress.value = cycle.progressPercent;
+  groupDescEl.textContent   = group.description;
+  cycleLabelEl.textContent  = "Cycle " + cycle.number + " of " + cycle.total + " · " + formatDate(group.startDate) + " – " + formatDate(cycle.endDate);
+  cycleDaysEl.textContent   = cycle.daysRemaining > 0 ? cycle.daysRemaining + " days remaining" : "Cycle ended";
+  cycleProgress.value       = cycle.progressPercent;
 }
 
 function renderStats(group) {
@@ -349,7 +349,7 @@ function renderNextPayout(nextPayout) {
 
   if (nextPayout.daysRemaining != null) {
     countdownNumEl.textContent = nextPayout.daysRemaining;
-    countdownEl.hidden = false;
+    countdownEl.hidden         = false;
   } else {
     countdownEl.hidden = true;
   }
@@ -379,21 +379,21 @@ function renderMembers(members) {
 // Shows different buttons depending on whether user is admin, treasurer, or member
 
 function renderFooterButtons(group) {
-  const footer = document.querySelector(".action-footer");
+  const footer   = document.querySelector(".action-footer");
   const userRole = group.userRole; // 'admin', 'treasurer', or 'member'
 
   footer.innerHTML = ""; // clear existing buttons
 
   // Everyone gets View contributions
   const viewContribBtn = document.createElement("button");
-  viewContribBtn.id = "view-contributions-btn";
+  viewContribBtn.id          = "view-contributions-btn";
   viewContribBtn.textContent = "View contributions";
   viewContribBtn.addEventListener("click", loadAndShowContributions);
   footer.appendChild(viewContribBtn);
 
   // Everyone gets View payouts
   const viewPayoutsBtn = document.createElement("button");
-  viewPayoutsBtn.id = "view-payouts-btn";
+  viewPayoutsBtn.id          = "view-payouts-btn";
   viewPayoutsBtn.textContent = "View payouts";
   viewPayoutsBtn.addEventListener("click", () => {
     window.location.href = "upcompayme.html?groupId=" + groupSelect.value;
@@ -403,7 +403,7 @@ function renderFooterButtons(group) {
   // Admin gets: go to admin dashboard
   if (userRole === "admin") {
     const adminBtn = document.createElement("button");
-    adminBtn.id = "admin-btn";
+    adminBtn.id          = "admin-btn";
     adminBtn.textContent = "Admin dashboard";
     adminBtn.addEventListener("click", () => {
       window.location.href = `group-admin.html?groupId=${group.groupId}`;
@@ -411,160 +411,29 @@ function renderFooterButtons(group) {
     footer.appendChild(adminBtn);
   }
 
-  // Treasurer gets: initiate payout button
-  if (userRole === "treasurer" || userRole === "admin") {
-    const initiateBtn = document.createElement("button");
-    initiateBtn.id = "initiate-payout-btn";
-    initiateBtn.textContent = "Initiate payout";
-    initiateBtn.style.background = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
-    initiateBtn.style.color = "white";
-    initiateBtn.style.border = "none";
-    initiateBtn.style.borderRadius = "8px";
-    initiateBtn.style.padding = "10px 20px";
-    initiateBtn.style.fontWeight = "700";
-    initiateBtn.style.cursor = "pointer";
-    initiateBtn.addEventListener("click", () => openInitiatePayoutModal(group));
-    footer.appendChild(initiateBtn);
-  }
-}
-
-
-// ─── Initiate payout modal (for treasurer/admin) ──────────────────────────────
-
-function openInitiatePayoutModal(group) {
-  // Create modal if it doesn't exist
-  let modal = document.getElementById("initiate-payout-modal");
-
-  if (!modal) {
-    modal = document.createElement("aside");
-    modal.id = "initiate-payout-modal";
-    modal.className = "modal-overlay";
-    modal.innerHTML = `
-      <article class="modal">
-        <header class="modal-header">
-          <h2 class="modal-title">Initiate Payout</h2>
-          <button class="modal-close" id="close-payout-modal">✕</button>
-        </header>
-        <section class="modal-section">
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div>
-              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Recipient</label>
-              <select id="payout-recipient-select" style="width:100%; padding:9px 12px; border:1.5px solid rgba(14,148,144,0.25); border-radius:8px; font-size:14px; margin-top:4px;">
-                <option value="">— Select a member —</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Cycle Number</label>
-              <input type="number" id="payout-cycle-input" min="1" placeholder="e.g. 4" style="width:100%; padding:9px 12px; border:1.5px solid rgba(14,148,144,0.25); border-radius:8px; font-size:14px; margin-top:4px; box-sizing:border-box;" />
-            </div>
-            <div>
-              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Payout Amount</label>
-              <p id="payout-amount-preview" style="font-size:20px; font-weight:700; color:#034e52; margin-top:4px;"></p>
-            </div>
-            <div>
-              <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Notes (optional)</label>
-              <input type="text" id="payout-notes-input" placeholder="Any notes..." style="width:100%; padding:9px 12px; border:1.5px solid rgba(14,148,144,0.25); border-radius:8px; font-size:14px; margin-top:4px; box-sizing:border-box;" />
-            </div>
-            <p id="payout-modal-feedback" style="display:none; padding:8px 12px; border-radius:8px; font-size:13px;"></p>
-            <button id="confirm-payout-btn" style="padding:10px 20px; background:linear-gradient(135deg,#2dd4bf 0%,#0e9490 100%); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">Confirm Payout</button>
-          </div>
-        </section>
-      </article>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById("close-payout-modal").addEventListener("click", () => {
-      modal.hidden = true;
+  // Treasurer gets: go to treasurer portal where payouts are initiated
+  if (userRole === "treasurer") {
+    const treasurerBtn = document.createElement("button");
+    treasurerBtn.id          = "treasurer-btn";
+    treasurerBtn.textContent = "Treasurer portal";
+    treasurerBtn.addEventListener("click", () => {
+      window.location.href = `group-treasurer.html?groupId=${group.groupId}`;
     });
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) modal.hidden = true;
-    });
+    footer.appendChild(treasurerBtn);
   }
 
-  // Populate recipient dropdown with group members
-  const select = document.getElementById("payout-recipient-select");
-  select.innerHTML = '<option value="">— Select a member —</option>';
-  group.members.forEach(member => {
-    const opt = document.createElement("option");
-    opt.value = member.userId;
-    opt.dataset.name = member.name;
-    opt.textContent = `${member.name} (${member.email})`;
-    select.appendChild(opt);
-  });
-
-  // Show payout amount preview
-  const totalPayout = group.contributionAmount * group.totalMembers;
-  document.getElementById("payout-amount-preview").textContent = formatCurrency(totalPayout);
-
-  // Confirm button handler
-  document.getElementById("confirm-payout-btn").onclick = async () => {
-    const recipientId = select.value;
-    const recipientName = select.options[select.selectedIndex]?.dataset.name || "";
-    const cycleNumber = document.getElementById("payout-cycle-input").value;
-    const notes = document.getElementById("payout-notes-input").value.trim();
-    const feedbackEl = document.getElementById("payout-modal-feedback");
-
-    if (!recipientId) {
-      showPayoutFeedback("Please select a recipient.", "error");
-      return;
-    }
-    if (!cycleNumber || parseInt(cycleNumber) < 1) {
-      showPayoutFeedback("Please enter a valid cycle number.", "error");
-      return;
-    }
-
-    const btn = document.getElementById("confirm-payout-btn");
-    btn.disabled = true;
-    btn.textContent = "Processing...";
-
-    try {
-      const token = await auth0Client.getTokenSilently();
-      const response = await fetch(`${config.apiBase}/api/payouts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          groupId: group.groupId,
-          recipientId: parseInt(recipientId),
-          recipientName,
-          amount: totalPayout,
-          cycleNumber: parseInt(cycleNumber),
-          notes: notes || null
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showPayoutFeedback(`Payout of ${formatCurrency(totalPayout)} to ${recipientName} initiated! Ref: ${data.payout.transactionRef}`, "success");
-        // Reset form
-        select.value = "";
-        document.getElementById("payout-cycle-input").value = "";
-        document.getElementById("payout-notes-input").value = "";
-      } else {
-        showPayoutFeedback(data.error || "Failed to initiate payout.", "error");
-      }
-    } catch (err) {
-      console.error("Payout error:", err);
-      showPayoutFeedback("Something went wrong. Please try again.", "error");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Confirm Payout";
-    }
-  };
-
-  modal.hidden = false;
+  // NOTE: openInitiatePayoutModal has been removed from here.
+  // Payout initiation is now handled exclusively in group-treasurer.html
+  // via group-treasurer.js. Treasurers are redirected there via the button above.
 }
 
-function showPayoutFeedback(message, type) {
-  const el = document.getElementById("payout-modal-feedback");
-  el.textContent = message;
-  el.style.display = "block";
-  el.style.background = type === "success" ? "#dcfce7" : "#fee2e2";
-  el.style.color = type === "success" ? "#166534" : "#991b1b";
-}
+
+// ─── Initiate payout modal (moved to group-treasurer.js) ──────────────────────
+// The following functions have been commented out because payout initiation
+// is now handled by group-treasurer.html and group-treasurer.js.
+
+// function openInitiatePayoutModal(group) { ... }
+// function showPayoutFeedback(message, type) { ... }
 
 
 // ─── Rules modal ──────────────────────────────────────────────────────────────
@@ -634,7 +503,7 @@ async function loadGroup(groupId) {
   try {
     const group = getGroupById(groupId);
     if (!group) throw new Error("Group not found");
-    
+
     // Store current group for payment simulation
     currentGroupForPayment = group;
 
@@ -645,7 +514,7 @@ async function loadGroup(groupId) {
     renderStats(group);
     renderNextPayout(nextPayout);
     renderMembers(group.members);
-    renderFooterButtons(group); // ← renders correct buttons based on role
+    renderFooterButtons(group); // renders correct buttons based on role
 
     // Fetch and render the current user's payment status for this group
     const userId = localStorage.getItem('userId');
@@ -686,7 +555,7 @@ async function loadUserGroups() {
     return;
   }
 
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams       = new URLSearchParams(window.location.search);
   const selectedGroupId = urlParams.get('groupId');
 
   try {
@@ -738,36 +607,33 @@ document.addEventListener("keydown", (event) => {
 
 
 // ─── View contributions modal ─────────────────────────────────────────────────
-// This is for the view contributions button.
 
 async function loadAndShowContributions() {
   const groupId = groupSelect.value;
-  const userId = localStorage.getItem('userId');
-  
+  const userId  = localStorage.getItem('userId');
+
   if (!groupId) {
     alert("Please select a group first");
     return;
   }
-  
+
   if (!userId) {
     alert("User not found. Please log in again.");
     return;
   }
-  
+
   try {
-    const token = await auth0Client.getTokenSilently();
+    const token    = await auth0Client.getTokenSilently();
     const response = await fetch(`${config.apiBase}/api/contributions/${userId}/${groupId}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-    
+
     if (!response.ok) throw new Error("Failed to load contributions");
-    
+
     const data = await response.json();
     displayContributionsModal(data.contributions);
-    
+
   } catch (error) {
     console.error("Error loading contributions:", error);
     alert("Could not load contributions: " + error.message);
@@ -775,12 +641,11 @@ async function loadAndShowContributions() {
 }
 
 function displayContributionsModal(contributions) {
-  // Created a modal to display the contribution history.
   let modal = document.getElementById("contributions-modal");
-  
+
   if (!modal) {
-    modal = document.createElement("aside");
-    modal.id = "contributions-modal";
+    modal           = document.createElement("aside");
+    modal.id        = "contributions-modal";
     modal.className = "modal-overlay";
     modal.innerHTML = `
       <article class="modal">
@@ -792,18 +657,18 @@ function displayContributionsModal(contributions) {
       </article>
     `;
     document.body.appendChild(modal);
-    
+
     modal.querySelector(".modal-close").addEventListener("click", () => {
       modal.hidden = true;
     });
-    
+
     modal.addEventListener("click", (event) => {
       if (event.target === modal) modal.hidden = true;
     });
   }
-  
+
   const content = document.getElementById("contributions-content");
-  
+
   if (!contributions || contributions.length === 0) {
     content.innerHTML = '<p style="text-align:center; padding: 2rem;">No contributions found yet.</p>';
   } else {
@@ -820,30 +685,30 @@ function displayContributionsModal(contributions) {
         </thead>
         <tbody>
     `;
-    
+
     contributions.forEach(contrib => {
       totalPaid += parseFloat(contrib.amount);
-      const paidDate = contrib.paidAt ? new Date(contrib.paidAt).toLocaleDateString() : "—";
-      const dueDate = contrib.dueDate ? new Date(contrib.dueDate).toLocaleDateString() : "—";
-      
+      const paidDate = contrib.paidAt  ? new Date(contrib.paidAt).toLocaleDateString()  : "—";
+      const dueDate  = contrib.dueDate ? new Date(contrib.dueDate).toLocaleDateString() : "—";
+
       let statusColor = "#2b7e3a";
-      let statusBg = "#2b7e3a20";
-      let statusText = contrib.status;
-      
+      let statusBg    = "#2b7e3a20";
+      let statusText  = contrib.status;
+
       if (contrib.status === "pending") {
         statusColor = "#ff9800";
-        statusBg = "#ff980020";
-        statusText = "Pending";
+        statusBg    = "#ff980020";
+        statusText  = "Pending";
       } else if (contrib.status === "paid") {
         statusColor = "#2b7e3a";
-        statusBg = "#2b7e3a20";
-        statusText = "Paid";
+        statusBg    = "#2b7e3a20";
+        statusText  = "Paid";
       } else if (contrib.status === "missed" || contrib.status === "overdue") {
         statusColor = "#f44336";
-        statusBg = "#f4433620";
-        statusText = "Missed";
+        statusBg    = "#f4433620";
+        statusText  = "Missed";
       }
-      
+
       html += `
         <tr style="border-bottom:1px solid #eee;">
           <td style="padding:8px;">${paidDate}</td>
@@ -853,7 +718,7 @@ function displayContributionsModal(contributions) {
         </tr>
       `;
     });
-    
+
     html += `
         </tbody>
         <tfoot>
@@ -865,10 +730,10 @@ function displayContributionsModal(contributions) {
         </tfoot>
       </table>
     `;
-    
+
     content.innerHTML = html;
   }
-  
+
   modal.hidden = false;
 }
 
@@ -877,14 +742,14 @@ function displayContributionsModal(contributions) {
 // onAuthReady is called by auth_service.js once auth0Client is fully initialised
 
 const setAvatar = () => {
-    const name = localStorage.getItem('userName') || '';
-    const initials = name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
-    const avatar = document.getElementById('avatar');
-    if (avatar) avatar.textContent = initials || '?';
+  const name     = localStorage.getItem('userName') || '';
+  const initials = name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
+  const avatar   = document.getElementById('avatar');
+  if (avatar) avatar.textContent = initials || '?';
 };
 
 function onAuthReady() {
-    setAvatar();
-    setupPaymentModal();
-    loadUserGroups();
+  setAvatar();
+  setupPaymentModal();
+  loadUserGroups();
 }
