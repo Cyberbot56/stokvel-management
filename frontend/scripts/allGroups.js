@@ -4,27 +4,25 @@ const sanitise = (str) => {
     return div.innerHTML;
 };
 
-const setAvatar = () => {
-    const name = localStorage.getItem('userName') || '';
+function setAvatar() {
+    const name     = localStorage.getItem('userName') || '';
     const initials = name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
-    const avatar = document.getElementById('avatar');
+    const avatar   = document.getElementById('avatar');
     if (avatar) avatar.textContent = initials || '?';
-};
+}
 
 const setWelcome = () => {
-    const name = localStorage.getItem('userName') || '';
+    const name      = localStorage.getItem('userName') || '';
     const firstName = name.split(' ')[0] || 'there';
-    const greeting = document.getElementById('welcomeGreeting');
+    const greeting  = document.getElementById('welcomeGreeting');
     if (greeting) greeting.textContent = `Welcome back, ${firstName}!`;
 };
 
-// Store both lists once fetched so toggling doesn't re-fetch
-let allGroupsCache = [];
-let myGroupsCache = [];
-let currentView = 'all'; // 'all'
-
+// Renders the user's groups into the card grid.
+// Routes each group to the correct page based on the user's role:
+// admin → group-admin.html, treasurer → group-treasurer.html, member → group-overview.html
 function renderGroups(groups) {
-    const grid = document.querySelector('.groups-grid');
+    const grid     = document.querySelector('.groups-grid');
     const noGroups = document.getElementById('noGroups');
 
     if (groups.length === 0) {
@@ -34,12 +32,12 @@ function renderGroups(groups) {
     }
 
     grid.innerHTML = '';
-    grid.hidden = false;
+    grid.hidden    = false;
     if (noGroups) noGroups.hidden = true;
 
     groups.forEach(group => {
-        const card = document.createElement('article');
-        card.className = 'group-card';
+        const card       = document.createElement('article');
+        card.className   = 'group-card';
 
         card.innerHTML = `
             <figure class="card-icon">
@@ -57,9 +55,6 @@ function renderGroups(groups) {
         `;
 
         card.querySelector('.btnViewGroup').addEventListener('click', () => {
-            // Determine where to redirect based on user role 
-            //Because the admin/ treasure and member page might be different
-            
             let destination;
             if (group.userRole === 'admin') {
                 destination = 'group-admin.html';
@@ -75,98 +70,45 @@ function renderGroups(groups) {
     });
 }
 
-function setActiveButton(view) {
-    const btnAll = document.getElementById('buttonAllGroups');
-    const btnMy = document.getElementById('buttonMyGroups');
-    const headerTitle = document.querySelector('.header-title');
-
-    if (view === 'all') {
-        btnAll.classList.add('active');
-        btnMy.classList.remove('active');
-        if (headerTitle) headerTitle.textContent = 'All Groups';
-    } else {
-        btnMy.classList.add('active');
-        btnAll.classList.remove('active');
-        if (headerTitle) headerTitle.textContent = 'My Groups';
-    }
-}
-
-function showAllGroups() {
-    currentView = 'all';
-    setActiveButton('all');
-    renderGroups(allGroupsCache);
-}
-
-function showMyGroups() {
-    currentView = 'mine';
-    setActiveButton('mine');
-    renderGroups(myGroupsCache);
-}
-
-async function loadAllGroups() {
-    const grid = document.querySelector('.groups-grid');
-    const noGroups = document.getElementById('noGroups');
+// Fetches only the groups the logged-in user belongs to and renders them automatically.
+// The All Groups / My Groups toggle has been removed — dashboard always shows the user's own groups.
+async function loadMyGroups() {
+    const grid      = document.querySelector('.groups-grid');
     const loadError = document.getElementById('loadError');
+    const userId    = localStorage.getItem('userId');
+
+    if (!userId) {
+        console.error('No userId in localStorage — user may not be logged in.');
+        if (loadError) loadError.hidden = false;
+        return;
+    }
 
     try {
-        const token = await auth0Client.getTokenSilently();
-        const userId = localStorage.getItem('userId');
-
-        // Fetch both in parallel
-        const [allGroupsRes, myGroupsRes] = await Promise.all([
-            fetch(`${config.apiBase}/api/groups`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }),
-            fetch(`${config.apiBase}/api/groups_members/${userId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-        ]);
-
-        if (!allGroupsRes.ok) throw new Error(`Server error: ${allGroupsRes.status}`);
-        if (!myGroupsRes.ok) throw new Error(`Server error: ${myGroupsRes.status}`);
-
-        const allGroups = await allGroupsRes.json();
-        const myGroups = await myGroupsRes.json();
-
-        // Build role map from user's memberships (includes admin, treasurer, member)
-        const roleMap = {};
-        myGroups.forEach(g => { 
-            roleMap[g.groupId] = g.userRole; 
+        const token    = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/groups_members/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        // All groups with role merged in
-        allGroupsCache = allGroups.map(group => ({
-            ...group,
-            userRole: roleMap[group.groupId] || null
-        }));
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
-        // My groups already have userRole from the API
-        myGroupsCache = myGroups;
-
-        // Default view is all groups
-        showAllGroups();
+        const groups = await response.json();
+        renderGroups(groups);
 
     } catch (error) {
         console.error('Fetch error:', error);
         if (loadError) loadError.hidden = false;
-        grid.hidden = true;
+        if (grid) grid.hidden = true;
     }
 }
 
-// Button listeners
-const btnMy = document.getElementById('buttonMyGroups');
-if (btnMy) btnMy.onclick = showMyGroups;
-
-const btnAll = document.getElementById('buttonAllGroups');
-if (btnAll) btnAll.onclick = showAllGroups;
-
-const btnCreate = document.getElementById('buttonCreateGroup');
-if (btnCreate) {
-    btnCreate.onclick = () => window.location.href = 'create-group.html';
-}
-
+// Wire up Create Group button inside onAuthReady so it fires safely after auth initialises
 function onAuthReady() {
     setAvatar();
     setWelcome();
-    loadAllGroups();
+    loadMyGroups();
+
+    const btnCreate = document.getElementById('buttonCreateGroup');
+    if (btnCreate) {
+        btnCreate.onclick = () => window.location.href = 'create-group.html';
+    }
 }

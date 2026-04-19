@@ -5,39 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Group Overview – Stokvel App</title>
   <link rel="stylesheet" href="../css/group-overview.css" />
-  <style>
-    .simulate-payment-btn {
-      padding: 12px 28px;
-      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      width: 100%;
-      max-width: 300px;
-      margin: 0 auto;
-      display: block;
-    }
-
-    .simulate-payment-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
-    }
-
-    .simulate-payment-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .payment-button-container {
-      margin-top: 1rem;
-      text-align: center;
-    }
-  </style>
 </head>
 <body>
 
@@ -111,12 +78,21 @@
       <ul id="members-grid" class="members-grid"></ul>
     </article>
 
-    <!-- Payment simulation button for members -->
-    <article class="card">
-      <div class="payment-button-container">
-        <button id="simulate-payment-btn" class="simulate-payment-btn">💳 Simulate My Payment</button>
-      </div>
-    </article>
+  
+  <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
+  <article class="card" id="payment-status-card">
+    <h2 class="card-title">My contribution this cycle</h2>
+    <section class="payment-status-row">
+      <mark id="payment-status-icon" class="payment-status-icon"></mark>
+      <section class="payment-status-body">
+        <p id="payment-status-label" class="payment-status-label"></p>
+        <p id="payment-status-sub"   class="payment-status-sub"></p>
+        <small id="payment-ref"      class="payment-ref" hidden></small>
+      </section>
+      <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+    </section>
+  </article>
+
 
     <footer class="action-footer">
       <button id="view-payouts-btn">View payouts</button>

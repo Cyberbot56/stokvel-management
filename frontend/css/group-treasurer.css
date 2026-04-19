@@ -1,0 +1,379 @@
+/* ── Treasurer badge ── */
+
+.treasurer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  font-style: normal;
+}
+
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+
+/* ── Section header ── */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+
+/* ── Contribution form ── */
+
+.contribution-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group select,
+.form-group input {
+  padding: 9px 12px;
+  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  outline: none;
+  color: #0f172a;
+  background: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  border-color: #0e9490;
+  box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+}
+
+.btn-record {
+  align-self: flex-start;
+  padding: 9px 24px;
+  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-record:hover    { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4); }
+.btn-record:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+
+/* ── Filter pills ── */
+
+.filter-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.filter-pill {
+  padding: 5px 14px;
+  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: white;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-pill:hover {
+  background: #e0f7f6;
+  color: #034e52;
+  border-color: rgba(14, 148, 144, 0.5);
+}
+
+.filter-pill.active {
+  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  color: white;
+  border-color: transparent;
+}
+
+
+/* ── Contributions table ── */
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.members-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px solid #e0f7f6;
+}
+
+.members-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #f0fafa;
+  color: #0f172a;
+  vertical-align: middle;
+}
+
+.members-table tr:last-child td { border-bottom: none; }
+.members-table tr:hover td      { background: #f0fafa; }
+
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-pill.paid    { background: #2b7e3a20; color: #2b7e3a; }
+.status-pill.pending { background: #ff980020; color: #b45309; }
+.status-pill.missed  { background: #f4433620; color: #991b1b; }
+
+
+/* ── Flag button ── */
+
+.btn-flag {
+  padding: 6px 14px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1.5px solid #fecaca;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: background 0.15s ease;
+}
+
+.btn-flag:hover { background: #fecaca; }
+
+.no-action { font-size: 12px; color: #94a3b8; }
+
+
+/* ── Group stats strip ── */
+
+dl.group-stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e0f7f6;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+dl.group-stats-strip dt {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+dl.group-stats-strip dd {
+  font-size: 15px;
+  font-weight: 700;
+  color: #034e52;
+  margin-left: 0;
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+hr.strip-divider {
+  width: 1px;
+  height: 28px;
+  border: none;
+  background: #e0f7f6;
+  margin: 0;
+}
+
+
+/* ── Error / loading / empty states ── */
+
+.error-banner {
+  display: block;
+  background: #fef2f2;
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  margin-bottom: 0.75rem;
+}
+
+.loading-msg {
+  display: block;
+  text-align: center;
+  padding: 2rem;
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.empty-state {
+  display: block;
+  text-align: center;
+  padding: 2rem;
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+
+
+/* ── Back link ── */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #0e9490;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0;
+  margin-bottom: 1.25rem;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover { color: #034e52; }
+
+
+/* ── Flag as missed dialog ── */
+
+dialog {
+  border: 1px solid rgba(14, 148, 144, 0.2);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(14, 148, 144, 0.15);
+  background: white;
+}
+
+dialog h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #034e52;
+  margin-bottom: 8px;
+}
+
+dialog p {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 18px;
+}
+
+dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+
+.dialog-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.dialog-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.dialog-input:focus {
+  border-color: #0e9490;
+  box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 9px 20px;
+  background: white;
+  color: #64748b;
+  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-confirm-flag {
+  padding: 9px 20px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn-confirm-flag:hover { background: #dc2626; }
+
+
+/* ── Fix browser defaults on semantic elements ── */
+
+i.logo-mark, address.header-avatar { font-style: normal; }
+figure.header-logo { margin: 0; }
+strong.treasurer-badge, strong.badge { font-weight: inherit; }

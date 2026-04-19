@@ -1,0 +1,236 @@
+/* ── Admin badge ── */
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  font-style: normal;
+}
+
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+
+/* ── Section header ── */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+
+/* ── Add member / assign treasurer form ── */
+
+.add-member-form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.add-member-form input {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 12px;
+  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color: #0f172a;
+  background: white;
+}
+
+.add-member-form input:focus {
+  border-color: #0e9490;
+  box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+}
+
+.add-member-form input.input-error { border-color: #ef4444; }
+
+.btn-add {
+  padding: 9px 20px;
+  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-add:hover    { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4); }
+.btn-add:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.form-feedback {
+  width: 100%;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.form-feedback.success { background: #e0f7f6; color: #034e52; border-left: 3px solid #0e9490; }
+.form-feedback.error   { background: #fef2f2; color: #991b1b; border-left: 3px solid #ef4444; }
+
+
+/* ── Members table ── */
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.members-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px solid #e0f7f6;
+}
+
+.members-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #f0fafa;
+  color: #0f172a;
+  vertical-align: middle;
+}
+
+.members-table tr:last-child td { border-bottom: none; }
+.members-table tr:hover td      { background: #f0fafa; }
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.member-initials {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e0f7f6;
+  color: #034e52;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+.member-name-text  { font-weight: 600; color: #034e52; }
+.member-email-text { font-size: 12px; color: #64748b; margin-top: 1px; }
+
+.role-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-style: normal;
+}
+
+.role-badge.admin     { background: #e0f7f6; color: #034e52; }
+.role-badge.treasurer { background: #FAEEDA; color: #854F0B; }
+.role-badge.member    { background: #f0fafa; color: #64748b; }
+
+.joined-date { font-size: 12px; color: #64748b; }
+
+.empty-members {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 13px;
+  font-style: italic;
+}
+
+
+/* ── Group stats strip ── */
+
+dl.group-stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e0f7f6;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+dl.group-stats-strip dt {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+dl.group-stats-strip dd {
+  font-size: 15px;
+  font-weight: 700;
+  color: #034e52;
+  margin-left: 0;
+}
+
+.stat-group  { display: flex; flex-direction: column; gap: 2px; }
+
+hr.strip-divider {
+  width: 1px;
+  height: 28px;
+  border: none;
+  background: #e0f7f6;
+  margin: 0;
+}
+
+
+/* ── Back link ── */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #0e9490;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0;
+  margin-bottom: 1.25rem;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover { color: #034e52; }
+
+
+/* ── Fix browser defaults ── */
+
+i.logo-mark, i.member-initials, address.header-avatar { font-style: normal; }
+figure.header-logo { margin: 0; }
+b.badge, b.admin-badge { font-weight: inherit; }

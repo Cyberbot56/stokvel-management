@@ -106,16 +106,6 @@ header h1 {
     padding: 1.5rem 2rem 0.75rem;
 }
 
-/* Toggle group — All Groups + My Groups sit in a pill container */
-.toggle-group {
-    display: flex;
-    background: white;
-    border: 1.5px solid rgba(14, 148, 144, 0.2);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(14, 148, 144, 0.08);
-}
-
 .toggle-group button {
     border-radius: 0;
     border: none;

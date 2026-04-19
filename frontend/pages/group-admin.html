@@ -5,344 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Group Admin – Stokvel App</title>
   <link rel="stylesheet" href="../css/group-overview.css" />
-  <style>
-    .admin-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-      font-style: normal;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-
-    .add-member-form {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .add-member-form input {
-      flex: 1;
-      min-width: 200px;
-      padding: 9px 12px;
-      border: 1.5px solid rgba(14, 148, 144, 0.25);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      color: #0f172a;
-      background: white;
-    }
-
-    .add-member-form input:focus {
-      border-color: #0e9490;
-      box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
-    }
-
-    .add-member-form input.input-error { border-color: #ef4444; }
-
-    .btn-add {
-      padding: 9px 20px;
-      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      cursor: pointer;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4); }
-    .btn-add:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    .form-feedback {
-      width: 100%;
-      font-size: 13px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      margin-top: 4px;
-    }
-
-    .form-feedback.success { background: #e0f7f6; color: #034e52; border-left: 3px solid #0e9490; }
-    .form-feedback.error   { background: #fef2f2; color: #991b1b; border-left: 3px solid #ef4444; }
-
-    .members-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .members-table th {
-      text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700;
-      color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: 1.5px solid #e0f7f6;
-    }
-    .members-table td { padding: 11px 12px; border-bottom: 1px solid #f0fafa; color: #0f172a; vertical-align: middle; }
-    .members-table tr:last-child td { border-bottom: none; }
-    .members-table tr:hover td { background: #f0fafa; }
-
-    .member-info { display: flex; align-items: center; gap: 10px; }
-
-    .member-initials {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: #e0f7f6; color: #034e52;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; flex-shrink: 0; font-style: normal;
-    }
-
-    .member-name-text { font-weight: 600; color: #034e52; }
-    .member-email-text { font-size: 12px; color: #64748b; margin-top: 1px; }
-
-    .role-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; font-style: normal; }
-    .role-badge.admin  { background: #e0f7f6; color: #034e52; }
-    .role-badge.member { background: #f0fafa; color: #64748b; }
-
-    .joined-date { font-size: 12px; color: #64748b; }
-
-    /* Stats strip as description list */
-    dl.group-stats-strip {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      padding: 0.75rem 0;
-      border-top: 1px solid #e0f7f6;
-      margin-top: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    dl.group-stats-strip dt {
-      font-size: 10px; font-weight: 700; color: #64748b;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
-
-    dl.group-stats-strip dd {
-      font-size: 15px; font-weight: 700; color: #034e52;
-      margin-left: 0;
-    }
-
-    .stat-group { display: flex; flex-direction: column; gap: 2px; }
-
-    hr.strip-divider { width: 1px; height: 28px; border: none; background: #e0f7f6; margin: 0; }
-
-    .empty-members { text-align: center; padding: 2rem; color: #64748b; font-size: 13px; font-style: italic; }
-
-    .back-link {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; color: #0e9490; font-weight: 600; cursor: pointer;
-      background: none; border: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 0; margin-bottom: 1.25rem; transition: color 0.2s ease;
-    }
-    .back-link:hover { color: #034e52; }
-
-    /* Fix italic defaults on i and address */
-    i.logo-mark, address.header-avatar { font-style: normal; }
-
-    /* Simplified payment button styles */
-    .payment-button-container {
-      margin-top: 1rem;
-      text-align: center;
-    }
-
-    .simulate-payment-btn {
-      padding: 12px 28px;
-      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      width: 100%;
-      max-width: 300px;
-    }
-
-    .simulate-payment-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
-    }
-
-    .simulate-payment-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* Modal styles */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .modal-overlay[hidden] {
-      display: none;
-    }
-
-    .modal {
-      background: white;
-      border-radius: 16px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid #e0f7f6;
-    }
-
-    .modal-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #034e52;
-      margin: 0;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #64748b;
-      padding: 0;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      transition: background 0.2s;
-    }
-
-    .modal-close:hover {
-      background: #f0fafa;
-    }
-
-    .payment-confirm-body {
-      padding: 1.5rem;
-      text-align: center;
-    }
-
-    .payment-amount-display {
-      font-size: 32px;
-      font-weight: 700;
-      color: #034e52;
-      margin: 0 0 1rem 0;
-    }
-
-    .payment-confirm-desc {
-      font-size: 14px;
-      color: #64748b;
-      margin: 0;
-    }
-
-    .modal-footer {
-      display: flex;
-      gap: 1rem;
-      justify-content: flex-end;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid #e0f7f6;
-    }
-
-    .print-btn {
-      padding: 8px 16px;
-      background: #f0fafa;
-      border: 1px solid #e0f7f6;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      color: #64748b;
-    }
-
-    .confirm-pay-btn {
-      padding: 8px 20px;
-      background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .confirm-pay-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .status-banner {
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-    }
-
-    .status-banner.success {
-      background: #e0f7f6;
-      color: #034e52;
-      border-left: 3px solid #0e9490;
-    }
-
-    .status-banner.closed {
-      background: #fef2f2;
-      color: #991b1b;
-      border-left: 3px solid #ef4444;
-    }
-
-    .action-footer {
-      margin-top: 1.5rem;
-      text-align: center;
-    }
-
-    #view-contributions-btn {
-      padding: 10px 24px;
-      background: white;
-      border: 2px solid #0e9490;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #0e9490;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    #view-contributions-btn:hover {
-      background: #0e9490;
-      color: white;
-    }
-
-    .modal-section {
-      padding: 1rem;
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-  </style>
+  <link rel="stylesheet" href="../css/group-admin.css" />
 </head>
 <body>
 
@@ -399,22 +62,19 @@
       </dl>
     </article>
 
+
     <article class="card">
       <header class="section-header">
         <h2 class="card-title">Onboard a new member</h2>
       </header>
       <p>Enter the email address of a registered user to add them to this group.</p>
       <section class="add-member-form">
-        <input
-          type="email"
-          id="member-email"
-          placeholder="member@example.com"
-          autocomplete="off"
-        />
+        <input type="email" id="member-email" placeholder="member@example.com" autocomplete="off" />
         <button class="btn-add" id="btn-add-member">Add member</button>
         <p class="form-feedback" id="add-feedback" hidden></p>
       </section>
     </article>
+
 
     <article class="card">
       <header class="section-header">
@@ -422,16 +82,12 @@
       </header>
       <p>Enter the email address of a registered user to assign them as treasurer for this group.</p>
       <section class="add-member-form">
-        <input
-          type="email"
-          id="treasurer-email"
-          placeholder="treasurer@example.com"
-          autocomplete="off"
-        />
+        <input type="email" id="treasurer-email" placeholder="treasurer@example.com" autocomplete="off" />
         <button class="btn-add" id="btn-assign-treasurer">Assign Treasurer</button>
         <p class="form-feedback" id="assign-feedback" hidden></p>
       </section>
     </article>
+
 
     <article class="card">
       <header class="section-header">
@@ -443,12 +99,21 @@
       </section>
     </article>
 
-    <!-- Simple payment button - no icons or text -->
-    <article class="card">
-      <div class="payment-button-container">
-        <button id="simulate-payment-btn" class="simulate-payment-btn">💳 Simulate Payment</button>
-      </div>
+
+    <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
+    <article class="card" id="payment-status-card">
+      <h2 class="card-title">My contribution this cycle</h2>
+      <section class="payment-status-row">
+        <mark id="payment-status-icon" class="payment-status-icon"></mark>
+        <section class="payment-status-body">
+          <p id="payment-status-label" class="payment-status-label"></p>
+          <p id="payment-status-sub"   class="payment-status-sub"></p>
+          <small id="payment-ref"      class="payment-ref" hidden></small>
+        </section>
+        <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+      </section>
     </article>
+
 
     <footer class="action-footer">
       <button id="view-contributions-btn">View contributions</button>
@@ -456,24 +121,28 @@
 
   </main>
 
+
+  <!-- Payment confirmation modal -->
   <aside id="payment-confirm-modal" class="modal-overlay" hidden>
     <article class="modal payment-modal">
       <header class="modal-header">
-        <h2 class="modal-title">Confirm Payment</h2>
+        <h2 class="modal-title">Confirm payment</h2>
         <button id="close-payment-modal" class="modal-close" aria-label="Close payment modal">✕</button>
       </header>
       <section class="payment-confirm-body">
         <p id="confirm-amount-display" class="payment-amount-display"></p>
         <p class="payment-confirm-desc">
-          This is a simulated payment. Your contribution will be recorded as paid for this cycle.
+          This is a simulated payment. Your contribution will be recorded
+          as pending until the treasurer confirms it.
         </p>
       </section>
       <footer class="modal-footer payment-modal-footer">
-        <button id="cancel-payment-btn" class="print-btn">Cancel</button>
-        <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm Payment</button>
+        <button id="cancel-payment-btn"  class="print-btn">Cancel</button>
+        <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm payment</button>
       </footer>
     </article>
   </aside>
+
 
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>

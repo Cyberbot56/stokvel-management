@@ -116,38 +116,74 @@ async function handleConfirmPayment() {
   }
 }
 
-async function handleSimulatePayment() {
-  const userId = localStorage.getItem('userId');
-  const groupId = currentGroupId;
-  const amount = currentGroup?.contributionAmount;
-  
-  if (!userId || !groupId || !amount) {
-    alert('Missing payment information. Please refresh the page.');
-    return;
+// Renders the payment status card with three states:
+// unpaid → shows amount + Pay now button
+// pending → shows amount + Awaiting confirmation (treasurer must confirm)
+// paid → shows amount, paid date, and transaction reference
+function renderPaymentCard(statusData) {
+  const icon  = document.getElementById('payment-status-icon');
+  const label = document.getElementById('payment-status-label');
+  const sub   = document.getElementById('payment-status-sub');
+  const ref   = document.getElementById('payment-ref');
+  const btn   = document.getElementById('pay-now-btn');
+
+  if (!icon || !label || !sub || !btn) return;
+
+  if (statusData.hasPaidThisCycle) {
+    const paidDate    = new Date(statusData.lastPayment.paidAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
+    icon.textContent  = '\u2713';
+    icon.className    = 'payment-status-icon paid-icon';
+    label.textContent = 'Paid';
+    label.className   = 'payment-status-label paid-label';
+    sub.textContent   = formatCurrency(statusData.contributionAmount) + ' \u00b7 ' + paidDate;
+    btn.hidden        = true;
+    if (ref && statusData.lastPayment.transactionRef) {
+      ref.textContent = 'Ref: ' + statusData.lastPayment.transactionRef;
+      ref.hidden      = false;
+    }
+
+  } else if (statusData.hasPendingPayment) {
+    icon.textContent  = '\u23f3';
+    icon.className    = 'payment-status-icon pending-icon';
+    label.textContent = 'Pending';
+    label.className   = 'payment-status-label pending-label';
+    sub.textContent   = formatCurrency(statusData.contributionAmount) + ' \u00b7 Awaiting confirmation';
+    btn.hidden        = true;
+    if (ref && statusData.pendingPayment.transactionRef) {
+      ref.textContent = 'Ref: ' + statusData.pendingPayment.transactionRef;
+      ref.hidden      = false;
+    }
+
+  } else {
+    icon.textContent  = '!';
+    icon.className    = 'payment-status-icon unpaid-icon';
+    label.textContent = 'Unpaid';
+    label.className   = 'payment-status-label unpaid-label';
+    sub.textContent   = formatCurrency(statusData.contributionAmount) + ' due this cycle';
+    if (ref) ref.hidden = true;
+    btn.hidden          = false;
+    btn.dataset.amount      = statusData.contributionAmount;
+    btn.dataset.groupid     = currentGroupId;
+    btn.dataset.userid      = localStorage.getItem('userId');
+    btn.dataset.treasurerid = localStorage.getItem('userId');
   }
-  
+}
+
+// Pay now — checks status before opening modal to guard against double-payment.
+async function handlePayNow() {
+  const btn     = document.getElementById('pay-now-btn');
+  const userId  = parseInt(btn.dataset.userid);
+  const groupId = parseInt(btn.dataset.groupid);
+  const amount  = parseFloat(btn.dataset.amount);
+
   try {
-    const paymentStatus = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
-    
-    if (paymentStatus.hasPaidThisCycle) {
-      alert('You have already paid for this cycle!');
+    const status = await fetchPaymentStatus(userId, groupId);
+    if (status.hasPaidThisCycle || status.hasPendingPayment) {
+      renderPaymentCard(status);
       return;
     }
-    
-    if (paymentStatus.hasPendingPayment) {
-      alert('You already have a pending payment. Please wait for treasurer approval.');
-      return;
-    }
-    
-    openPaymentConfirmModal(
-      parseInt(userId),
-      parseInt(groupId),
-      parseFloat(amount),
-      parseInt(userId)
-    );
-    
+    openPaymentConfirmModal(userId, groupId, amount, userId);
   } catch (error) {
-    console.error('Error checking payment status:', error);
     alert('Unable to process payment. Please try again.');
   }
 }
@@ -177,30 +213,20 @@ function setupViewContributionsButton() {
   }
 }
 
-function setupPaymentSimulationButton() {
-  const simulateBtn = document.getElementById('simulate-payment-btn');
-  if (simulateBtn) {
-    simulateBtn.addEventListener('click', handleSimulatePayment);
-  }
-  
+function setupPaymentModal() {
+  const payNowBtn   = document.getElementById('pay-now-btn');
   const closePayBtn = document.getElementById('close-payment-modal');
-  const cancelPayBtn = document.getElementById('cancel-payment-btn');
-  const confirmPayBtn = document.getElementById('confirm-payment-btn');
-  const payConfirmModal = document.getElementById('payment-confirm-modal');
+  const cancelBtn   = document.getElementById('cancel-payment-btn');
+  const confirmBtn  = document.getElementById('confirm-payment-btn');
+  const modal       = document.getElementById('payment-confirm-modal');
 
+  if (payNowBtn)   payNowBtn.addEventListener('click', handlePayNow);
   if (closePayBtn) closePayBtn.addEventListener('click', closePaymentModal);
-  if (cancelPayBtn) cancelPayBtn.addEventListener('click', closePaymentModal);
-  if (confirmPayBtn) confirmPayBtn.addEventListener('click', handleConfirmPayment);
+  if (cancelBtn)   cancelBtn.addEventListener('click', closePaymentModal);
+  if (confirmBtn)  confirmBtn.addEventListener('click', handleConfirmPayment);
+  if (modal)       modal.addEventListener('click', (e) => { if (e.target === modal) closePaymentModal(); });
 
-  if (payConfirmModal) {
-    payConfirmModal.addEventListener('click', (e) => {
-      if (e.target === payConfirmModal) closePaymentModal();
-    });
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closePaymentModal();
-  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePaymentModal(); });
 }
 
 async function loadAndShowContributions() {
@@ -872,17 +898,28 @@ async function init() {
 
   setupBackLink();
   setupViewContributionsButton();
-  setupPaymentSimulationButton();
+  setupPaymentModal();
   setupFilterButtons();
   setupFlagModalButtons();
 
   document.getElementById("record-payment-form")
     ?.addEventListener("submit", recordPayment);
 
-  await loadGroupData();        
+  await loadGroupData();
   await loadMembers();
   await loadPaymentTracking();
   await loadContributions();
+
+  // Fetch and render the treasurer's own payment status for this group
+  const userId = localStorage.getItem('userId');
+  if (userId && currentGroupId) {
+    try {
+      const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(currentGroupId));
+      renderPaymentCard(statusData);
+    } catch (e) {
+      console.warn('Could not load payment status:', e.message);
+    }
+  }
 }
 
 init();

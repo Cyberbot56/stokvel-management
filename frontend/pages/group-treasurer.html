@@ -1,340 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Treasurer Dashboard – Stokvel App</title>
-<link rel="stylesheet" href="../css/group-overview.css" />
-<style>
-  .simulate-payment-btn {
-    padding: 12px 28px;
-    background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-    display: block;
-  }
-
-  .simulate-payment-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
-  }
-
-  .simulate-payment-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .payment-button-container {
-    margin-top: 1rem;
-    text-align: center;
-  }
-
-  /* Flag Modal Styles */
-  dialog {
-    border: 1px solid rgba(14, 148, 144, 0.2);
-    border-radius: 16px;
-    padding: 28px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 8px 32px rgba(14, 148, 144, 0.15);
-    background: white;
-  }
-
-  dialog h2 {
-    font-size: 16px;
-    font-weight: 700;
-    color: #034e52;
-    margin-bottom: 8px;
-  }
-
-  dialog p {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 18px;
-  }
-
-  dialog::backdrop {
-    background: rgba(0, 0, 0, 0.45);
-  }
-
-  .dialog-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 6px;
-  }
-
-  .dialog-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1.5px solid rgba(14, 148, 144, 0.25);
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    box-sizing: border-box;
-  }
-
-  .dialog-input:focus {
-    border-color: #0e9490;
-    box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
-  }
-
-  .dialog-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    justify-content: flex-end;
-  }
-
-  .btn-cancel {
-    padding: 9px 20px;
-    background: white;
-    color: #64748b;
-    border: 1.5px solid rgba(14, 148, 144, 0.25);
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-  }
-
-  .btn-confirm-flag {
-    padding: 9px 20px;
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-  }
-
-  .btn-flag {
-    padding: 6px 14px;
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1.5px solid #fecaca;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s ease;
-  }
-
-  .btn-flag:hover {
-    background: #fecaca;
-  }
-
-  .no-action {
-    font-size: 12px;
-    color: #94a3b8;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Treasurer Dashboard – Stokvel App</title>
+  <link rel="stylesheet" href="../css/group-overview.css" />
+  <link rel="stylesheet" href="../css/group-treasurer.css" />
 </head>
 
 <body>
-<header class="site-header">
-  <figure class="header-logo">
-    <i class="logo-mark"></i>
-    <h1>STOKVEL</h1>
-  </figure>
-  <p class="header-title">Treasurer Portal</p>
-  <nav class="header-right">
-    <address class="header-avatar" id="avatar"></address>
-    <button class="logout-btn" id="logoutBtn">Log out</button>
-  </nav>
-</header>
 
-<main class="page">
-  <button class="back-link" id="back-btn">← Back to Groups</button>
-  <output id="status-banner" class="status-banner" hidden></output>
+  <header class="site-header">
+    <figure class="header-logo">
+      <i class="logo-mark"></i>
+      <h1>STOKVEL</h1>
+    </figure>
+    <p class="header-title">Treasurer Portal</p>
+    <nav class="header-right">
+      <address class="header-avatar" id="avatar"></address>
+      <button class="logout-btn" id="logoutBtn">Log out</button>
+    </nav>
+  </header>
 
-  <article class="card" id="group-header-card">
-    <header class="group-title-row">
-      <section>
-        <h2 id="group-name">—</h2>
-        <p id="group-desc" class="group-desc">—</p>
+  <main class="page">
+
+    <button class="back-link" id="back-btn">← Back to Groups</button>
+
+    <output id="status-banner" class="status-banner" hidden></output>
+
+    <article class="card" id="group-header-card">
+      <header class="group-title-row">
+        <section>
+          <h2 id="group-name">—</h2>
+          <p id="group-desc" class="group-desc">—</p>
+        </section>
+        <section class="badge-group">
+          <strong id="status-badge" class="badge">—</strong>
+          <strong class="treasurer-badge">Treasurer</strong>
+        </section>
+      </header>
+
+      <dl class="group-stats-strip">
+        <section class="stat-group">
+          <dt>Total Collected</dt>
+          <dd id="stat-total-collected">R 0.00</dd>
+        </section>
+        <hr class="strip-divider">
+        <section class="stat-group">
+          <dt>Target</dt>
+          <dd id="stat-amount">—</dd>
+        </section>
+        <hr class="strip-divider">
+        <section class="stat-group">
+          <dt>Cycle Progress</dt>
+          <dd id="stat-cycle">—</dd>
+        </section>
+      </dl>
+    </article>
+
+
+    <article class="card">
+      <header class="section-header">
+        <h2 class="card-title">Record Member Contribution</h2>
+      </header>
+
+      <form class="contribution-form" id="record-payment-form">
+        <section class="form-group">
+          <label for="member-select">Select Member</label>
+          <select id="member-select" required>
+            <option value="">Choose a member...</option>
+          </select>
+        </section>
+
+        <section class="form-group">
+          <label for="payment-amount">Amount Received (R)</label>
+          <input type="number" id="payment-amount" placeholder="0.00" step="0.01" required />
+        </section>
+
+        <section class="form-group">
+          <label for="payment-date">Date Received</label>
+          <input type="date" id="payment-date" required />
+        </section>
+
+        <button type="submit" class="btn-record" id="btn-record-payment">Confirm Payment</button>
+      </form>
+
+      <output class="form-feedback" id="payment-feedback" hidden></output>
+    </article>
+
+
+    <article class="card">
+      <header class="section-header">
+        <h2 class="card-title">Payment Tracking</h2>
+        <output id="member-count">—</output>
+      </header>
+
+      <section id="members-container">
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Payment Due</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="member-list-body">
+            <tr>
+              <td colspan="4" style="text-align: center;">Loading members...</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
-      <section class="badge-group">
-        <strong id="status-badge" class="badge">—</strong>
-        <strong class="treasurer-badge">Treasurer</strong>
+    </article>
+
+
+    <article class="card">
+      <header class="section-header">
+        <h2 class="card-title">Missed Contributions</h2>
+        <output id="missedCount">—</output>
+      </header>
+
+      <nav class="filter-group" aria-label="Filter contributions by status">
+        <button class="filter-pill active" id="filter-all"     data-status="all">All</button>
+        <button class="filter-pill"        id="filter-pending" data-status="pending">Pending</button>
+        <button class="filter-pill"        id="filter-paid"    data-status="paid">Paid</button>
+        <button class="filter-pill"        id="filter-missed"  data-status="missed">Missed</button>
+      </nav>
+
+      <output id="errorBanner"  class="error-banner"  hidden></output>
+      <output id="loadingMsg"   class="loading-msg"   hidden>Loading contributions...</output>
+      <output id="emptyState"   class="empty-state"   hidden>No contributions found for this group.</output>
+
+      <section id="tableContainer" hidden>
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Due Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Note</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="contributionsBody"></tbody>
+        </table>
       </section>
-    </header>
+    </article>
 
-    <dl class="group-stats-strip">
-      <section class="stat-group">
-        <dt>Total Collected</dt>
-        <dd id="stat-total-collected">R 0.00</dd>
+
+    <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
+    <article class="card" id="payment-status-card">
+      <h2 class="card-title">My contribution this cycle</h2>
+      <section class="payment-status-row">
+        <mark id="payment-status-icon" class="payment-status-icon"></mark>
+        <section class="payment-status-body">
+          <p id="payment-status-label" class="payment-status-label"></p>
+          <p id="payment-status-sub"   class="payment-status-sub"></p>
+          <small id="payment-ref"      class="payment-ref" hidden></small>
+        </section>
+        <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
       </section>
-      <section class="stat-group">
-        <dt>Target</dt>
-        <dd id="stat-amount">—</dd>
-      </section>
-      <section class="stat-group">
-        <dt>Cycle Progress</dt>
-        <dd id="stat-cycle">—</dd>
-      </section>
-    </dl>
-  </article>
+    </article>
 
-  <article class="card">
-    <header class="section-header">
-      <h2 class="card-title">Record Member Contribution</h2>
-    </header>
 
-    <form class="contribution-form" id="record-payment-form">
-      <section class="form-group">
-        <label for="member-select">Select Member</label>
-        <select id="member-select" required>
-          <option value="">Choose a member...</option>
-        </select>
-      </section>
-
-      <section class="form-group">
-        <label for="payment-amount">Amount Received (R)</label>
-        <input type="number" id="payment-amount" placeholder="0.00" step="0.01" required />
-      </section>
-
-      <section class="form-group">
-        <label for="payment-date">Date Received</label>
-        <input type="date" id="payment-date" required />
-      </section>
-
-      <button type="submit" class="btn-record" id="btn-record-payment">Confirm Payment</button>
-    </form>
-
-    <output class="form-feedback" id="payment-feedback" hidden></output>
-  </article>
-
-  <article class="card">
-    <header class="section-header">
-      <h2 class="card-title">Payment Tracking</h2>
-      <output id="member-count">—</output>
-    </header>
-
-    <section id="members-container">
-      <table class="members-table">
-        <thead>
-          <tr>
-            <th>Member</th>
-            <th>Payment Due</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="member-list-body">
-          <tr>
-            <td colspan="4" style="text-align: center;">Loading members...</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-  </article>
-
-  <article class="card">
-    <header class="section-header">
-      <h2 class="card-title">Missed Contributions</h2>
-      <output id="missedCount">—</output>
-    </header>
-
-    <section class="filter-group">
-      <button class="filter-pill active" id="filter-all" data-status="all">All</button>
-      <button class="filter-pill" id="filter-pending" data-status="pending">Pending</button>
-      <button class="filter-pill" id="filter-paid" data-status="paid">Paid</button>
-      <button class="filter-pill" id="filter-missed" data-status="missed">Missed</button>
-    </section>
-
-    <output id="errorBanner" class="error-banner" hidden></output>
-    <output id="loadingMsg" class="loading-msg" hidden>Loading contributions...</output>
-    <output id="emptyState" class="empty-state" hidden>No contributions found for this group.</output>
-
-    <section id="tableContainer" hidden>
-      <table class="members-table">
-        <thead>
-          <tr>
-            <th>Member</th>
-            <th>Due Date</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Note</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="contributionsBody"></tbody>
-      </table>
-    </section>
-  </article>
-
-  <!-- Payment simulation button for treasurer -->
-  <article class="card">
-    <div class="payment-button-container">
-      <button id="simulate-payment-btn" class="simulate-payment-btn">💳 Simulate My Payment</button>
-    </div>
-  </article>
-
-  <footer class="action-footer">
-    <button id="view-contributions-btn">View contributions</button>
-  </footer>
-</main>
-
-<aside id="payment-confirm-modal" class="modal-overlay" hidden>
-  <article class="modal payment-modal">
-    <header class="modal-header">
-      <h2 class="modal-title">Confirm Payment</h2>
-      <button id="close-payment-modal" class="modal-close" aria-label="Close payment modal">✕</button>
-    </header>
-    <section class="payment-confirm-body">
-      <p id="confirm-amount-display" class="payment-amount-display"></p>
-      <p class="payment-confirm-desc">
-        This is a simulated payment. Your contribution will be recorded as paid for this cycle.
-      </p>
-    </section>
-    <footer class="modal-footer payment-modal-footer">
-      <button id="cancel-payment-btn" class="print-btn">Cancel</button>
-      <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm Payment</button>
+    <footer class="action-footer">
+      <button id="view-contributions-btn">View contributions</button>
     </footer>
-  </article>
-</aside>
 
-<!-- Flag as missed modal -->
-<dialog id="flagModal">
-  <h2>Flag as missed?</h2>
-  <p>
-    This will mark <strong id="modalMemberName"></strong>'s contribution
-    as missed and record a note.
-  </p>
-  <label class="dialog-label" for="flagNote">Reason <span style="font-weight:400;text-transform:none;">(optional)</span></label>
-  <input
-    type="text"
-    id="flagNote"
-    class="dialog-input"
-    placeholder="e.g. No payment received by due date"
-    autocomplete="off"
-  />
-  <div class="dialog-actions">
-    <button class="btn-cancel" id="cancelFlagBtn">Cancel</button>
-    <button class="btn-confirm-flag" id="confirmFlagBtn">Flag as missed</button>
-  </div>
-</dialog>
+  </main>
 
-<script src="../scripts/config.js"></script>
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-<script src="../scripts/auth_service.js"></script>
-<script src="../scripts/Missed-contributions.js"></script>
+
+  <!-- Payment confirmation modal -->
+  <aside id="payment-confirm-modal" class="modal-overlay" hidden>
+    <article class="modal payment-modal">
+      <header class="modal-header">
+        <h2 class="modal-title">Confirm payment</h2>
+        <button id="close-payment-modal" class="modal-close" aria-label="Close payment modal">✕</button>
+      </header>
+      <section class="payment-confirm-body">
+        <p id="confirm-amount-display" class="payment-amount-display"></p>
+        <p class="payment-confirm-desc">
+          This is a simulated payment. Your contribution will be recorded
+          as pending until the treasurer confirms it.
+        </p>
+      </section>
+      <footer class="modal-footer payment-modal-footer">
+        <button id="cancel-payment-btn"  class="print-btn">Cancel</button>
+        <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm payment</button>
+      </footer>
+    </article>
+  </aside>
+
+
+  <!-- Flag as missed dialog -->
+  <dialog id="flagModal">
+    <h2>Flag as missed?</h2>
+    <p>
+      This will mark <strong id="modalMemberName"></strong>'s contribution
+      as missed and record a note.
+    </p>
+    <label class="dialog-label" for="flagNote">
+      Reason <span style="font-weight:400; text-transform:none;">(optional)</span>
+    </label>
+    <input
+      type="text"
+      id="flagNote"
+      class="dialog-input"
+      placeholder="e.g. No payment received by due date"
+      autocomplete="off"
+    />
+    <menu class="dialog-actions">
+      <li><button class="btn-cancel"       id="cancelFlagBtn">Cancel</button></li>
+      <li><button class="btn-confirm-flag" id="confirmFlagBtn">Flag as missed</button></li>
+    </menu>
+  </dialog>
+
+
+  <script src="../scripts/config.js"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="../scripts/auth_service.js"></script>
+  <script src="../scripts/Missed-contributions.js"></script>
 </body>
 </html>

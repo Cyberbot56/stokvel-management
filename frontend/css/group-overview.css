@@ -409,7 +409,6 @@ progress::-moz-progress-bar      { background: #0e9490; border-radius: 99px; }
   padding: 1rem;
 }
 
-.modal-overlay
 /* ── Header right group (avatar + logout) ── */
 .header-right {
     display: flex;
@@ -1126,3 +1125,138 @@ dialog::backdrop {
   padding: 2px 8px;
   border-radius: 12px;
 }
+/* ── Payment status card ── */
+
+.payment-status-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.payment-status-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  font-style: normal;
+  flex-shrink: 0;
+}
+
+.paid-icon   { background: #e0f7f6; color: #0e9490; }
+.unpaid-icon  { background: #fef3c7; color: #b45309; }
+.pending-icon { background: #E6F1FB; color: #185FA5; }
+
+.payment-status-body { flex: 1; }
+
+.payment-status-label { font-size: 15px; font-weight: 700; }
+.paid-label           { color: #0e9490; }
+.unpaid-label         { color: #b45309; }
+.pending-label        { color: #185FA5; }
+
+.payment-status-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.payment-ref {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.pay-now-btn {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #0e9490;
+  color: white;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.pay-now-btn:hover  { background: #034e52; transform: translateY(-1px); }
+.pay-now-btn:active { transform: translateY(0); }
+
+.status-banner.success {
+  background: #e0f7f6;
+  color: #034e52;
+  border-left: 3px solid #0e9490;
+}
+
+/* ── Payment confirmation modal ── */
+
+.payment-modal { max-width: 420px; }
+
+.payment-confirm-body {
+  text-align: center;
+  padding: 1.5rem 0 1rem;
+}
+
+.payment-amount-display {
+  font-size: 42px;
+  font-weight: 700;
+  color: #0e9490;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.payment-confirm-desc {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  background: #f0fafa;
+  border-left: 3px solid #2dd4bf;
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  text-align: left;
+}
+
+.payment-modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirm-pay-btn {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #0e9490;
+  color: white;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: background 0.2s ease;
+}
+
+.confirm-pay-btn:hover    { background: #034e52; }
+.confirm-pay-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+/* ── Initiate payout button (treasurer/admin) ── */
+
+.initiate-payout-btn {
+  font-size: 13px;
+  padding: 8px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #0e9490;
+  color: white;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.initiate-payout-btn:hover { background: #034e52; transform: translateY(-1px); }
