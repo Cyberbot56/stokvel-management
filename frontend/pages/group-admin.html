@@ -100,7 +100,7 @@
     </article>
 
 
-    <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
+    <!-- Payment status card -->
     <article class="card" id="payment-status-card">
       <h2 class="card-title">My contribution this cycle</h2>
       <section class="payment-status-row">
@@ -111,6 +111,39 @@
           <small id="payment-ref"      class="payment-ref" hidden></small>
         </section>
         <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+      </section>
+    </article>
+
+
+    <!-- Initiate payout card -->
+    <article class="card">
+      <header class="section-header">
+        <h2 class="card-title">Initiate a payout</h2>
+      </header>
+      <p>Select a member to receive the payout for this cycle.</p>
+      <section class="add-member-form">
+        <select id="payout-recipient">
+          <option value="">— Select a member —</option>
+        </select>
+        <input type="number" id="payout-cycle" placeholder="Cycle number" min="1" />
+        <textarea id="payout-notes" placeholder="Notes (optional)" rows="2"></textarea>
+        <p class="payout-amount-preview">
+          Payout amount: <strong id="payout-amount-display">—</strong>
+        </p>
+        <button class="btn-add" id="btn-initiate-payout">Initiate Payout</button>
+        <p class="form-feedback" id="payout-feedback" hidden></p>
+      </section>
+    </article>
+
+
+    <!-- Payout history card -->
+    <article class="card">
+      <header class="section-header">
+        <h2 class="card-title">Payout history</h2>
+        <output id="payout-count"></output>
+      </header>
+      <section id="payouts-container">
+        <p class="empty-payouts">Loading payouts...</p>
       </section>
     </article>
 
@@ -139,6 +172,23 @@
       <footer class="modal-footer payment-modal-footer">
         <button id="cancel-payment-btn"  class="print-btn">Cancel</button>
         <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm payment</button>
+      </footer>
+    </article>
+  </aside>
+
+
+  <!-- Payout confirmation modal -->
+  <aside id="confirm-modal" class="modal-overlay" hidden>
+    <article class="modal payment-modal">
+      <header class="modal-header">
+        <h2 class="modal-title">Confirm payout</h2>
+      </header>
+      <section class="payment-confirm-body">
+        <p id="confirm-modal-body"></p>
+      </section>
+      <footer class="modal-footer payment-modal-footer">
+        <button id="modal-cancel-btn"  class="print-btn">Cancel</button>
+        <button id="modal-confirm-btn" class="confirm-pay-btn">Confirm</button>
       </footer>
     </article>
   </aside>
