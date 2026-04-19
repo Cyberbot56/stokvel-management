@@ -7,6 +7,7 @@ var currentGroupId = new URLSearchParams(window.location.search).get('groupId');
 var pendingFlagId = null;
 var allContributions = [];
 var treasurerId = localStorage.getItem("userId");
+var currentGroup = null; // Add this for payment simulation
 
 // ── Helper Functions ───────────────────────────────────
 function formatCurrency(amount) {
@@ -24,6 +25,133 @@ async function getAuthToken() {
   } catch (error) {
     console.error("Token error:", error);
     return null;
+  }
+}
+
+// ── Payment Simulation Functions ───────────────────────
+async function fetchPaymentStatus(userId, groupId) {
+  const token = await getAuthToken();
+  const response = await fetch(`${config.apiBase}/api/payments/status/${userId}/${groupId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error('Failed to fetch payment status');
+  return await response.json();
+}
+
+async function simulatePayment(userId, groupId, amount, treasurerId) {
+  const token = await getAuthToken();
+  const response = await fetch(`${config.apiBase}/api/payments/simulate`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ userId, groupId, amount, treasurerId })
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Payment failed');
+  }
+  return await response.json();
+}
+
+function openPaymentConfirmModal(userId, groupId, amount, treasurerId) {
+  const modal = document.getElementById('payment-confirm-modal');
+  const amountEl = document.getElementById('confirm-amount-display');
+  const confirmBtn = document.getElementById('confirm-payment-btn');
+
+  if (!modal || !amountEl || !confirmBtn) {
+    console.error('Modal elements not found');
+    return;
+  }
+
+  amountEl.textContent = formatCurrency(amount);
+
+  confirmBtn.dataset.userid = userId;
+  confirmBtn.dataset.groupid = groupId;
+  confirmBtn.dataset.amount = amount;
+  confirmBtn.dataset.treasurerid = treasurerId;
+
+  modal.hidden = false;
+}
+
+function closePaymentModal() {
+  const modal = document.getElementById('payment-confirm-modal');
+  if (modal) modal.hidden = true;
+}
+
+async function handleConfirmPayment() {
+  const confirmBtn = document.getElementById('confirm-payment-btn');
+  if (!confirmBtn) return;
+
+  const userId = parseInt(confirmBtn.dataset.userid);
+  const groupId = parseInt(confirmBtn.dataset.groupid);
+  const amount = parseFloat(confirmBtn.dataset.amount);
+  const treasurerId = parseInt(confirmBtn.dataset.treasurerid);
+
+  confirmBtn.textContent = 'Processing...';
+  confirmBtn.disabled = true;
+
+  try {
+    const result = await simulatePayment(userId, groupId, amount, treasurerId);
+    console.log('Payment initiated:', result);
+    closePaymentModal();
+
+    // Show success banner
+    const banner = document.getElementById('status-banner');
+    banner.textContent = `✅ Payment initiated! Reference: ${result.transactionRef}. Awaiting treasurer approval.`;
+    banner.className = 'status-banner success';
+    banner.hidden = false;
+    setTimeout(() => { banner.hidden = true; }, 5000);
+
+    // Refresh contributions
+    await loadPaymentTracking();
+    await loadContributions();
+
+  } catch (error) {
+    console.error('Payment error:', error);
+    alert('Payment failed: ' + error.message);
+  } finally {
+    confirmBtn.textContent = 'Confirm Payment';
+    confirmBtn.disabled = false;
+  }
+}
+
+async function handleSimulatePayment() {
+  const userId = localStorage.getItem('userId');
+  const groupId = currentGroupId;
+  const amount = currentGroup?.contributionAmount;
+  
+  if (!userId || !groupId || !amount) {
+    alert('Missing payment information. Please refresh the page.');
+    return;
+  }
+  
+  try {
+    // Check if already paid
+    const paymentStatus = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
+    
+    if (paymentStatus.hasPaidThisCycle) {
+      alert('You have already paid for this cycle!');
+      return;
+    }
+    
+    if (paymentStatus.hasPendingPayment) {
+      alert('You already have a pending payment. Please wait for treasurer approval.');
+      return;
+    }
+    
+    // Open confirmation modal with amount
+    openPaymentConfirmModal(
+      parseInt(userId),
+      parseInt(groupId),
+      parseFloat(amount),
+      parseInt(userId)
+    );
+    
+  } catch (error) {
+    console.error('Error checking payment status:', error);
+    alert('Unable to process payment. Please try again.');
   }
 }
 
@@ -50,6 +178,34 @@ function setupViewContributionsButton() {
   if (viewContribBtn) {
     viewContribBtn.addEventListener('click', loadAndShowContributions);
   }
+}
+
+// Setup payment simulation button
+function setupPaymentSimulationButton() {
+  const simulateBtn = document.getElementById('simulate-payment-btn');
+  if (simulateBtn) {
+    simulateBtn.addEventListener('click', handleSimulatePayment);
+  }
+  
+  // Payment modal buttons
+  const closePayBtn = document.getElementById('close-payment-modal');
+  const cancelPayBtn = document.getElementById('cancel-payment-btn');
+  const confirmPayBtn = document.getElementById('confirm-payment-btn');
+  const payConfirmModal = document.getElementById('payment-confirm-modal');
+
+  if (closePayBtn) closePayBtn.addEventListener('click', closePaymentModal);
+  if (cancelPayBtn) cancelPayBtn.addEventListener('click', closePaymentModal);
+  if (confirmPayBtn) confirmPayBtn.addEventListener('click', handleConfirmPayment);
+
+  if (payConfirmModal) {
+    payConfirmModal.addEventListener('click', (e) => {
+      if (e.target === payConfirmModal) closePaymentModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePaymentModal();
+  });
 }
 
 async function loadAndShowContributions() {
@@ -86,7 +242,6 @@ async function loadAndShowContributions() {
 }
 
 function displayContributionsModal(contributions) {
-  // Create a modal to display the contribution history
   let modal = document.getElementById("contributions-modal");
   
   if (!modal) {
@@ -137,11 +292,33 @@ function displayContributionsModal(contributions) {
       const paidDate = contrib.paidAt ? new Date(contrib.paidAt).toLocaleDateString() : "—";
       const dueDate = contrib.dueDate ? new Date(contrib.dueDate).toLocaleDateString() : "—";
       
+      let statusColor = "#2b7e3a";
+      let statusBg = "#2b7e3a20";
+      let statusText = contrib.status;
+      
+      if (contrib.status === "pending") {
+        statusColor = "#ff9800";
+        statusBg = "#ff980020";
+        statusText = "Pending";
+      } else if (contrib.status === "paid") {
+        statusColor = "#2b7e3a";
+        statusBg = "#2b7e3a20";
+        statusText = "Paid";
+      } else if (contrib.status === "missed") {
+        statusColor = "#f44336";
+        statusBg = "#f4433620";
+        statusText = "Missed";
+      } else if (contrib.status === "Not Paid") {
+        statusColor = "#64748b";
+        statusBg = "#e2e8f0";
+        statusText = "Not Paid";
+      }
+      
       html += `
         <tr style="border-bottom:1px solid #eee;">
           <td style="padding:8px;">${paidDate}</td>
           <td style="padding:8px;">${formatCurrency(parseFloat(contrib.amount))}</td>
-          <td style="padding:8px;"><span style="background:#2b7e3a20; color:#2b7e3a; padding:4px 12px; border-radius:20px;">${contrib.status}</span></td>
+          <td style="padding:8px;"><span style="background:${statusBg}; color:${statusColor}; padding:4px 12px; border-radius:20px;">${statusText}</span></td>
           <td style="padding:8px;">${dueDate}</td>
         </tr>
       `;
@@ -154,9 +331,9 @@ function displayContributionsModal(contributions) {
             <td style="padding:12px 8px;">Total</td>
             <td style="padding:12px 8px;">${formatCurrency(totalPaid)}</td>
             <td colspan="2"></td>
-          </tr>
+           </tr>
         </tfoot>
-      </table>
+       </table>
     `;
     
     content.innerHTML = html;
@@ -179,6 +356,9 @@ async function loadMembers() {
 
     const groups = await res.json();
     const group = groups.find(g => String(g.groupId) === String(currentGroupId));
+    
+    // Store current group for payment simulation
+    currentGroup = group;
 
     if (!group) return;
 
@@ -197,47 +377,75 @@ async function loadMembers() {
   }
 }
 
-// ── Payment Tracking Table ─────────────────────────────
+// ── Payment Tracking Table (shows due date instead of last payment) ─────────────
 async function loadPaymentTracking() {
-  const tbody = document.getElementById("member-list-body");
-  if (!tbody) return;
+    const tbody = document.getElementById("member-list-body");
+    if (!tbody) return;
 
-  tbody.innerHTML = `<tr><td colspan="4">Loading...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4">Loading...</td></tr>`;
 
-  try {
-    const token = await getAuthToken();
+    try {
+        const token = await getAuthToken();
 
-    const res = await fetch(`${config.apiBase}/api/get-all-contributions/group/${currentGroupId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+        // Use the new endpoint that returns members with their contribution status
+        const res = await fetch(`${config.apiBase}/api/group-members-with-status/${currentGroupId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
 
-    const result = await res.json();
-    const data = result.contributions || result;
+        const result = await res.json();
 
-    if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4">No data</td></tr>`;
-      return;
+        if (!result.members || result.members.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4">No members found</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        result.members.forEach(member => {
+            const row = document.createElement("tr");
+            
+            let statusText = member.contributionStatus;
+            let statusColor = "";
+            let showFlagButton = false;
+            
+            if (member.contributionStatus === "Not Paid") {
+                statusColor = "#64748b";
+                showFlagButton = true;
+            } else if (member.contributionStatus === "pending") {
+                statusColor = "#ff9800";
+                showFlagButton = true;
+            } else if (member.contributionStatus === "paid") {
+                statusColor = "#2b7e3a";
+                showFlagButton = false;
+            } else if (member.contributionStatus === "missed") {
+                statusColor = "#f44336";
+                showFlagButton = false;
+            }
+            
+            const dueDateFormatted = member.dueDate ? new Date(member.dueDate).toLocaleDateString() : "—";
+            
+            row.innerHTML = `
+                <td style="padding: 11px 12px;">${member.name}</td>
+                <td style="padding: 11px 12px;">${dueDateFormatted}</td>
+                <td style="padding: 11px 12px;"><span style="color:${statusColor}; font-weight:600;">${statusText}</span></td>
+                <td style="padding: 11px 12px;">
+                    ${showFlagButton && member.contributionId ? `<button class="btn-flag" onclick="openFlagModal(${member.contributionId}, '${member.name}')">Flag</button>` : '—'}
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+        
+        // Update member count display
+        const memberCountEl = document.getElementById('member-count');
+        if (memberCountEl) {
+            memberCountEl.textContent = `${result.members.length} total`;
+        }
+
+    } catch (err) {
+        console.error("Tracking error:", err);
+        tbody.innerHTML = `<tr><td colspan="4">Error loading data: ${err.message}</td></tr>`;
     }
-
-    tbody.innerHTML = "";
-
-    data.forEach(c => {
-      const row = document.createElement("tr");
-      
-      row.innerHTML = `
-        <td>${c.users?.name || "Unknown"}</td>
-        <td>${c.paidAt ? new Date(c.paidAt).toLocaleDateString() : "—"}</td>
-        <td>${c.status}</td>
-        <td><button class="btn-flag" onclick="openFlagModal(${c.contributionId}, '${c.users?.name}')">Flag</button></td>
-      `;
-
-      tbody.appendChild(row);
-    });
-
-  } catch (err) {
-    console.error("Tracking error:", err);
-    tbody.innerHTML = `<tr><td colspan="4">Error loading data</td></tr>`;
-  }
 }
 
 function showFeedback(message, type) {
@@ -253,7 +461,7 @@ function showFeedback(message, type) {
   }, 3000);
 }
 
-// ── Record Payment ─────────────────────────────────────
+// ── Record Payment (Treasurer marks as paid) ─────────────────────────────────────
 async function recordPayment(e) {
   e.preventDefault();
 
@@ -284,7 +492,10 @@ async function recordPayment(e) {
       })
     });
 
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed");
+    }
 
     showFeedback("Contribution recorded successfully", "success");
 
@@ -294,52 +505,86 @@ async function recordPayment(e) {
     await loadContributions();
     await updateTotalCollected();
 
-  } catch {
-    showFeedback("Failed to record contribution", "error");
+  } catch (error) {
+    showFeedback(error.message || "Failed to record contribution", "error");
   }
 }
 
 // ── Load Contributions (Missed Section) ────────────────
 async function loadContributions() {
-  try {
-    const token = await getAuthToken();
+    try {
+        const token = await getAuthToken();
 
-    const res = await fetch(`${config.apiBase}/api/get-all-contributions/group/${currentGroupId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+        const res = await fetch(`${config.apiBase}/api/group-members-with-status/${currentGroupId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
 
-    const result = await res.json();
-    const data = result.contributions || result; 
-    allContributions = data;
+        const result = await res.json();
+        
+        if (!result.members || result.members.length === 0) {
+            document.getElementById('emptyState').hidden = false;
+            document.getElementById('tableContainer').hidden = true;
+            return;
+        }
 
-    renderContributionsTable(data);
-    document.getElementById('tableContainer').hidden = false;
+        document.getElementById('emptyState').hidden = true;
+        document.getElementById('tableContainer').hidden = false;
+        
+        renderContributionsTable(result.members);
+        
+        // Update missed count
+        const missedCount = result.members.filter(m => m.contributionStatus === 'missed').length;
+        const missedCountEl = document.getElementById('missedCount');
+        if (missedCountEl) {
+            missedCountEl.textContent = `${missedCount} missed`;
+        }
 
-  } catch (err) {
-    console.error(err);
-  }
+    } catch (err) {
+        console.error(err);
+        document.getElementById('errorBanner').textContent = 'Failed to load contributions';
+        document.getElementById('errorBanner').hidden = false;
+    }
 }
 
-function renderContributionsTable(data) {
-  const tbody = document.getElementById('contributionsBody');
-  if (!tbody) return;
+function renderContributionsTable(members) {
+    const tbody = document.getElementById('contributionsBody');
+    if (!tbody) return;
 
-  tbody.innerHTML = "";
+    tbody.innerHTML = "";
 
-  data.forEach(c => {
-    const row = document.createElement("tr");
+    members.forEach(member => {
+        const row = document.createElement("tr");
+        
+        let statusText = member.contributionStatus;
+        let statusClass = "";
+        
+        if (member.contributionStatus === "Not Paid") {
+            statusClass = "pending";
+        } else if (member.contributionStatus === "pending") {
+            statusClass = "pending";
+        } else if (member.contributionStatus === "paid") {
+            statusClass = "paid";
+        } else if (member.contributionStatus === "missed") {
+            statusClass = "missed";
+        }
+        
+        const dueDateFormatted = member.dueDate ? new Date(member.dueDate).toLocaleDateString() : "—";
+        
+        row.innerHTML = `
+            <td style="padding: 11px 12px;">${member.name}</td>
+            <td style="padding: 11px 12px;">${dueDateFormatted}</td>
+            <td style="padding: 11px 12px;">${formatCurrency(member.amount)}</td>
+            <td style="padding: 11px 12px;"><span class="status-pill ${statusClass}">${statusText}</span></td>
+            <td style="padding: 11px 12px;">${member.note || "—"}</td>
+            <td style="padding: 11px 12px;">
+                ${(member.contributionStatus === "pending" || member.contributionStatus === "Not Paid") && member.contributionId ? 
+                    `<button class="btn-flag" onclick="openFlagModal(${member.contributionId}, '${member.name}')">Flag</button>` : 
+                    "—"}
+            </td>
+        `;
 
-    row.innerHTML = `
-      <td>${c.users?.name || "Unknown"}</td>
-      <td>${c.dueDate ? new Date(c.dueDate).toLocaleDateString() : "—"}</td>
-      <td>R ${c.amount}</td>
-      <td>${c.status}</td>
-      <td>${c.note || "—"}</td>
-      <td>${c.status === "pending" ? `<button class="btn-flag" onclick="openFlagModal(${c.contributionId}, '${c.users?.name}')">Flag</button>` : "—"}</td>
-    `;
-
-    tbody.appendChild(row);
-  });
+        tbody.appendChild(row);
+    });
 }
 
 // ─── Load Group Data (Header & Stats) ───────────────────────────────────────
@@ -356,6 +601,9 @@ async function loadGroupData() {
 
     const groups = await res.json();
     const group = groups.find(g => String(g.groupId) === String(currentGroupId));
+    
+    // Store current group for payment simulation
+    currentGroup = group;
 
     if (!group) {
       console.error("Group not found");
@@ -456,7 +704,8 @@ async function init() {
   }
 
   setupBackLink();
-  setupViewContributionsButton();  // ← ADDED THIS LINE
+  setupViewContributionsButton();
+  setupPaymentSimulationButton();
 
   document.getElementById("record-payment-form")
     ?.addEventListener("submit", recordPayment);

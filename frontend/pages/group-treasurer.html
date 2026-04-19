@@ -5,6 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Treasurer Dashboard – Stokvel App</title>
 <link rel="stylesheet" href="../css/group-overview.css" />
+<style>
+  .simulate-payment-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .simulate-payment-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
+  }
+
+  .simulate-payment-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .payment-button-container {
+    margin-top: 1rem;
+    text-align: center;
+  }
+</style>
 </head>
 
 <body>
@@ -140,22 +173,36 @@
     </section>
   </article>
 
-  <dialog id="flagModal">
-    <form method="dialog" class="modal-content">
-      <h3>Flag Missed Contribution</h3>
-      <p>Mark <strong id="modalMemberName"></strong>'s contribution as missed?</p>
-      <label for="flagNote">Note (optional):</label>
-      <textarea id="flagNote" rows="3" placeholder="Add reason or additional information..."></textarea>
-      <footer class="modal-actions">
-        <button type="button" class="btn-cancel">Cancel</button>
-        <button type="button" class="btn-confirm">Confirm Missed</button>
-      </footer>
-    </form>
-  </dialog>
+  <!-- Payment simulation button for treasurer -->
+  <article class="card">
+    <div class="payment-button-container">
+      <button id="simulate-payment-btn" class="simulate-payment-btn">💳 Simulate My Payment</button>
+    </div>
+  </article>
+
   <footer class="action-footer">
-      <button id="view-contributions-btn">View contributions</button>
+    <button id="view-contributions-btn">View contributions</button>
   </footer>
 </main>
+
+<aside id="payment-confirm-modal" class="modal-overlay" hidden>
+  <article class="modal payment-modal">
+    <header class="modal-header">
+      <h2 class="modal-title">Confirm Payment</h2>
+      <button id="close-payment-modal" class="modal-close" aria-label="Close payment modal">✕</button>
+    </header>
+    <section class="payment-confirm-body">
+      <p id="confirm-amount-display" class="payment-amount-display"></p>
+      <p class="payment-confirm-desc">
+        This is a simulated payment. Your contribution will be recorded as paid for this cycle.
+      </p>
+    </section>
+    <footer class="modal-footer payment-modal-footer">
+      <button id="cancel-payment-btn" class="print-btn">Cancel</button>
+      <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm Payment</button>
+    </footer>
+  </article>
+</aside>
 
 <script src="../scripts/config.js"></script>
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>

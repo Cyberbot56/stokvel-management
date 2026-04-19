@@ -37,6 +37,9 @@ const CURRENT_USER_ID = parseInt(localStorage.getItem('userId')) || null;
 
 const AVATAR_COLOURS = ["av-teal", "av-blue", "av-purple", "av-coral"];
 
+// Store current group for payment simulation
+let currentGroupForPayment = null;
+
 
 // ─── Helper functions ─────────────────────────────────────────────────────────
 
@@ -95,6 +98,158 @@ function getMockCycleAndPayout() {
 function fetchRules(groupId) {
   return new Promise((resolve) => {
     setTimeout(() => resolve(MOCK_RULES), 400);
+  });
+}
+
+// ─── Payment Simulation Functions ─────────────────────────────────────────────
+
+async function fetchPaymentStatus(userId, groupId) {
+  const token = await auth0Client.getTokenSilently();
+  const response = await fetch(`${config.apiBase}/api/payments/status/${userId}/${groupId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error('Failed to fetch payment status');
+  return await response.json();
+}
+
+async function simulatePayment(userId, groupId, amount, treasurerId) {
+  const token = await auth0Client.getTokenSilently();
+  const response = await fetch(`${config.apiBase}/api/payments/simulate`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ userId, groupId, amount, treasurerId })
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Payment failed');
+  }
+  return await response.json();
+}
+
+function openPaymentConfirmModal(userId, groupId, amount, treasurerId) {
+  const modal = document.getElementById('payment-confirm-modal');
+  const amountEl = document.getElementById('confirm-amount-display');
+  const confirmBtn = document.getElementById('confirm-payment-btn');
+
+  if (!modal || !amountEl || !confirmBtn) {
+    console.error('Modal elements not found');
+    return;
+  }
+
+  amountEl.textContent = formatCurrency(amount);
+
+  confirmBtn.dataset.userid = userId;
+  confirmBtn.dataset.groupid = groupId;
+  confirmBtn.dataset.amount = amount;
+  confirmBtn.dataset.treasurerid = treasurerId;
+
+  modal.hidden = false;
+}
+
+function closePaymentModal() {
+  const modal = document.getElementById('payment-confirm-modal');
+  if (modal) modal.hidden = true;
+}
+
+async function handleConfirmPayment() {
+  const confirmBtn = document.getElementById('confirm-payment-btn');
+  if (!confirmBtn) return;
+
+  const userId = parseInt(confirmBtn.dataset.userid);
+  const groupId = parseInt(confirmBtn.dataset.groupid);
+  const amount = parseFloat(confirmBtn.dataset.amount);
+  const treasurerId = parseInt(confirmBtn.dataset.treasurerid);
+
+  confirmBtn.textContent = 'Processing...';
+  confirmBtn.disabled = true;
+
+  try {
+    const result = await simulatePayment(userId, groupId, amount, treasurerId);
+    console.log('Payment successful:', result);
+    closePaymentModal();
+
+    // Show success banner
+    const banner = document.getElementById('status-banner');
+    banner.textContent = `✅ Payment successful! Reference: ${result.transactionRef}`;
+    banner.className = 'status-banner success';
+    banner.hidden = false;
+    setTimeout(() => { banner.hidden = true; }, 5000);
+
+    // Refresh contributions modal if it's open
+    const contributionsModal = document.getElementById('contributions-modal');
+    if (contributionsModal && !contributionsModal.hidden) {
+      await loadAndShowContributions();
+    }
+
+  } catch (error) {
+    console.error('Payment error:', error);
+    alert('Payment failed: ' + error.message);
+  } finally {
+    confirmBtn.textContent = 'Confirm Payment';
+    confirmBtn.disabled = false;
+  }
+}
+
+async function handleSimulatePayment() {
+  const userId = localStorage.getItem('userId');
+  const groupId = groupSelect.value;
+  const amount = currentGroupForPayment?.contributionAmount;
+  
+  if (!userId || !groupId || !amount) {
+    alert('Missing payment information. Please refresh the page.');
+    return;
+  }
+  
+  try {
+    // Check if already paid
+    const paymentStatus = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
+    
+    if (paymentStatus.hasPaidThisCycle) {
+      alert('You have already paid for this cycle!');
+      return;
+    }
+    
+    // Open confirmation modal with amount
+    openPaymentConfirmModal(
+      parseInt(userId),
+      parseInt(groupId),
+      parseFloat(amount),
+      parseInt(userId) // Member pays themselves (treasurer would record actual payment)
+    );
+    
+  } catch (error) {
+    console.error('Error checking payment status:', error);
+    alert('Unable to process payment. Please try again.');
+  }
+}
+
+function setupPaymentSimulationButton() {
+  const simulateBtn = document.getElementById('simulate-payment-btn');
+  if (simulateBtn) {
+    simulateBtn.addEventListener('click', handleSimulatePayment);
+  }
+  
+  // Payment modal buttons
+  const closePayBtn = document.getElementById('close-payment-modal');
+  const cancelPayBtn = document.getElementById('cancel-payment-btn');
+  const confirmPayBtn = document.getElementById('confirm-payment-btn');
+  const payConfirmModal = document.getElementById('payment-confirm-modal');
+
+  if (closePayBtn) closePayBtn.addEventListener('click', closePaymentModal);
+  if (cancelPayBtn) cancelPayBtn.addEventListener('click', closePaymentModal);
+  if (confirmPayBtn) confirmPayBtn.addEventListener('click', handleConfirmPayment);
+
+  if (payConfirmModal) {
+    payConfirmModal.addEventListener('click', (e) => {
+      if (e.target === payConfirmModal) closePaymentModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePaymentModal();
   });
 }
 
@@ -451,6 +606,9 @@ async function loadGroup(groupId) {
   try {
     const group = getGroupById(groupId);
     if (!group) throw new Error("Group not found");
+    
+    // Store current group for payment simulation
+    currentGroupForPayment = group;
 
     const { cycle, nextPayout } = getMockCycleAndPayout();
 
@@ -623,7 +781,7 @@ function displayContributionsModal(contributions) {
             <th style="padding:8px; text-align:left;">Amount</th>
             <th style="padding:8px; text-align:left;">Status</th>
             <th style="padding:8px; text-align:left;">Due Date</th>
-           </tr>
+          </tr>
         </thead>
         <tbody>
     `;
@@ -633,13 +791,31 @@ function displayContributionsModal(contributions) {
       const paidDate = contrib.paidAt ? new Date(contrib.paidAt).toLocaleDateString() : "—";
       const dueDate = contrib.dueDate ? new Date(contrib.dueDate).toLocaleDateString() : "—";
       
+      let statusColor = "#2b7e3a";
+      let statusBg = "#2b7e3a20";
+      let statusText = contrib.status;
+      
+      if (contrib.status === "pending") {
+        statusColor = "#ff9800";
+        statusBg = "#ff980020";
+        statusText = "Pending";
+      } else if (contrib.status === "paid") {
+        statusColor = "#2b7e3a";
+        statusBg = "#2b7e3a20";
+        statusText = "Paid";
+      } else if (contrib.status === "missed" || contrib.status === "overdue") {
+        statusColor = "#f44336";
+        statusBg = "#f4433620";
+        statusText = "Missed";
+      }
+      
       html += `
         <tr style="border-bottom:1px solid #eee;">
           <td style="padding:8px;">${paidDate}</td>
           <td style="padding:8px;">${formatCurrency(parseFloat(contrib.amount))}</td>
-          <td style="padding:8px;"><span style="background:#2b7e3a20; color:#2b7e3a; padding:4px 12px; border-radius:20px;">${contrib.status}</span></td>
+          <td style="padding:8px;"><span style="background:${statusBg}; color:${statusColor}; padding:4px 12px; border-radius:20px;">${statusText}</span></td>
           <td style="padding:8px;">${dueDate}</td>
-         </tr>
+        </tr>
       `;
     });
     
@@ -650,7 +826,7 @@ function displayContributionsModal(contributions) {
             <td style="padding:12px 8px;">Total</td>
             <td style="padding:12px 8px;">${formatCurrency(totalPaid)}</td>
             <td colspan="2"></td>
-           </tr>
+          </tr>
         </tfoot>
       </table>
     `;
@@ -674,5 +850,6 @@ const setAvatar = () => {
 
 function onAuthReady() {
     setAvatar();
+    setupPaymentSimulationButton(); // Add payment button setup
     loadUserGroups();
 }
