@@ -7,7 +7,8 @@ var currentGroupId = new URLSearchParams(window.location.search).get('groupId');
 var pendingFlagId = null;
 var allContributions = [];
 var treasurerId = localStorage.getItem("userId");
-var currentGroup = null; // Add this for payment simulation
+var currentGroup = null;
+var currentFilter = 'all';
 
 // ── Helper Functions ───────────────────────────────────
 function formatCurrency(amount) {
@@ -97,14 +98,12 @@ async function handleConfirmPayment() {
     console.log('Payment initiated:', result);
     closePaymentModal();
 
-    // Show success banner
     const banner = document.getElementById('status-banner');
     banner.textContent = `✅ Payment initiated! Reference: ${result.transactionRef}. Awaiting treasurer approval.`;
     banner.className = 'status-banner success';
     banner.hidden = false;
     setTimeout(() => { banner.hidden = true; }, 5000);
 
-    // Refresh contributions
     await loadPaymentTracking();
     await loadContributions();
 
@@ -128,7 +127,6 @@ async function handleSimulatePayment() {
   }
   
   try {
-    // Check if already paid
     const paymentStatus = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
     
     if (paymentStatus.hasPaidThisCycle) {
@@ -141,7 +139,6 @@ async function handleSimulatePayment() {
       return;
     }
     
-    // Open confirmation modal with amount
     openPaymentConfirmModal(
       parseInt(userId),
       parseInt(groupId),
@@ -172,7 +169,7 @@ const setAvatar = () => {
   if (avatar) avatar.textContent = initials || '?';
 };
 
-// ── View Contributions Button (Treasurer's Own Contributions) ─────────────────
+// ── View Contributions Button ─────────────────────────────────
 function setupViewContributionsButton() {
   const viewContribBtn = document.getElementById('view-contributions-btn');
   if (viewContribBtn) {
@@ -180,14 +177,12 @@ function setupViewContributionsButton() {
   }
 }
 
-// Setup payment simulation button
 function setupPaymentSimulationButton() {
   const simulateBtn = document.getElementById('simulate-payment-btn');
   if (simulateBtn) {
     simulateBtn.addEventListener('click', handleSimulatePayment);
   }
   
-  // Payment modal buttons
   const closePayBtn = document.getElementById('close-payment-modal');
   const cancelPayBtn = document.getElementById('cancel-payment-btn');
   const confirmPayBtn = document.getElementById('confirm-payment-btn');
@@ -331,9 +326,9 @@ function displayContributionsModal(contributions) {
             <td style="padding:12px 8px;">Total</td>
             <td style="padding:12px 8px;">${formatCurrency(totalPaid)}</td>
             <td colspan="2"></td>
-           </tr>
+          </tr>
         </tfoot>
-       </table>
+      </table>
     `;
     
     content.innerHTML = html;
@@ -357,7 +352,6 @@ async function loadMembers() {
     const groups = await res.json();
     const group = groups.find(g => String(g.groupId) === String(currentGroupId));
     
-    // Store current group for payment simulation
     currentGroup = group;
 
     if (!group) return;
@@ -377,7 +371,7 @@ async function loadMembers() {
   }
 }
 
-// ── Payment Tracking Table (shows due date instead of last payment) ─────────────
+// ── Payment Tracking Table (Flag button shows for ALL EXCEPT paid) ─────────────
 async function loadPaymentTracking() {
     const tbody = document.getElementById("member-list-body");
     if (!tbody) return;
@@ -387,7 +381,6 @@ async function loadPaymentTracking() {
     try {
         const token = await getAuthToken();
 
-        // Use the new endpoint that returns members with their contribution status
         const res = await fetch(`${config.apiBase}/api/group-members-with-status/${currentGroupId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -406,37 +399,47 @@ async function loadPaymentTracking() {
             
             let statusText = member.contributionStatus;
             let statusColor = "";
-            let showFlagButton = false;
             
             if (member.contributionStatus === "Not Paid") {
                 statusColor = "#64748b";
-                showFlagButton = true;
             } else if (member.contributionStatus === "pending") {
                 statusColor = "#ff9800";
-                showFlagButton = true;
             } else if (member.contributionStatus === "paid") {
                 statusColor = "#2b7e3a";
-                showFlagButton = false;
             } else if (member.contributionStatus === "missed") {
                 statusColor = "#f44336";
-                showFlagButton = false;
             }
             
             const dueDateFormatted = member.dueDate ? new Date(member.dueDate).toLocaleDateString() : "—";
             
+            // Show flag button for ALL EXCEPT paid status
+            let actionContent = '—';
+            if (member.contributionId && member.contributionStatus !== 'paid') {
+                actionContent = `<button class="btn-flag" data-contribution-id="${member.contributionId}" data-member-name="${escapeHtml(member.name)}">Flag</button>`;
+            }
+            
             row.innerHTML = `
-                <td style="padding: 11px 12px;">${member.name}</td>
+                <td style="padding: 11px 12px;">${escapeHtml(member.name)}</td>
                 <td style="padding: 11px 12px;">${dueDateFormatted}</td>
                 <td style="padding: 11px 12px;"><span style="color:${statusColor}; font-weight:600;">${statusText}</span></td>
                 <td style="padding: 11px 12px;">
-                    ${showFlagButton && member.contributionId ? `<button class="btn-flag" onclick="openFlagModal(${member.contributionId}, '${member.name}')">Flag</button>` : '—'}
+                    ${actionContent}
                 </td>
             `;
 
             tbody.appendChild(row);
         });
         
-        // Update member count display
+        // Add event listeners to flag buttons
+        document.querySelectorAll('#member-list-body .btn-flag').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const contributionId = parseInt(btn.dataset.contributionId);
+                const memberName = btn.dataset.memberName;
+                openFlagModal(contributionId, memberName);
+            });
+        });
+        
         const memberCountEl = document.getElementById('member-count');
         if (memberCountEl) {
             memberCountEl.textContent = `${result.members.length} total`;
@@ -461,7 +464,7 @@ function showFeedback(message, type) {
   }, 3000);
 }
 
-// ── Record Payment (Treasurer marks as paid) ─────────────────────────────────────
+// ── Record Payment ─────────────────────────────────────────────────────
 async function recordPayment(e) {
   e.preventDefault();
 
@@ -530,10 +533,10 @@ async function loadContributions() {
         document.getElementById('emptyState').hidden = true;
         document.getElementById('tableContainer').hidden = false;
         
-        renderContributionsTable(result.members);
+        allContributions = result.members;
+        renderContributionsTable(allContributions, currentFilter);
         
-        // Update missed count
-        const missedCount = result.members.filter(m => m.contributionStatus === 'missed').length;
+        const missedCount = allContributions.filter(m => m.contributionStatus === 'missed').length;
         const missedCountEl = document.getElementById('missedCount');
         if (missedCountEl) {
             missedCountEl.textContent = `${missedCount} missed`;
@@ -546,13 +549,23 @@ async function loadContributions() {
     }
 }
 
-function renderContributionsTable(members) {
+function renderContributionsTable(members, filter = 'all') {
     const tbody = document.getElementById('contributionsBody');
     if (!tbody) return;
 
+    let filteredMembers = members;
+    if (filter !== 'all') {
+        filteredMembers = members.filter(m => m.contributionStatus === filter);
+    }
+
+    if (filteredMembers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No contributions found for this filter</td></tr>`;
+        return;
+    }
+
     tbody.innerHTML = "";
 
-    members.forEach(member => {
+    filteredMembers.forEach(member => {
         const row = document.createElement("tr");
         
         let statusText = member.contributionStatus;
@@ -570,24 +583,48 @@ function renderContributionsTable(members) {
         
         const dueDateFormatted = member.dueDate ? new Date(member.dueDate).toLocaleDateString() : "—";
         
+        // Show flag button for ALL EXCEPT paid status
+        let actionContent = '<span class="no-action">—</span>';
+        if (member.contributionId && member.contributionStatus !== 'paid') {
+            actionContent = `<button class="btn-flag" data-contribution-id="${member.contributionId}" data-member-name="${escapeHtml(member.name)}">Flag</button>`;
+        }
+        
         row.innerHTML = `
-            <td style="padding: 11px 12px;">${member.name}</td>
+            <td style="padding: 11px 12px;">${escapeHtml(member.name)}</td>
             <td style="padding: 11px 12px;">${dueDateFormatted}</td>
             <td style="padding: 11px 12px;">${formatCurrency(member.amount)}</td>
             <td style="padding: 11px 12px;"><span class="status-pill ${statusClass}">${statusText}</span></td>
-            <td style="padding: 11px 12px;">${member.note || "—"}</td>
+            <td style="padding: 11px 12px;">${escapeHtml(member.note || "—")}</td>
             <td style="padding: 11px 12px;">
-                ${(member.contributionStatus === "pending" || member.contributionStatus === "Not Paid") && member.contributionId ? 
-                    `<button class="btn-flag" onclick="openFlagModal(${member.contributionId}, '${member.name}')">Flag</button>` : 
-                    "—"}
+                ${actionContent}
             </td>
         `;
 
         tbody.appendChild(row);
     });
+    
+    // Add event listeners to flag buttons
+    document.querySelectorAll('#contributionsBody .btn-flag').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const contributionId = parseInt(btn.dataset.contributionId);
+            const memberName = btn.dataset.memberName;
+            openFlagModal(contributionId, memberName);
+        });
+    });
 }
 
-// ─── Load Group Data (Header & Stats) ───────────────────────────────────────
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ─── Load Group Data ───────────────────────────────────────────────────────
 async function loadGroupData() {
   if (!currentGroupId) return;
 
@@ -602,7 +639,6 @@ async function loadGroupData() {
     const groups = await res.json();
     const group = groups.find(g => String(g.groupId) === String(currentGroupId));
     
-    // Store current group for payment simulation
     currentGroup = group;
 
     if (!group) {
@@ -610,7 +646,6 @@ async function loadGroupData() {
       return;
     }
 
-    // Update group header
     document.getElementById('group-name').textContent = group.name;
     document.getElementById('group-desc').textContent = group.description || '—';
     
@@ -618,16 +653,13 @@ async function loadGroupData() {
     statusBadge.textContent = group.status.charAt(0).toUpperCase() + group.status.slice(1);
     statusBadge.className = `badge ${group.status}`;
 
-    // Update stats
     document.getElementById('stat-amount').textContent = `R ${group.contributionAmount}`;
     
-    // Display cycle type directly from group data
     const cycleEl = document.getElementById('stat-cycle');
     if (cycleEl) {
       cycleEl.textContent = group.cycleType || '—';
     }
 
-    // Calculate and display total collected
     await updateTotalCollected();
 
   } catch (error) {
@@ -635,7 +667,7 @@ async function loadGroupData() {
   }
 }
 
-// ─── Calculate Total Collected Contributions ─────────────────────────────────
+// ─── Calculate Total Collected ─────────────────────────────────
 async function updateTotalCollected() {
   try {
     const token = await getAuthToken();
@@ -647,7 +679,6 @@ async function updateTotalCollected() {
     const result = await res.json();
     const contributions = result.contributions || result;
 
-    // Sum only paid contributions
     const totalCollected = contributions
       .filter(c => c.status === 'paid')
       .reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
@@ -660,40 +691,176 @@ async function updateTotalCollected() {
   }
 }
 
-// ── Flag Modal ─────────────────────────────────────────
-function openFlagModal(id, name) {
-  pendingFlagId = id;
-  document.getElementById("modalMemberName").textContent = name;
-  document.getElementById("flagModal").showModal();
+// ── Flag Modal Functions ─────────────────────────────────────────
+function openFlagModal(contributionId, memberName) {
+    pendingFlagId = contributionId;
+    const modal = document.getElementById('flagModal');
+    const memberNameSpan = document.getElementById('modalMemberName');
+    const noteInput = document.getElementById('flagNote');
+    
+    if (memberNameSpan) memberNameSpan.textContent = memberName;
+    if (noteInput) noteInput.value = '';
+    
+    if (modal) modal.showModal();
 }
 
 function closeFlagModal() {
-  document.getElementById("flagModal").close();
+    const modal = document.getElementById('flagModal');
+    if (modal) modal.close();
+    pendingFlagId = null;
 }
 
-// ── Confirm Flag ───────────────────────────────────────
 async function confirmFlag() {
-  const note = document.getElementById("flagNote").value;
+    if (!pendingFlagId) {
+        console.error('No contribution ID to flag');
+        return;
+    }
+    
+    const note = document.getElementById('flagNote').value.trim();
+    const confirmBtn = document.getElementById('confirmFlagBtn');
+    
+    if (confirmBtn) {
+        confirmBtn.textContent = 'Processing...';
+        confirmBtn.disabled = true;
+    }
+    
+    try {
+        const token = await getAuthToken();
+        
+        const response = await fetch(`${config.apiBase}/api/missed-contributions/${pendingFlagId}/flag`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ note: note || `Flagged as missed on ${new Date().toLocaleDateString()}` })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to flag contribution');
+        }
+        
+        const updatedContribution = await response.json();
+        
+        updateContributionInData(updatedContribution);
+        
+        closeFlagModal();
+        
+        const banner = document.getElementById('status-banner');
+        banner.textContent = `✓ Contribution flagged as missed successfully`;
+        banner.className = 'status-banner success';
+        banner.hidden = false;
+        setTimeout(() => { banner.hidden = true; }, 3000);
+        
+        await loadPaymentTracking();
+        await loadContributions();
+        
+    } catch (error) {
+        console.error('Error flagging contribution:', error);
+        const banner = document.getElementById('status-banner');
+        banner.textContent = `✗ Failed to flag contribution: ${error.message}`;
+        banner.className = 'status-banner error';
+        banner.hidden = false;
+        setTimeout(() => { banner.hidden = true; }, 4000);
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.textContent = 'Flag as missed';
+            confirmBtn.disabled = false;
+        }
+    }
+}
 
-  try {
-    const token = await getAuthToken();
+function updateContributionInData(updatedContribution) {
+    if (!allContributions) return;
+    
+    const index = allContributions.findIndex(c => c.contributionId === updatedContribution.contributionsId);
+    if (index !== -1) {
+        allContributions[index] = {
+            ...allContributions[index],
+            contributionStatus: updatedContribution.status,
+            note: updatedContribution.note
+        };
+    }
+}
 
-    await fetch(`${config.apiBase}/api/missed-contributions/${pendingFlagId}/flag`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ note })
+// Setup filter buttons
+function setupFilterButtons() {
+    const filterAll = document.getElementById('filter-all');
+    const filterPending = document.getElementById('filter-pending');
+    const filterPaid = document.getElementById('filter-paid');
+    const filterMissed = document.getElementById('filter-missed');
+    
+    if (filterAll) {
+        filterAll.addEventListener('click', () => {
+            currentFilter = 'all';
+            updateActiveFilter('all');
+            renderContributionsTable(allContributions, 'all');
+        });
+    }
+    
+    if (filterPending) {
+        filterPending.addEventListener('click', () => {
+            currentFilter = 'pending';
+            updateActiveFilter('pending');
+            renderContributionsTable(allContributions, 'pending');
+        });
+    }
+    
+    if (filterPaid) {
+        filterPaid.addEventListener('click', () => {
+            currentFilter = 'paid';
+            updateActiveFilter('paid');
+            renderContributionsTable(allContributions, 'paid');
+        });
+    }
+    
+    if (filterMissed) {
+        filterMissed.addEventListener('click', () => {
+            currentFilter = 'missed';
+            updateActiveFilter('missed');
+            renderContributionsTable(allContributions, 'missed');
+        });
+    }
+}
+
+function updateActiveFilter(activeStatus) {
+    const filters = ['all', 'pending', 'paid', 'missed'];
+    filters.forEach(status => {
+        const btn = document.getElementById(`filter-${status}`);
+        if (btn) {
+            if (status === activeStatus) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
     });
+}
 
-    closeFlagModal();
-    await loadContributions();
-    await loadPaymentTracking();
-
-  } catch {
-    alert("Failed");
-  }
+// Setup flag modal buttons
+function setupFlagModalButtons() {
+    const cancelBtn = document.getElementById('cancelFlagBtn');
+    const confirmBtn = document.getElementById('confirmFlagBtn');
+    const modal = document.getElementById('flagModal');
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeFlagModal);
+    }
+    
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', confirmFlag);
+    }
+    
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeFlagModal();
+        });
+    }
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeFlagModal();
+    });
 }
 
 // ── INIT ───────────────────────────────────────────────
@@ -706,17 +873,12 @@ async function init() {
   setupBackLink();
   setupViewContributionsButton();
   setupPaymentSimulationButton();
+  setupFilterButtons();
+  setupFlagModalButtons();
 
   document.getElementById("record-payment-form")
     ?.addEventListener("submit", recordPayment);
 
-  document.querySelector("#flagModal .btn-cancel")
-    ?.addEventListener("click", closeFlagModal);
-
-  document.querySelector("#flagModal .btn-confirm")
-    ?.addEventListener("click", confirmFlag);
-
-  // Load all data
   await loadGroupData();        
   await loadMembers();
   await loadPaymentTracking();
