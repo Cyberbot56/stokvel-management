@@ -247,7 +247,10 @@ async function loadGroupData() {
         if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
         const groups = await response.json();
-        const group  = groups.find(g => String(g.groupId) === String(groupId));
+        // const group  = groups.find(g => String(g.groupId) === String(groupId));
+        const group = groups.find(g => String(g.groupId) === String(groupId));
+        console.log('group object:', group);
+        console.log('members:', group?.members);
 
         if (!group) {
             banner.textContent = 'Group not found or you are not a member.';
