@@ -926,16 +926,16 @@ app.post('/api/payouts', requireAuth, async (req, res) => {
         const group = await prisma.groups.findUnique({ where: { groupId: parseInt(groupId) } });
         if (!group) return res.status(404).json({ error: 'Group not found' });
  
-        // Only admin or treasurer can initiate a payout
+        // Only treasurer can initiate a payout
         const initiatorMembership = await prisma.group_members.findFirst({
             where: {
                 FgroupId: parseInt(groupId),
                 SuserId: initiatedBy,
-                role: { in: ['admin', 'treasurer'] }
+                role: { in: ['treasurer'] }
             }
         });
         if (!initiatorMembership) {
-            return res.status(403).json({ error: 'Only the group admin or treasurer can initiate payouts' });
+            return res.status(403).json({ error: 'Only the group treasurer can initiate payouts' });
         }
  
         const recipientMembership = await prisma.group_members.findFirst({
