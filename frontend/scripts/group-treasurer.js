@@ -224,12 +224,66 @@ async function updatePayoutStatus(payoutId, status) {
     }
 }
 
-// ─── Load group data ──────────────────────────────────────────────────────────
+// // ─── Load group data ──────────────────────────────────────────────────────────
+// async function loadGroupData() {
+//     const userId    = localStorage.getItem('userId');
+//     const urlParams = new URLSearchParams(window.location.search);
+//     const groupId   = urlParams.get('groupId');
+//     const banner    = document.getElementById('status-banner');
+
+//     if (!userId || !groupId) {
+//         banner.textContent = 'Missing session data. Please log in again.';
+//         banner.className   = 'status-banner closed';
+//         banner.hidden      = false;
+//         return;
+//     }
+
+//     try {
+//         const token    = await auth0Client.getTokenSilently();
+//         const response = await fetch(`${config.apiBase}/api/groups_members/${userId}`, {
+//             headers: { 'Authorization': `Bearer ${token}` }
+//         });
+
+//         if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+//         const groups = await response.json();
+//         const group  = groups.find(g => String(g.groupId) === String(groupId));
+
+//         if (!group) {
+//             banner.textContent = 'Group not found or you are not a member.';
+//             banner.className   = 'status-banner closed';
+//             banner.hidden      = false;
+//             return;
+//         }
+
+//         // Only treasurers can access this page
+//         if (group.userRole !== 'treasurer') {
+//             window.location.href = `group-overview.html?groupId=${groupId}`;
+//             return;
+//         }
+
+//         currentGroup = group;
+//         populateRecipientDropdown(group.members);
+//         updatePayoutPreview();
+//         await loadPayouts();
+
+//     } catch (err) {
+//         console.error('Load error:', err);
+//         banner.textContent = 'Error loading group data. Please try again.';
+//         banner.className   = 'status-banner closed';
+//         banner.hidden      = false;
+//     }
+// }
+
 async function loadGroupData() {
     const userId    = localStorage.getItem('userId');
     const urlParams = new URLSearchParams(window.location.search);
     const groupId   = urlParams.get('groupId');
-    const banner    = document.getElementById('status-banner');
+
+    console.log('userId:', userId);
+    console.log('groupId:', groupId);
+
+    const banner = document.getElementById('status-banner');
 
     if (!userId || !groupId) {
         banner.textContent = 'Missing session data. Please log in again.';
@@ -247,9 +301,11 @@ async function loadGroupData() {
         if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
         const groups = await response.json();
-        // const group  = groups.find(g => String(g.groupId) === String(groupId));
-        const group = groups.find(g => String(g.groupId) === String(groupId));
-        console.log('group object:', group);
+        console.log('all groups returned:', groups);
+
+        const group  = groups.find(g => String(g.groupId) === String(groupId));
+        console.log('matched group:', group);
+        console.log('userRole:', group?.userRole);
         console.log('members:', group?.members);
 
         if (!group) {
@@ -259,13 +315,16 @@ async function loadGroupData() {
             return;
         }
 
-        // Only treasurers can access this page
         if (group.userRole !== 'treasurer') {
+            console.log('Not a treasurer, redirecting...');
             window.location.href = `group-overview.html?groupId=${groupId}`;
             return;
         }
 
         currentGroup = group;
+        console.log('currentGroup set:', currentGroup);
+        console.log('members to populate:', group.members);
+
         populateRecipientDropdown(group.members);
         updatePayoutPreview();
         await loadPayouts();
