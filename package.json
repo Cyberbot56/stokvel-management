@@ -16,8 +16,15 @@
     "prisma": "^5.22.0"
   },
   "devDependencies": {
-    "jest": "^29.0.0",
+    "jest": "^29.7.0",
     "supertest": "^6.0.0"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "backend/**/*.js",
+      "!backend/tests/**",
+      "!**/node_modules/**"
+    ]
   },
   "repository": {
     "type": "git",

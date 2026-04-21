@@ -1,164 +1,27 @@
 const request = require('supertest');
-const express = require('express');
-const cors = require('cors');
+const app = require('../server');
+const crypto = require('crypto');
 
-// Mock Prisma so tests never touch the real DB 
 jest.mock('@prisma/client', () => {
   const mockPrisma = {
-    users: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-    },
-    groups: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-    },
-    group_members: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      create: jest.fn(),
-    },
-    group_invites: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
+    users: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn() },
+    groups: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
+    group_members: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
+    group_invites: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
     $transaction: jest.fn(),
     $disconnect: jest.fn(),
   };
   return { PrismaClient: jest.fn(() => mockPrisma) };
 });
 
-//  Build a lightweight test app (mirrors server.js routes) 
+jest.mock('../src/middleware/auth', () => ({
+  requireAuth: (req, res, next) => next()
+}));
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const crypto = require('crypto');
-const app = express();
-app.use(cors());
-app.use(express.json());
 
-// Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-// Register
-app.post('/api/auth/register', async (req, res) => {
-  const { email, name, providerId } = req.body;
-  try {
-    const newUser = await prisma.users.create({ data: { email, name, providerId, createdAt: new Date() } });
-    res.status(201).json(newUser);
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to create user', details: error.message });
-  }
-});
-
-// Login
-app.post('/api/auth/login', async (req, res) => {
-  const { email } = req.body;
-  try {
-    const user = await prisma.users.findUnique({ where: { email } });
-    if (user) return res.json(user);
-    res.status(404).json({ error: 'User not found' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get all groups
-app.get('/api/groups', async (req, res) => {
-  try {
-    const groups = await prisma.groups.findMany();
-    res.json(groups);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch groups' });
-  }
-});
-
-// Add member
-app.post('/api/groups/add-member', async (req, res) => {
-  const { email, groupId } = req.body;
-  if (!email || !groupId) {
-    return res.status(400).json({ error: 'Missing required fields', required: ['email', 'groupId'] });
-  }
-  try {
-    const user = await prisma.users.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ error: 'User not found. Please ask the user to create an account first.' });
-
-    const existingMembership = await prisma.group_members.findFirst({
-      where: { FgroupId: parseInt(groupId), SuserId: user.userId }
-    });
-    if (existingMembership) return res.status(400).json({ error: 'User is already a member of the group' });
-
-    const newMember = await prisma.group_members.create({
-      data: { FgroupId: parseInt(groupId), SuserId: user.userId, role: 'member', joinedAt: new Date() }
-    });
-    res.status(201).json({ message: 'Member added successfully', member: newMember });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to add member to group', details: error.message });
-  }
-});
-
-// Create invite
-app.post('/api/invites', async (req, res) => {
-  const { groupId, email, createdBy } = req.body;
-  if (!groupId || !email || !createdBy) {
-    return res.status(400).json({ error: 'Missing required fields', required: ['groupId', 'email', 'createdBy'] });
-  }
-  if (!email.includes('@')) return res.status(400).json({ error: 'Invalid email format' });
-
-  try {
-    const group = await prisma.groups.findUnique({ where: { groupId: parseInt(groupId) } });
-    if (!group) return res.status(404).json({ error: 'Group not found' });
-
-    const user = await prisma.users.findUnique({ where: { userId: parseInt(createdBy) } });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    const newInvite = await prisma.group_invites.create({
-      data: { SFKgroupId: parseInt(groupId), token, email, createdBy: parseInt(createdBy), expiresAt, status: 'active' }
-    });
-    res.status(201).json({ message: 'Invite sent successfully', invite: newInvite });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to create invite', details: error.message });
-  }
-});
-
-// Join via token
-app.post('/api/invites/join', async (req, res) => {
-  const { token, userId } = req.body;
-  if (!token || !userId) {
-    return res.status(400).json({ error: 'Missing required fields', required: ['token', 'userId'] });
-  }
-  try {
-    const invite = await prisma.group_invites.findUnique({ where: { token } });
-    if (!invite) return res.status(404).json({ error: 'Invalid invite token' });
-    if (invite.expiresAt < new Date()) return res.status(400).json({ error: 'Invite has expired' });
-    if (invite.status !== 'active') return res.status(400).json({ error: 'Invite has been revoked' });
-
-    const existingMember = await prisma.group_members.findFirst({
-      where: { FgroupId: invite.SFKgroupId, SuserId: parseInt(userId) }
-    });
-    if (existingMember) return res.status(400).json({ error: 'User is already a member of this group' });
-
-    const newMember = await prisma.group_members.create({
-      data: { FgroupId: invite.SFKgroupId, SuserId: parseInt(userId), role: 'member', joinedAt: new Date() }
-    });
-    res.status(201).json({ message: 'Successfully joined the group', member: newMember });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to join group', details: error.message });
-  }
-});
-
-// TESTS 
-
-describe(' Health Check', () => {
+describe('Health Check', () => {
   test('GET /health returns 200 with healthy status', async () => {
     const res = await request(app).get('/health');
     expect(res.statusCode).toBe(200);
@@ -183,7 +46,7 @@ describe('Auth - Register', () => {
   });
 });
 
-describe(' Auth - Login', () => {
+describe('Auth - Login', () => {
   test('POST /api/auth/login returns user if found', async () => {
     prisma.users.findUnique.mockResolvedValue({ userId: 1, email: 'test@gmail.com', name: 'Test User' });
     const res = await request(app).post('/api/auth/login').send({ email: 'test@gmail.com' });
@@ -240,13 +103,14 @@ describe('Add Member', () => {
     prisma.users.findUnique.mockResolvedValue({ userId: 2, email: 'new@gmail.com' });
     prisma.group_members.findFirst.mockResolvedValue(null);
     prisma.group_members.create.mockResolvedValue({ memberId: 5, role: 'member' });
+    prisma.groups.findUnique.mockResolvedValue({ groupId: 1, name: 'Savings Club', cycleType: 'monthly', contributionAmount: 500 });
     const res = await request(app).post('/api/groups/add-member').send({ email: 'new@gmail.com', groupId: 1 });
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('Member added successfully');
   });
 });
 
-describe(' Invites', () => {
+describe('Invites', () => {
   test('POST /api/invites returns 400 if fields missing', async () => {
     const res = await request(app).post('/api/invites').send({ groupId: 1 });
     expect(res.statusCode).toBe(400);
@@ -307,7 +171,7 @@ describe('Join via Invite', () => {
   });
 });
 
-describe(' Stokvel Business Logic', () => {
+describe('Stokvel Business Logic', () => {
   test('Contribution amount must be positive', () => {
     const validate = (amount) => amount > 0;
     expect(validate(500)).toBe(true);
