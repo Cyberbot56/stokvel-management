@@ -335,6 +335,85 @@ async function loadGroupData() {
     }
 }
 
+//This is a function to handle scheduling a meeting.
+//It validates the input fields, prepare the data then send them to the post api on server.js
+//It makes the inputs empty after a successful submission and shows feedback to the user. If there is an error, it shows an error message.
+async function handleScheduleMeeting(e) {
+    e.preventDefault();
+
+    const titleInput   = document.getElementById('meeting-title');
+    const agendaInput  = document.getElementById('meeting-agenda');
+    const dateInput    = document.getElementById('meeting-date');
+    const timeInput    = document.getElementById('meeting-time');
+    const submitBtn    = document.getElementById('sch-meeting');
+
+    // Validate
+    if (!titleInput.value.trim()) {
+        showFeedback('meeting-feedback', 'Please enter a meeting title.', 'error');
+        return;
+    }
+    if (!dateInput.value) {
+        showFeedback('meeting-feedback', 'Please select a meeting date.', 'error');
+        return;
+    }
+    if (!timeInput.value) {
+        showFeedback('meeting-feedback', 'Please select a meeting time.', 'error');
+        return;
+    }
+    if (!currentGroup || !currentGroup.groupId) {
+        showFeedback('meeting-feedback', 'Group information not loaded. Please refresh.', 'error');
+        return;
+    }
+
+    // Prepare data
+    const meetingData = {
+        groupId: currentGroup.groupId,
+        title: titleInput.value.trim(),
+        agenda: agendaInput.value.trim() || null,   // allow empty agenda
+        date: dateInput.value,                      // "2026-04-27"
+        time: timeInput.value                       // "14:30"
+    };
+
+    // Disable button & show loading state
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Scheduling...';
+
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/meetings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(meetingData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showFeedback('meeting-feedback', 
+                `Meeting "${titleInput.value}" scheduled successfully for ${dateInput.value} at ${timeInput.value}.`, 
+                'success'
+            );
+            // Optional: clear the form
+            titleInput.value = '';
+            agendaInput.value = '';
+            dateInput.value = '';
+            timeInput.value = '';
+        } else {
+            showFeedback('meeting-feedback', data.error || 'Failed to schedule meeting.', 'error');
+        }
+    } catch (err) {
+        console.error('Schedule meeting error:', err);
+        showFeedback('meeting-feedback', 'Network error. Please try again.', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+    }
+}
+
 // ─── Event listeners ──────────────────────────────────────────────────────────
 function setupEventListeners() {
     const backBtn           = document.getElementById('back-btn');
@@ -353,6 +432,11 @@ function setupEventListeners() {
         modalCancelBtn.addEventListener('click', () => {
             document.getElementById('confirm-modal').hidden = true;
         });
+    }
+    
+    const scheduleForm = document.getElementById('schedule-meeting');
+    if (scheduleForm) {
+        scheduleForm.addEventListener('submit', handleScheduleMeeting);
     }
 }
 

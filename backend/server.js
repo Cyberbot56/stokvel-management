@@ -502,6 +502,31 @@ app.patch('/api/payouts/:payoutId', requireAuth, async (req, res) => {
     }
 });
 
+//This is an api to post meetings 
+//It is only accessed by the treasurer of the group
+//It will take in the groupId, title, agenda, date, time then will use the new Date() to get the day the meeting was scheduled.
+app.post('/api/meetings', requireAuth, async (req, res) => {
+    const { groupId, title, agenda, date, time } = req.body;
+    const scheduledBy = req.user.userId;
+
+    try {
+        const meeting = await prisma.meetings.create({
+            data: {
+                FKKgroupId: parseInt(groupId),
+                title: title,
+                agenda: agenda,
+                Date: new Date(date),
+                Time: time, 
+                postedAt: new Date(),
+            }
+        });
+        res.status(201).json({ message: 'Meeting scheduled successfully', meeting });
+    } catch (error) {
+        console.error('Error scheduling meeting:', error);
+        res.status(500).json({ error: 'Failed to schedule meeting', details: error.message });
+    }
+});
+
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });

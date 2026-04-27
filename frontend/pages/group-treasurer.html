@@ -317,6 +317,7 @@
         </section>
       </dl>
     </article>
+    
 
 
     <article class="card">
@@ -437,6 +438,40 @@
       </section>
     </article>
 
+     <!--Schedule meetings-->
+    <article class="card">
+      <header class="section-header">
+        <h2 class="card-title">Schedule meetings</h2>
+      </header>
+
+      <form class="add-member-form" id="schedule-meeting">
+
+
+      <section class="form-group">
+      <label for="meeting-title">Title</label>
+      <input type="text" id="meeting-title" required />
+       </section>
+
+      </section>
+      <section class="form-group">
+      <label for="meeting-agenda">Agenda</label>
+      <input type="text" id="meeting-agenda" required />
+       </section>
+
+      <section class="form-group">
+        <label for="payment-date">Date of meeting</label>
+        <input type="date" id="meeting-date" required />
+      </section>
+      <section class="form-group">
+      <label for="meeting-time">Time of meeting</label>
+      <input type="time" id="meeting-time" required step="60" />  
+       </section>
+
+      <button type="submit" class="btn-record" id="sch-meeting">Schedule Meeting</button>
+      </form>
+
+      <output class="form-feedback" id="meeting-feedback" hidden></output>
+    </article>
 
     <!-- Payout history card -->
     <article class="card">
