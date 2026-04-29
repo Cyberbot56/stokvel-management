@@ -8,17 +8,17 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: "18.x"
+  NODE_VERSION: "22.x" # Updated to match your app
 
 jobs:
   test-backend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Updated to v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # Updated to v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -106,10 +106,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Updated to v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # Updated to v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -128,15 +128,71 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Updated to v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel
 
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
+        run: |
+          vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Create deployment comment
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "--prod"
-          working-directory: ./
+          script: |
+            const { execSync } = require('child_process');
+            let deploymentUrl = '';
+            try {
+              deploymentUrl = execSync('vercel ls --token=${{ secrets.VERCEL_TOKEN }} | grep -o "https://[^ ]*" | head -1', {
+                env: {
+                  VERCEL_ORG_ID: '${{ secrets.VERCEL_ORG_ID }}',
+                  VERCEL_PROJECT_ID: '${{ secrets.VERCEL_PROJECT_ID }}'
+                }
+              }).toString().trim();
+            } catch(e) {
+              deploymentUrl = 'Deployment URL not found';
+            }
 
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 **Vercel Deployment**\n\n✅ Production deployment completed!\n\n🔗 **URL:** ${deploymentUrl}\n\n📦 **Project:** stokvel-management\n\n🕐 Deployed at: ${new Date().toISOString()}`
+            });
 
+  # Optional: Preview deployments for pull requests
+  deploy-preview:
+    needs: [test-backend, build-frontend]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel
+
+      - name: Deploy to Vercel (Preview)
+        id: preview
+        run: |
+          DEPLOY_URL=$(vercel --token=${{ secrets.VERCEL_TOKEN }} --yes | tee /dev/tty | grep -o 'https://[^ ]*' | head -1)
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Add preview comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🔍 **Vercel Preview Deployment**\n\n✅ Preview environment is ready!\n\n🔗 **Preview URL:** ${{ steps.preview.outputs.url }}\n\n📦 **Branch:** ${context.payload.pull_request.head.ref}\n\n🕐 Deployed at: ${new Date().toISOString()}`
+            });
