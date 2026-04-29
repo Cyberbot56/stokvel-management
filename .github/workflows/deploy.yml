@@ -153,10 +153,12 @@ deploy-production:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+        working-directory: ./backend
 
       - name: Generate Prisma client
         run: npx prisma generate
+        working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
@@ -165,5 +167,5 @@ deploy-production:
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
-          startup-command: 'node backend/server.js'
+          package: ./backend
+          startup-command: 'node server.js'
