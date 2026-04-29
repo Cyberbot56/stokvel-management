@@ -1,8 +1,8 @@
 # Stokvel Management Platform
 
-## CI/CD Status
+## Code Coverage Status
 
-[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Cyberbot56/16ba4c80de63c1e13ccd0cc391c7e861/raw/stokvel-test-badge.json)](https://github.com/Cyberbot56/stokvel-management/actions)
+[![Coverage Status](https://codecov.io/gh/cyberbot56/stokvel-management/branch/main/graph/badge.svg)](https://codecov.io/gh/cyberbot56/stokvel-management)
 
 ## Live Demo
 

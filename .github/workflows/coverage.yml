@@ -1,0 +1,35 @@
+name: Test & Coverage
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x" # Changed to match your app
+
+      - name: Install dependencies
+        run: npm install # Run from root, not backend
+        # Remove working-directory - package.json is in root
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        # Required for @prisma/client to work
+
+      - name: Run tests with coverage
+        run: npm test # This runs from root where package.json is
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info # Path from root, not backend/coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false # Set to false temporarily until tests pass
+          flags: backend-tests
+          name: stokvel-backend-coverage
+          verbose: true

@@ -5,7 +5,26 @@
   "main": "server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "test": "jest --json --outputFile=results.json --testPathPattern=backend/tests"
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:backend": "jest backend/tests --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/backend/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "backend/**/*.js",
+      "!backend/tests/**",
+      "!**/node_modules/**"
+    ],
+    "clearMocks": true,
+    "resetModules": true,
+    "verbose": true,
+    "moduleNameMapper": {
+      "^@prisma/client$": "<rootDir>/node_modules/@prisma/client"
+    }
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -18,19 +37,5 @@
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^6.0.0"
-  },
-  "jest": {
-    "collectCoverageFrom": [
-      "backend/**/*.js",
-      "!backend/tests/**",
-      "!**/node_modules/**"
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Cyberbot56/stokvel-management.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }
