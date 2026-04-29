@@ -13,6 +13,7 @@
     "testEnvironment": "node",
     "testMatch": [
       "**/backend/tests/**/*.test.js"
+      
     ],
     "collectCoverageFrom": [
       "backend/**/*.js",

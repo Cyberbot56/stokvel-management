@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1777477752207" clover="3.2.0">
-  <project timestamp="1777477752208" name="All files">
-    <metrics statements="295" coveredstatements="154" conditionals="131" coveredconditionals="52" methods="36" coveredmethods="16" elements="462" coveredelements="222" complexity="0" loc="295" ncloc="295" packages="2" files="2" classes="2"/>
+<coverage generated="1777482128970" clover="3.2.0">
+  <project timestamp="1777482128973" name="All files">
+    <metrics statements="295" coveredstatements="171" conditionals="131" coveredconditionals="62" methods="36" coveredmethods="18" elements="462" coveredelements="251" complexity="0" loc="295" ncloc="295" packages="2" files="2" classes="2"/>
     <package name="backend">
       <metrics statements="278" coveredstatements="154" conditionals="121" coveredconditionals="52" methods="34" coveredmethods="16"/>
       <file name="server.js" path="/mnt/c/dev/Stokvel/stokvel-management/backend/server.js">
@@ -287,26 +287,26 @@
       </file>
     </package>
     <package name="backend.src.middleware">
-      <metrics statements="17" coveredstatements="0" conditionals="10" coveredconditionals="0" methods="2" coveredmethods="0"/>
+      <metrics statements="17" coveredstatements="17" conditionals="10" coveredconditionals="10" methods="2" coveredmethods="2"/>
       <file name="auth.js" path="/mnt/c/dev/Stokvel/stokvel-management/backend/src/middleware/auth.js">
-        <metrics statements="17" coveredstatements="0" conditionals="10" coveredconditionals="0" methods="2" coveredmethods="0"/>
-        <line num="1" count="0" type="stmt"/>
-        <line num="2" count="0" type="stmt"/>
-        <line num="3" count="0" type="stmt"/>
-        <line num="5" count="0" type="stmt"/>
-        <line num="7" count="0" type="stmt"/>
-        <line num="42" count="0" type="stmt"/>
-        <line num="43" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="45" count="0" type="stmt"/>
-        <line num="48" count="0" type="stmt"/>
-        <line num="49" count="0" type="stmt"/>
-        <line num="51" count="0" type="stmt"/>
-        <line num="52" count="0" type="stmt"/>
-        <line num="66" count="0" type="stmt"/>
-        <line num="67" count="0" type="stmt"/>
-        <line num="69" count="0" type="stmt"/>
-        <line num="70" count="0" type="stmt"/>
-        <line num="75" count="0" type="stmt"/>
+        <metrics statements="17" coveredstatements="17" conditionals="10" coveredconditionals="10" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="42" count="10" type="stmt"/>
+        <line num="43" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="45" count="9" type="stmt"/>
+        <line num="48" count="9" type="stmt"/>
+        <line num="49" count="9" type="stmt"/>
+        <line num="51" count="9" type="stmt"/>
+        <line num="52" count="9" type="stmt"/>
+        <line num="66" count="7" type="stmt"/>
+        <line num="67" count="7" type="stmt"/>
+        <line num="69" count="2" type="stmt"/>
+        <line num="70" count="2" type="stmt"/>
+        <line num="75" count="1" type="stmt"/>
       </file>
     </package>
   </project>
