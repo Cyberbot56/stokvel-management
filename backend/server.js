@@ -531,6 +531,81 @@ app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });
 
+// This api aggregates contribution data per member and calculates compliance rates.
+app.get('/api/groups/:groupId/compliance-report', requireAuth, async(req, res) =>{
+    const { groupId } = req.params;
+    const { from, to } = req.query;
+
+    // First checks if the user is admin if not then they get rejected
+    try {
+        const membership = await prisma.group_members.findFirst({
+        where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+        });
+        if (!membership || membership.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can view compliance reports' });
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { cycleType: true, contributionAmount: true, name: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        const members = await prisma.group_members.findMany({
+            where: { FgroupId: parseInt(groupId) },
+            include: { users: { select: { userId: true, name: true, email: true } } }
+        });
+
+        const whereClause = {
+            FKgroupId: parseInt(groupId),
+            ...(from && to && {
+                dueDate: { gte: new Date(from), lte: new Date(to) }
+            })
+        };
+
+        const contributions = await prisma.contributions.findMany({ where: whereClause });
+
+        const memberStats = members.map(member => {
+            const memberContributions = contributions.filter(c => c.FKuserId === member.users.userId);
+            const paid = memberContributions.filter(c => c.status === 'paid').length;
+            const missed = memberContributions.filter(c => c.status === 'missed').length;
+            const pending = memberContributions.filter(c => c.status === 'pending').length;
+            const total = memberContributions.length || 1;
+            const complianceRate = Math.round((paid / total) * 100);
+
+            let status = 'compliant';
+            if (complianceRate < 66) status = 'defaulting';
+            else if (complianceRate < 100) status = 'at-risk';
+
+            return {
+                memberId: member.users.userId,
+                name: member.users.name,
+                email: member.users.email,
+                role: member.role,
+                paid, missed, pending, complianceRate, status
+            };
+        });
+
+        const totalExpected = members.length;
+        const totalPaid = memberStats.filter(m => m.status === 'compliant').length;
+        const groupComplianceRate = Math.round((totalPaid / totalExpected) * 100);
+
+        res.json({
+            groupId: parseInt(groupId),
+            groupName: group.name,
+            period: { from: from || null, to: to || null },
+            groupComplianceRate,
+            totalMembers: members.length,
+            totalPaid,
+            members: memberStats
+        });
+    }
+    catch (error) {
+        console.error('Error generating compliance report:', error);
+        res.status(500).json({ error: 'Failed to generate compliance report', details: error.message });
+    }
+})
+
 // Only start server when run directly, not when imported by tests
 if (require.main === module) {
     const PORT = process.env.PORT || 3000;

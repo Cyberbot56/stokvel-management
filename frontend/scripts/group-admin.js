@@ -517,6 +517,115 @@ async function loadAndShowPayouts(groupId) {
     }
 }
 
+//Compliance report, NB its only fetched by authorized users such as admin if you have invalide token it won't fetch it.
+
+async function fetchComplianceReport(groupId) {
+    const token    = await auth0Client.getTokenSilently();
+    const response = await fetch(`${config.apiBase}/api/groups/${groupId}/compliance-report`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch compliance report');
+    return await response.json();
+}
+
+// This function loads and show the compliance report. I was gonna create new page but I continued with modal.
+async function loadAndShowComplianceReport() {
+    const groupId = currentGroup?.groupId;
+    if (!groupId) { alert('No group selected. Please refresh the page.'); return; }
+
+    let modal = document.getElementById('compliance-modal');
+    if (!modal) {
+        modal           = document.createElement('aside');
+        modal.id        = 'compliance-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <article class="modal">
+                <header class="modal-header">
+                    <h2 class="modal-title">Contribution Compliance Report</h2>
+                    <button class="modal-close" aria-label="Close report">&#x2715;</button>
+                </header>
+                <section id="compliance-content" class="modal-section"></section>
+            </article>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('.modal-close').addEventListener('click', () => { modal.hidden = true; });
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.hidden = true; });
+    }
+
+    const content = document.getElementById('compliance-content');
+    content.innerHTML = '<p style="text-align:center;padding:1.5rem;color:#64748b;">Loading...</p>';
+    modal.hidden = false;
+
+    try {
+        const data = await fetchComplianceReport(groupId);
+
+        // Summary banner
+        const rateColor = data.groupComplianceRate >= 80 ? '#034e52' : data.groupComplianceRate >= 50 ? '#b45309' : '#991b1b';
+        const rateBg    = data.groupComplianceRate >= 80 ? '#e0f7f6'  : data.groupComplianceRate >= 50 ? '#fef3c7'  : '#fef2f2';
+
+        let html = `
+            <section style="display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap;">
+                <section style="flex:1;min-width:120px;background:${rateBg};border-radius:10px;padding:14px 18px;text-align:center;">
+                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Group compliance</p>
+                    <p style="font-size:26px;font-weight:700;color:${rateColor};margin:0;">${data.groupComplianceRate}%</p>
+                </section>
+                <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
+                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Paid members</p>
+                    <p style="font-size:26px;font-weight:700;color:#034e52;margin:0;">${data.totalPaid} / ${data.totalMembers}</p>
+                </section>
+                <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
+                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Defaulting</p>
+                    <p style="font-size:26px;font-weight:700;color:#991b1b;margin:0;">${data.members.filter(m => m.status === 'defaulting').length}</p>
+                </section>
+            </section>
+        `;
+
+        // Members table
+        html += `
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="border-bottom:1.5px solid #e0f7f6;">
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Member</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Paid</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Missed</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Pending</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Rate</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        data.members.forEach(member => {
+            let statusBg = '#e0f7f6', statusColor = '#034e52', statusLabel = 'Compliant';
+            if (member.status === 'at-risk')    { statusBg = '#fef3c7'; statusColor = '#b45309'; statusLabel = 'At risk'; }
+            if (member.status === 'defaulting') { statusBg = '#fef2f2'; statusColor = '#991b1b'; statusLabel = 'Defaulting'; }
+
+            html += `
+                <tr style="border-bottom:1px solid #f0fafa;">
+                    <td style="padding:11px 12px;">
+                        <p style="font-weight:600;color:#034e52;margin:0;">${sanitise(member.name)}</p>
+                        <p style="font-size:12px;color:#64748b;margin:0;">${sanitise(member.email)}</p>
+                    </td>
+                    <td style="padding:11px 12px;text-align:center;color:#034e52;font-weight:700;">${member.paid}</td>
+                    <td style="padding:11px 12px;text-align:center;color:#991b1b;font-weight:700;">${member.missed}</td>
+                    <td style="padding:11px 12px;text-align:center;color:#b45309;font-weight:700;">${member.pending}</td>
+                    <td style="padding:11px 12px;text-align:center;font-weight:700;color:#0f172a;">${member.complianceRate}%</td>
+                    <td style="padding:11px 12px;text-align:center;">
+                        <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${statusLabel}</span>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        content.innerHTML = html;
+
+    } catch (error) {
+        content.innerHTML = `<p style="text-align:center;padding:2rem;color:#991b1b;">Could not load report: ${error.message}</p>`;
+    }
+}
+
 // ─── Contribution history ─────────────────────────────────────────────────────
 
 async function loadAndShowContributions() {
@@ -626,7 +735,7 @@ function displayContributionsModal(contributions) {
 }
 
 
-// ─── Event listeners ──────────────────────────────────────────────────────────
+// ─── Event listeners 
 
 function setupEventListeners() {
     const addMemberBtn       = document.getElementById('btn-add-member');
@@ -640,6 +749,8 @@ function setupEventListeners() {
     const cancelPayBtn       = document.getElementById('cancel-payment-btn');
     const confirmPayBtn      = document.getElementById('confirm-payment-btn');
     const payModal           = document.getElementById('payment-confirm-modal');
+    const complianceBtn      = document.getElementById('btn-compliance-report');
+
 
     if (addMemberBtn) addMemberBtn.addEventListener('click', addMember);
     if (memberEmail)  memberEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') addMember(); });
@@ -659,6 +770,7 @@ function setupEventListeners() {
         loadAndShowPayouts(groupId);
     });
 
+    if (complianceBtn) complianceBtn.addEventListener('click', loadAndShowComplianceReport);
     if (payNowBtn)   payNowBtn.addEventListener('click', handlePayNow);
     if (closePayBtn) closePayBtn.addEventListener('click', closePaymentModal);
     if (cancelPayBtn) cancelPayBtn.addEventListener('click', closePaymentModal);
