@@ -8,6 +8,7 @@ jest.mock('@prisma/client', () => {
     groups: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
     group_members: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
     group_invites: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    contributions: { findMany: jest.fn() },   // ← just add this line
     $transaction: jest.fn(),
     $disconnect: jest.fn(),
   };
@@ -198,4 +199,57 @@ describe('Stokvel Business Logic', () => {
     expect(token).toHaveLength(64);
     expect(/^[a-f0-9]+$/.test(token)).toBe(true);
   });
+});
+
+describe('Compliance Report', () => {
+    test('GET /api/groups/:groupId/compliance-report returns 404 if group not found', async () => {
+        prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+        prisma.groups.findUnique.mockResolvedValue(null);
+        prisma.group_members.findMany.mockResolvedValue([]);
+        prisma.contributions = { findMany: jest.fn().mockResolvedValue([]) };
+
+        const res = await request(app).get('/api/groups/99999/compliance-report');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toBe('Group not found');
+    });
+
+    test('GET /api/groups/:groupId/compliance-report returns 403 if user is not admin', async () => {
+        prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+
+        const res = await request(app).get('/api/groups/1/compliance-report');
+        expect(res.statusCode).toBe(403);
+        expect(res.body.error).toBe('Only admins can view compliance reports');
+    });
+
+    test('GET /api/groups/:groupId/compliance-report returns 200 with report data for admin', async () => {
+        prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+        prisma.groups.findUnique.mockResolvedValue({
+            groupId: 1, name: 'Test Stokvel',
+            cycleType: 'monthly', contributionAmount: 500
+        });
+        prisma.group_members.findMany.mockResolvedValue([
+            { role: 'admin', users: { userId: 1, name: 'Thabo', email: 'thabo@test.com' } },
+            { role: 'member', users: { userId: 2, name: 'Nomsa', email: 'nomsa@test.com' } }
+        ]);
+        prisma.contributions = { findMany: jest.fn().mockResolvedValue([
+            { FKuserId: 1, status: 'paid' },
+            { FKuserId: 2, status: 'missed' }
+        ]) };
+
+        const res = await request(app).get('/api/groups/1/compliance-report');
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toHaveProperty('groupComplianceRate');
+        expect(res.body).toHaveProperty('members');
+        expect(Array.isArray(res.body.members)).toBe(true);
+        expect(res.body.members).toHaveLength(2);
+    });
+
+    test('GET /api/groups/:groupId/compliance-report returns 500 on DB error', async () => {
+        prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+        prisma.groups.findUnique.mockRejectedValue(new Error('DB error'));
+
+        const res = await request(app).get('/api/groups/1/compliance-report');
+        expect(res.statusCode).toBe(500);
+        expect(res.body.error).toBe('Failed to generate compliance report');
+    });
 });
