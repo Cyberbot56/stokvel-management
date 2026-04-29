@@ -2,48 +2,11 @@
 // Mock @prisma/client before any other requires
 jest.mock('@prisma/client', () => {
   const mockPrisma = {
-    users: { 
-      findUnique: jest.fn(), 
-      findMany: jest.fn(), 
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn()
-    },
-    groups: { 
-      findMany: jest.fn(), 
-      findUnique: jest.fn(), 
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn()
-    },
-    group_members: { 
-      findMany: jest.fn(), 
-      findFirst: jest.fn(), 
-      create: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
-      delete: jest.fn()
-    },
-    group_invites: { 
-      findMany: jest.fn(), 
-      findUnique: jest.fn(), 
-      create: jest.fn(), 
-      update: jest.fn() 
-    },
-    contributions: { 
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn()
-    },
-    payouts: {               // Make sure this matches your schema exactly
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn()
-    },
-    meetings: {              // Make sure this matches your schema exactly
-      create: jest.fn()
-    },
+    users: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn() },
+    groups: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
+    group_members: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
+    group_invites: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    contributions: { findMany: jest.fn() },   // ← just add this line
     $transaction: jest.fn(),
     $disconnect: jest.fn(),
   };

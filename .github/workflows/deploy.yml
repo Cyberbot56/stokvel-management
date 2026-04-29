@@ -7,29 +7,150 @@
 #     branches: [main]
 #   workflow_dispatch:
 
-env:
-  NODE_VERSION: "22.x"
+# env:
+#   NODE_VERSION: "18.x"
 
-jobs:
-  test-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+# jobs:
+#   test-backend:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: ${{ env.NODE_VERSION }}
+#           cache: "npm"
 
-      - name: Debug - Check DATABASE_URL secret
-        run: |
-          if [ "${{ secrets.DATABASE_URL }}" != "" ]; then
-            echo "✅ DATABASE_URL secret is set"
-          else
-            echo "❌ DATABASE_URL secret is EMPTY"
-          fi
+#       - name: Debug - Check DATABASE_URL secret
+#         run: |
+#           if [ "${{ secrets.DATABASE_URL }}" != "" ]; then
+#             echo "✅ DATABASE_URL secret is set"
+#           else
+#             echo "❌ DATABASE_URL secret is EMPTY"
+#           fi
+
+#       - name: Install dependencies
+#         run: npm ci
+
+#       - name: Generate Prisma client
+#         run: npx prisma generate
+#         env:
+#           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+#       - name: Security audit
+#         run: npm audit --production --audit-level=moderate || echo "Security issues found but continuing"
+
+#       - name: Run tests
+#         id: test_results
+#         run: |
+#           npm test -- --coverage --coverageReporters=lcov --json --outputFile=results.json || true
+#           # Safely read results — default to 0 if file missing or fields absent
+#           if [ -f results.json ]; then
+#             TOTAL=$(jq '.numTotalTests // 0' results.json)
+#             PASSED=$(jq '.numPassedTests // 0' results.json)
+#             FAILED=$(jq '.numFailedTests // 0' results.json)
+#           else
+#             echo "⚠️ results.json not found — no tests ran"
+#             TOTAL=0
+#             PASSED=0
+#             FAILED=0
+#           fi
+#           if [ "$TOTAL" -eq 0 ]; then
+#             PERCENT=0
+#           else
+#             PERCENT=$(echo "scale=0; $PASSED * 100 / $TOTAL" | bc)
+#           fi
+#           echo "total=$TOTAL"     >> $GITHUB_OUTPUT
+#           echo "passed=$PASSED"   >> $GITHUB_OUTPUT
+#           echo "failed=$FAILED"   >> $GITHUB_OUTPUT
+#           echo "percent=$PERCENT" >> $GITHUB_OUTPUT
+#           echo "✅ Passed: $PASSED / $TOTAL ($PERCENT%)"
+#           # Fail the job if any tests actually ran and some failed
+#           if [ "$TOTAL" -gt 0 ] && [ "$FAILED" -gt 0 ]; then
+#             echo "❌ $FAILED test(s) failed"
+#             exit 1
+#           fi
+
+#       - name: Upload coverage to Codecov
+#         uses: codecov/codecov-action@v4
+#         with:
+#           token: ${{ secrets.CODECOV_TOKEN }}
+#           files: ./coverage/lcov.info
+#           fail_ci_if_error: false
+
+#       - name: Set badge color
+#         id: badge_color
+#         run: |
+#           PERCENT=${{ steps.test_results.outputs.percent }}
+#           if [ "$PERCENT" -ge 90 ]; then
+#             echo "color=brightgreen" >> $GITHUB_OUTPUT
+#           elif [ "$PERCENT" -ge 70 ]; then
+#             echo "color=yellow" >> $GITHUB_OUTPUT
+#           else
+#             echo "color=red" >> $GITHUB_OUTPUT
+#           fi
+
+#       - name: Update test badge
+#         uses: schneegans/dynamic-badges-action@v1.7.0
+#         with:
+#           auth: ${{ secrets.GIST_SECRET }}
+#           gistID: ${{ secrets.GIST_ID }}
+#           filename: stokvel-test-badge.json
+#           label: "Tests"
+#           message: "${{ steps.test_results.outputs.percent }}% (${{ steps.test_results.outputs.passed }}/${{ steps.test_results.outputs.total }})"
+#           color: ${{ steps.badge_color.outputs.color }}
+
+#   build-frontend:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: ${{ env.NODE_VERSION }}
+
+#       - name: Check static files
+#         run: |
+#           echo "Checking critical files..."
+#           test -f frontend/pages/index.html     && echo "✅ index.html exists"     || echo "❌ index.html MISSING"
+#           test -f frontend/pages/dashboard.html && echo "✅ dashboard.html exists" || echo "❌ dashboard.html MISSING"
+#           test -f frontend/scripts/config.js    && echo "✅ config.js exists"      || echo "❌ config.js MISSING"
+#           test -f prisma/schema.prisma          && echo "✅ Prisma schema exists"  || echo "❌ schema.prisma MISSING"
+#           echo "File check complete"
+
+#   deploy-production:
+#     needs: [test-backend, build-frontend]
+#     if: github.ref == 'refs/heads/main'
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Deploy to Vercel
+#         uses: amondnet/vercel-action@v20
+#         with:
+#           vercel-token: ${{ secrets.VERCEL_TOKEN }}
+#           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+#           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+#           vercel-args: "--prod"
+#           working-directory: ./
+
+deploy-production:
+  needs: [test-backend, build-frontend]
+  if: github.ref == 'refs/heads/main'
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
 
     - name: Install dependencies
       run: npm install
@@ -41,102 +162,10 @@ jobs:
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Security audit
-        run: npm audit --production --audit-level=moderate || echo "Security issues found but continuing"
-
-      - name: Run tests
-        id: test_results
-        run: |
-          npm test -- --coverage --coverageReporters=lcov --json --outputFile=results.json || true
-          # Safely read results — default to 0 if file missing or fields absent
-          if [ -f results.json ]; then
-            TOTAL=$(jq '.numTotalTests // 0' results.json)
-            PASSED=$(jq '.numPassedTests // 0' results.json)
-            FAILED=$(jq '.numFailedTests // 0' results.json)
-          else
-            echo "⚠️ results.json not found — no tests ran"
-            TOTAL=0
-            PASSED=0
-            FAILED=0
-          fi
-          if [ "$TOTAL" -eq 0 ]; then
-            PERCENT=0
-          else
-            PERCENT=$(echo "scale=0; $PASSED * 100 / $TOTAL" | bc)
-          fi
-          echo "total=$TOTAL"     >> $GITHUB_OUTPUT
-          echo "passed=$PASSED"   >> $GITHUB_OUTPUT
-          echo "failed=$FAILED"   >> $GITHUB_OUTPUT
-          echo "percent=$PERCENT" >> $GITHUB_OUTPUT
-          echo "✅ Passed: $PASSED / $TOTAL ($PERCENT%)"
-          # Fail the job if any tests actually ran and some failed
-          if [ "$TOTAL" -gt 0 ] && [ "$FAILED" -gt 0 ]; then
-            echo "❌ $FAILED test(s) failed"
-            exit 1
-          fi
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-
-      - name: Set badge color
-        id: badge_color
-        run: |
-          PERCENT=${{ steps.test_results.outputs.percent }}
-          if [ "$PERCENT" -ge 90 ]; then
-            echo "color=brightgreen" >> $GITHUB_OUTPUT
-          elif [ "$PERCENT" -ge 70 ]; then
-            echo "color=yellow" >> $GITHUB_OUTPUT
-          else
-            echo "color=red" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Update test badge
-        uses: schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: ${{ secrets.GIST_ID }}
-          filename: stokvel-test-badge.json
-          label: "Tests"
-          message: "${{ steps.test_results.outputs.percent }}% (${{ steps.test_results.outputs.passed }}/${{ steps.test_results.outputs.total }})"
-          color: ${{ steps.badge_color.outputs.color }}
-
-  build-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Check static files
-        run: |
-          echo "Checking critical files..."
-          test -f frontend/pages/index.html     && echo "✅ index.html exists"     || echo "❌ index.html MISSING"
-          test -f frontend/pages/dashboard.html && echo "✅ dashboard.html exists" || echo "❌ dashboard.html MISSING"
-          test -f frontend/scripts/config.js    && echo "✅ config.js exists"      || echo "❌ config.js MISSING"
-          test -f prisma/schema.prisma          && echo "✅ Prisma schema exists"  || echo "❌ schema.prisma MISSING"
-          echo "File check complete"
-
-  deploy-production:
-    needs: [test-backend, build-frontend]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-  
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod --yes'  # ← Added --yes here
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./backend
+        startup-command: "node server.js"
