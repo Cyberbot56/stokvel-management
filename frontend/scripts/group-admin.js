@@ -425,6 +425,20 @@ async function loadGroupData() {
     }
 }
 
+async function checkNewNotifications(groupId) {
+  try {
+    const meetings = await fetchMeetings(groupId);
+    const wrapper = document.querySelector(".badge-container");
+    
+    // If there is at least one meeting, show the dot
+    if (meetings && meetings.length > 0) {
+      wrapper.classList.add("has-notification");
+    }
+  } catch (e) {
+    console.error("Badge check failed", e);
+  }
+}
+
 
 
 // ─── View payouts modal ───────────────────────────────────────────────────────

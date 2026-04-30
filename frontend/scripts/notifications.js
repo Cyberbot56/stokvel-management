@@ -1,17 +1,25 @@
 function renderFooterButtons(group) {
-  const footer   = document.querySelector(".action-footer");
+  const footer = document.querySelector(".action-footer");
+  footer.innerHTML = ""; 
 
-  footer.innerHTML = ""; // clear existing buttons
-  // Everyone gets Notifications
+  //Create a container for the badge
+  const badgeWrapper = document.createElement("div");
+  badgeWrapper.className = "badge-container has-notification"; // Add "has-notification" to show the dot
 
   const viewNotificationsBtn = document.createElement("button");
-  viewNotificationsBtn.id          = "view-notifications-btn";
+  viewNotificationsBtn.id = "view-notifications-btn";
   viewNotificationsBtn.textContent = "Notifications";
-  viewNotificationsBtn.addEventListener("click", () => {
-    loadAndShowNotifications(group.groupId); 
-    });
-  footer.appendChild(viewNotificationsBtn);
 
+  //Click Logic
+  viewNotificationsBtn.addEventListener("click", () => {
+    // Remove the notification dot immediately
+    badgeWrapper.classList.remove("has-notification");
+    
+    // Call the existing function to show the modal
+    loadAndShowNotifications(group.groupId);
+  });
+  badgeWrapper.appendChild(viewNotificationsBtn);
+  footer.appendChild(badgeWrapper);
 }
 
 async function fetchMeetings(groupId) {
