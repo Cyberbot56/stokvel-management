@@ -526,7 +526,37 @@ app.post('/api/meetings', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Failed to schedule meeting', details: error.message });
     }
 });
+//An api to fetch meetings
+app.get('/api/meeting/group/:groupId', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+    const userId = req.user.userId;
 
+    try {
+        //verifying the user is a member of this group
+        const membership = await prisma.group_members.findFirst({
+            where: {
+                FgroupId: parseInt(groupId), SuserId: userId 
+            }});
+
+        if (!membership) {
+            return res.status(403).json({ error: 'You do not have permission to view this group\'s meetings' });
+        }
+        //Fetch meetings
+        const meetings = await prisma.meetings.findMany({
+            where: { FKKgroupId: parseInt(groupId) },
+            orderBy: { Date: 'desc'},
+            include: {groups: {select: {name: true}}}
+        });
+
+        res.json(meetings);
+        } catch (error) {
+        console.error('Error fetching meetings:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch meetings', 
+            details: error.message 
+        });
+    }
+});
 // This api aggregates contribution data per member and calculates compliance rates.
 app.get('/api/groups/:groupId/compliance-report', requireAuth, async(req, res) =>{
     const { groupId } = req.params;
