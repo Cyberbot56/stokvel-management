@@ -323,6 +323,8 @@ async function loadGroupData() {
         console.log('currentGroup set:', currentGroup);
         console.log('members to populate:', group.members);
 
+        renderFooterButtons(group);
+
         populateRecipientDropdown(group.members);
         updatePayoutPreview();
         await loadPayouts();

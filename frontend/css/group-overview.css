@@ -396,6 +396,29 @@ progress::-moz-progress-bar      { background: #0e9490; border-radius: 99px; }
   transform: translateY(-1px);
 }
 
+.notifications-footer {
+  text-align: center;
+  padding-bottom: 0.5rem;
+}
+
+#view-notifications-btn {
+  font-size: 13px;
+  padding: 8px 24px;
+  border: 1.5px solid rgba(14, 148, 144, 0.35);
+  border-radius: 8px;
+  background: white;
+  color: #0e9490;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+#view-notifications-btn:hover {
+  background: #e0f7f6;
+  transform: translateY(-1px);
+}
+
 /* ── Modal overlay ── */
 .modal-overlay {
   position: fixed;
@@ -1260,3 +1283,25 @@ dialog::backdrop {
 }
 
 .initiate-payout-btn:hover { background: #034e52; transform: translateY(-1px); }
+
+/* Container for the notification badge */
+.badge-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* The red dot indicator for a new notification*/
+.has-notification::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444; 
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+

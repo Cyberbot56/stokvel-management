@@ -1,3 +1,5 @@
+const groupSelect = { value: new URLSearchParams(window.location.search).get('groupId') };
+
 // State
 let currentGroup = null;
 
@@ -409,6 +411,8 @@ async function loadGroupData() {
         renderGroupHeader(group);
         renderMembers(group.members);
 
+        renderFooterButtons(group);
+
         // Fetch and render the admin's own payment status for this group
         const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
         renderPaymentCard(statusData);
@@ -419,6 +423,20 @@ async function loadGroupData() {
         banner.className   = 'status-banner closed';
         banner.hidden      = false;
     }
+}
+
+async function checkNewNotifications(groupId) {
+  try {
+    const meetings = await fetchMeetings(groupId);
+    const wrapper = document.querySelector(".badge-container");
+    
+    // If there is at least one meeting, show the dot
+    if (meetings && meetings.length > 0) {
+      wrapper.classList.add("has-notification");
+    }
+  } catch (e) {
+    console.error("Badge check failed", e);
+  }
 }
 
 

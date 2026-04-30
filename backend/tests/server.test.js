@@ -42,7 +42,8 @@ jest.mock('@prisma/client', () => {
       update: jest.fn()
     },
     meetings: {
-      create: jest.fn()
+      create: jest.fn(),
+      findMany: jest.fn()
     },
     $transaction: jest.fn(),
     $disconnect: jest.fn(),
@@ -292,5 +293,61 @@ describe('Stokvel Business Logic', () => {
     const token = crypto.randomBytes(32).toString('hex');
     expect(token).toHaveLength(64);
     expect(/^[a-f0-9]+$/.test(token)).toBe(true);
+  });
+});
+
+describe('Meetings API', () => {
+  
+  //beforeEach to clear mocks between tests so they don't interfere
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /api/meetings', () => {
+    test('should schedule a meeting and return 201', async () => {
+      prisma.meetings.create.mockResolvedValue({
+        meetingId: 1, 
+        title: 'Group Meeting',
+        Date: new Date('2024-12-25')
+      });
+
+      const res = await request(app)
+        .post('/api/meetings')
+        .send({
+          groupId: 1,
+          title: 'Group Meeting',
+          date: '2024-12-25'
+        });
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body.message).toBe('Meeting scheduled successfully');
+    });
+  });
+
+  describe('GET /api/meetings/group/:groupId', () => {
+    test('should return 200 and meetings list for members', async () => {
+      //mock permission check
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 123 });
+      
+      // mock data fetch
+      prisma.meetings.findMany.mockResolvedValue([
+        { title: 'Test Meeting', Date: new Date() }
+      ]);
+
+      const res = await request(app).get('/api/meetings/group/1');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body[0].title).toBe('Test Meeting');
+    });
+
+    test('should return 403 if user is not a member', async () => {
+      // Mock permission check to return null
+      prisma.group_members.findFirst.mockResolvedValue(null);
+
+      const res = await request(app).get('/api/meetings/group/1');
+
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toMatch(/permission/i);
+    });
   });
 });
