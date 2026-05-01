@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="../css/group-admin.css" />
 </head>
 <body>
-
+ 
   <header class="site-header">
     <figure class="header-logo">
       <i class="logo-mark"></i>
@@ -20,13 +20,13 @@
       <button class="logout-btn" id="logoutBtn">Log out</button>
     </nav>
   </header>
-
+ 
   <main class="page">
-
+ 
     <button class="back-link" id="back-btn">← Back to my groups</button>
-
+ 
     <p id="status-banner" class="status-banner" hidden></p>
-
+ 
     <article class="card" id="group-header-card">
       <header class="group-title-row">
         <section>
@@ -38,7 +38,7 @@
           <b class="admin-badge">Admin</b>
         </section>
       </header>
-
+ 
       <dl class="group-stats-strip">
         <section class="stat-group">
           <dt>Members</dt>
@@ -61,8 +61,8 @@
         </section>
       </dl>
     </article>
-
-
+ 
+ 
     <article class="card">
       <header class="section-header">
         <h2 class="card-title">Onboard a new member</h2>
@@ -74,8 +74,8 @@
         <p class="form-feedback" id="add-feedback" hidden></p>
       </section>
     </article>
-
-
+ 
+ 
     <article class="card">
       <header class="section-header">
         <h2 class="card-title">Assign a Treasurer</h2>
@@ -87,8 +87,8 @@
         <p class="form-feedback" id="assign-feedback" hidden></p>
       </section>
     </article>
-
-
+ 
+ 
     <article class="card">
       <header class="section-header">
         <h2 class="card-title">Members</h2>
@@ -98,17 +98,9 @@
         <p class="empty-members">Loading members...</p>
       </section>
     </article>
-
-      <!-- Compliance Report card -->
-  <article class="card">
-    <header class="section-header">
-      <h2 class="card-title">Contribution Compliance</h2>
-      <button class="btn-add" id="btn-compliance-report">View Report</button>
-    </header>
-    <p>Monitor member payment health for this group.</p>
-  </article>
-
-    <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
+ 
+ 
+    <!-- Payment status card -->
     <article class="card" id="payment-status-card">
       <h2 class="card-title">My contribution this cycle</h2>
       <section class="payment-status-row">
@@ -121,16 +113,71 @@
         <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
       </section>
     </article>
-
-
+ 
+ 
+    <!-- Reports card — Sprint 3 Story 6 -->
+    <!-- Admin can view reports and export them as CSV or PDF -->
+    <article class="card" id="reports-card">
+      <header class="section-header">
+        <h2 class="card-title">Reports</h2>
+      </header>
+ 
+      <!-- Report 1: Contribution compliance -->
+      <!-- View opens your teammate's existing compliance modal -->
+      <!-- CSV and PDF export are new — added by Dev 6 for Sprint 3 Story 6 -->
+      <section class="report-row">
+        <section class="report-info">
+          <p class="report-title">Contribution Compliance</p>
+          <p class="report-desc">Shows each member's payment history — who has paid, who is pending, and who has missed contributions.</p>
+        </section>
+        <section class="report-actions">
+          <button class="btn-report-view" id="btn-compliance-report">View</button>
+          <button class="btn-export-csv"  id="export-compliance-csv">CSV</button>
+          <button class="btn-export-pdf"  id="export-compliance-pdf">PDF</button>
+        </section>
+      </section>
+ 
+      <hr class="report-divider" />
+ 
+      <!-- Report 2: Payout history -->
+      <!-- View opens your teammate's existing payouts modal -->
+      <section class="report-row">
+        <section class="report-info">
+          <p class="report-title">Payout History</p>
+          <p class="report-desc">Shows all payouts for the group — who has received the pot, when, the amount, and the current status.</p>
+        </section>
+        <section class="report-actions">
+          <button class="btn-report-view" id="btn-payouts-report">View</button>
+          <button class="btn-export-csv"  id="export-payouts-csv">CSV</button>
+          <button class="btn-export-pdf"  id="export-payouts-pdf">PDF</button>
+        </section>
+      </section>
+ 
+      <hr class="report-divider" />
+ 
+      <!-- Report 3: Group summary — members, roles, group settings -->
+      <section class="report-row">
+        <section class="report-info">
+          <p class="report-title">Group Summary</p>
+          <p class="report-desc">A full overview of the group — all members, their roles, contribution amount, cycle type, and start date.</p>
+        </section>
+        <section class="report-actions">
+          <button class="btn-export-csv" id="export-summary-csv">CSV</button>
+          <button class="btn-export-pdf" id="export-summary-pdf">PDF</button>
+        </section>
+      </section>
+ 
+    </article>
+ 
+ 
     <footer class="action-footer">
       <button id="view-contributions-btn">View contributions</button>
       <button id="view-payouts-btn">View payouts</button>
     </footer>
-
+ 
   </main>
-
-
+ 
+ 
   <!-- Payment confirmation modal -->
   <aside id="payment-confirm-modal" class="modal-overlay" hidden>
     <article class="modal payment-modal">
@@ -151,11 +198,14 @@
       </footer>
     </article>
   </aside>
-
-
+ 
+ 
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <!-- jsPDF — browser PDF library, must load before group-admin.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="../scripts/auth_service.js"></script>
   <script src="../scripts/group-admin.js"></script>
 </body>
 </html>
+ 

@@ -108,7 +108,6 @@ function renderMembers(members) {
 
 // ─── Payment status ───────────────────────────────────────────────────────────
 
-// Checks whether the admin has paid their own contribution for the current cycle.
 async function fetchPaymentStatus(userId, groupId) {
     const token    = await auth0Client.getTokenSilently();
     const response = await fetch(`${config.apiBase}/api/payments/status/${userId}/${groupId}`, {
@@ -118,7 +117,6 @@ async function fetchPaymentStatus(userId, groupId) {
     return await response.json();
 }
 
-// Calls the simulate endpoint — same flow as member and treasurer pages.
 async function simulatePayment(userId, groupId, amount, treasurerId) {
     const token    = await auth0Client.getTokenSilently();
     const response = await fetch(`${config.apiBase}/api/payments/simulate`, {
@@ -133,10 +131,6 @@ async function simulatePayment(userId, groupId, amount, treasurerId) {
     return await response.json();
 }
 
-// Renders the payment status card with three states:
-// unpaid → shows amount + Pay now button
-// pending → shows amount + Awaiting confirmation (treasurer must confirm)
-// paid → shows amount, paid date, and transaction reference
 function renderPaymentCard(statusData) {
     const icon  = document.getElementById('payment-status-icon');
     const label = document.getElementById('payment-status-label');
@@ -158,7 +152,6 @@ function renderPaymentCard(statusData) {
             ref.textContent = 'Ref: ' + statusData.lastPayment.transactionRef;
             ref.hidden      = false;
         }
-
     } else if (statusData.hasPendingPayment) {
         icon.textContent  = '\u23f3';
         icon.className    = 'payment-status-icon pending-icon';
@@ -170,15 +163,14 @@ function renderPaymentCard(statusData) {
             ref.textContent = 'Ref: ' + statusData.pendingPayment.transactionRef;
             ref.hidden      = false;
         }
-
     } else {
-        icon.textContent  = '!';
-        icon.className    = 'payment-status-icon unpaid-icon';
-        label.textContent = 'Unpaid';
-        label.className   = 'payment-status-label unpaid-label';
-        sub.textContent   = formatCurrency(statusData.contributionAmount) + ' due this cycle';
-        if (ref) ref.hidden = true;
-        btn.hidden          = false;
+        icon.textContent        = '!';
+        icon.className          = 'payment-status-icon unpaid-icon';
+        label.textContent       = 'Unpaid';
+        label.className         = 'payment-status-label unpaid-label';
+        sub.textContent         = formatCurrency(statusData.contributionAmount) + ' due this cycle';
+        if (ref) ref.hidden     = true;
+        btn.hidden              = false;
         btn.dataset.amount      = statusData.contributionAmount;
         btn.dataset.groupid     = statusData.groupId;
         btn.dataset.userid      = statusData.userId;
@@ -192,7 +184,7 @@ function openPaymentConfirmModal(userId, groupId, amount, treasurerId) {
     const confirmBtn = document.getElementById('confirm-payment-btn');
     if (!modal || !amountEl || !confirmBtn) return;
 
-    amountEl.textContent = formatCurrency(amount);
+    amountEl.textContent           = formatCurrency(amount);
     confirmBtn.dataset.userid      = userId;
     confirmBtn.dataset.groupid     = groupId;
     confirmBtn.dataset.amount      = amount;
@@ -205,7 +197,6 @@ function closePaymentModal() {
     if (modal) modal.hidden = true;
 }
 
-// Pay now — checks status again before opening modal to guard against double-payment.
 async function handlePayNow() {
     const btn     = document.getElementById('pay-now-btn');
     const userId  = parseInt(btn.dataset.userid);
@@ -224,7 +215,6 @@ async function handlePayNow() {
     }
 }
 
-// Fires when the admin clicks Confirm payment.
 async function handleConfirmPayment() {
     const confirmBtn = document.getElementById('confirm-payment-btn');
     if (!confirmBtn) return;
@@ -245,7 +235,7 @@ async function handleConfirmPayment() {
         renderPaymentCard(updated);
 
         const banner       = document.getElementById('status-banner');
-        banner.textContent = `Payment submitted · Ref: ${result.transactionRef}`;
+        banner.textContent = 'Payment submitted · Ref: ' + result.transactionRef;
         banner.className   = 'status-banner success';
         banner.hidden      = false;
         setTimeout(() => { banner.hidden = true; }, 5000);
@@ -359,7 +349,7 @@ async function assignTreasurer() {
 }
 
 function showFeedback(id, message, type) {
-    const el     = document.getElementById(id);
+    const el = document.getElementById(id);
     if (!el) return;
     el.textContent = message;
     el.className   = 'form-feedback ' + type;
@@ -409,7 +399,6 @@ async function loadGroupData() {
         renderGroupHeader(group);
         renderMembers(group.members);
 
-        // Fetch and render the admin's own payment status for this group
         const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
         renderPaymentCard(statusData);
 
@@ -420,7 +409,6 @@ async function loadGroupData() {
         banner.hidden      = false;
     }
 }
-
 
 
 // ─── View payouts modal ───────────────────────────────────────────────────────
@@ -436,7 +424,6 @@ async function fetchPayouts(groupId) {
 
 async function loadAndShowPayouts(groupId) {
     const userId = parseInt(localStorage.getItem('userId'));
-
     if (!groupId) { alert('No group selected. Please refresh the page.'); return; }
 
     let modal = document.getElementById('payouts-modal');
@@ -474,10 +461,10 @@ async function loadAndShowPayouts(groupId) {
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
                     <tr style="border-bottom:1.5px solid #e0f7f6;">
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Member</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Amount</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Status</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Member</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Date</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Amount</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -486,9 +473,7 @@ async function loadAndShowPayouts(groupId) {
         payouts.forEach(p => {
             const isMe      = p.recipientId === userId;
             const name      = isMe ? 'You' : (p.recipientName || p.recipient?.name || '\u2014');
-            const date      = p.initiatedAt
-                ? new Date(p.initiatedAt).toLocaleDateString('en-ZA', { day:'numeric', month:'long', year:'numeric' })
-                : '\u2014';
+            const date      = p.initiatedAt ? new Date(p.initiatedAt).toLocaleDateString('en-ZA', { day:'numeric', month:'long', year:'numeric' }) : '\u2014';
             const amount    = new Intl.NumberFormat('en-ZA', { style:'currency', currency:'ZAR', minimumFractionDigits:2 }).format(p.amount);
             const statusTxt = p.status.charAt(0).toUpperCase() + p.status.slice(1);
             const rowBg     = isMe ? 'background:#e0f7f6;' : 'background:white;';
@@ -517,7 +502,8 @@ async function loadAndShowPayouts(groupId) {
     }
 }
 
-//Compliance report, NB its only fetched by authorized users such as admin if you have invalide token it won't fetch it.
+
+// ─── Compliance report ────────────────────────────────────────────────────────
 
 async function fetchComplianceReport(groupId) {
     const token    = await auth0Client.getTokenSilently();
@@ -528,7 +514,6 @@ async function fetchComplianceReport(groupId) {
     return await response.json();
 }
 
-// This function loads and show the compliance report. I was gonna create new page but I continued with modal.
 async function loadAndShowComplianceReport() {
     const groupId = currentGroup?.groupId;
     if (!groupId) { alert('No group selected. Please refresh the page.'); return; }
@@ -559,38 +544,33 @@ async function loadAndShowComplianceReport() {
     try {
         const data = await fetchComplianceReport(groupId);
 
-        // Summary banner
         const rateColor = data.groupComplianceRate >= 80 ? '#034e52' : data.groupComplianceRate >= 50 ? '#b45309' : '#991b1b';
         const rateBg    = data.groupComplianceRate >= 80 ? '#e0f7f6'  : data.groupComplianceRate >= 50 ? '#fef3c7'  : '#fef2f2';
 
         let html = `
             <section style="display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap;">
                 <section style="flex:1;min-width:120px;background:${rateBg};border-radius:10px;padding:14px 18px;text-align:center;">
-                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Group compliance</p>
+                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin:0 0 4px;">Group compliance</p>
                     <p style="font-size:26px;font-weight:700;color:${rateColor};margin:0;">${data.groupComplianceRate}%</p>
                 </section>
                 <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
-                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Paid members</p>
+                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin:0 0 4px;">Paid members</p>
                     <p style="font-size:26px;font-weight:700;color:#034e52;margin:0;">${data.totalPaid} / ${data.totalMembers}</p>
                 </section>
                 <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
-                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Defaulting</p>
+                    <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin:0 0 4px;">Defaulting</p>
                     <p style="font-size:26px;font-weight:700;color:#991b1b;margin:0;">${data.members.filter(m => m.status === 'defaulting').length}</p>
                 </section>
             </section>
-        `;
-
-        // Members table
-        html += `
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
                     <tr style="border-bottom:1.5px solid #e0f7f6;">
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Member</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Paid</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Missed</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Pending</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Rate</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Status</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Member</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Paid</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Missed</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Pending</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Rate</th>
+                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -610,7 +590,7 @@ async function loadAndShowComplianceReport() {
                     <td style="padding:11px 12px;text-align:center;color:#034e52;font-weight:700;">${member.paid}</td>
                     <td style="padding:11px 12px;text-align:center;color:#991b1b;font-weight:700;">${member.missed}</td>
                     <td style="padding:11px 12px;text-align:center;color:#b45309;font-weight:700;">${member.pending}</td>
-                    <td style="padding:11px 12px;text-align:center;font-weight:700;color:#0f172a;">${member.complianceRate}%</td>
+                    <td style="padding:11px 12px;text-align:center;font-weight:700;">${member.complianceRate}%</td>
                     <td style="padding:11px 12px;text-align:center;">
                         <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${statusLabel}</span>
                     </td>
@@ -625,6 +605,7 @@ async function loadAndShowComplianceReport() {
         content.innerHTML = `<p style="text-align:center;padding:2rem;color:#991b1b;">Could not load report: ${error.message}</p>`;
     }
 }
+
 
 // ─── Contribution history ─────────────────────────────────────────────────────
 
@@ -703,9 +684,9 @@ function displayContributionsModal(contributions) {
         const ref      = contrib.note || '—';
 
         let statusColor = '#2b7e3a', statusBg = '#2b7e3a20', statusText = contrib.status;
-        if (contrib.status === 'pending')                                       { statusColor = '#ff9800'; statusBg = '#ff980020'; statusText = 'Pending'; }
-        else if (contrib.status === 'missed' || contrib.status === 'overdue')  { statusColor = '#f44336'; statusBg = '#f4433620'; statusText = 'Missed'; }
-        else if (contrib.status === 'paid')                                     { statusText = 'Paid'; }
+        if (contrib.status === 'pending')                                      { statusColor = '#ff9800'; statusBg = '#ff980020'; statusText = 'Pending'; }
+        else if (contrib.status === 'missed' || contrib.status === 'overdue') { statusColor = '#f44336'; statusBg = '#f4433620'; statusText = 'Missed'; }
+        else if (contrib.status === 'paid')                                    { statusText = 'Paid'; }
 
         html += `
             <tr style="border-bottom:1px solid #eee;">
@@ -735,7 +716,183 @@ function displayContributionsModal(contributions) {
 }
 
 
-// ─── Event listeners 
+// ─── REPORT EXPORTS — Sprint 3 Story 6 ───────────────────────────────────────
+// CSV is built in the browser — no extra API calls needed.
+// PDF uses jsPDF from the CDN loaded in group-admin.html.
+
+
+// Converts a 2D array into a CSV file and triggers a download.
+// Each cell is quoted to handle commas inside values safely.
+function downloadCSV(rows, filename) {
+    const csv  = rows.map(row => row.map(cell => '"' + (cell ?? '') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href     = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Creates a PDF from headers and rows using jsPDF.
+// window.jspdf.jsPDF is set by the CDN script in the HTML.
+function downloadPDF(title, headers, rows, filename) {
+    const { jsPDF } = window.jspdf;
+    const doc       = new jsPDF();
+    const groupName = currentGroup ? currentGroup.name : 'Stokvel Group';
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(groupName, 14, 18);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(title, 14, 26);
+
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text('Exported: ' + new Date().toLocaleDateString('en-ZA', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    }), 14, 33);
+    doc.setTextColor(0);
+
+    doc.autoTable({
+        startY: 38,
+        head: [headers],
+        body: rows,
+        styles: { fontSize: 10, cellPadding: 4 },
+        headStyles: { fillColor: [14, 148, 144], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [240, 250, 250] }
+    });
+
+    doc.save(filename);
+}
+
+// Report 1: Contribution compliance CSV
+async function exportComplianceCSV() {
+    if (!currentGroup) { alert('No group loaded.'); return; }
+    try {
+        const data = await fetchComplianceReport(currentGroup.groupId);
+        const rows = [
+            ['GROUP COMPLIANCE REPORT'],
+            ['Group', currentGroup.name],
+            ['Compliance Rate', data.groupComplianceRate + '%'],
+            ['Paid Members', data.totalPaid + ' / ' + data.totalMembers],
+            [],
+            ['Member Name', 'Email', 'Paid', 'Missed', 'Pending', 'Rate', 'Status']
+        ];
+        data.members.forEach(m => {
+            rows.push([m.name, m.email, m.paid, m.missed, m.pending, m.complianceRate + '%', m.status]);
+        });
+        downloadCSV(rows, currentGroup.name + '_contribution_compliance.csv');
+    } catch (error) {
+        alert('Could not export: ' + error.message);
+    }
+}
+
+// Report 1: Contribution compliance PDF
+async function exportCompliancePDF() {
+    if (!currentGroup) { alert('No group loaded.'); return; }
+    try {
+        const data    = await fetchComplianceReport(currentGroup.groupId);
+        const headers = ['Member', 'Email', 'Paid', 'Missed', 'Pending', 'Rate', 'Status'];
+        const rows    = data.members.map(m => [m.name, m.email, m.paid, m.missed, m.pending, m.complianceRate + '%', m.status]);
+        downloadPDF('Contribution Compliance Report', headers, rows, currentGroup.name + '_contribution_compliance.pdf');
+    } catch (error) {
+        alert('Could not export: ' + error.message);
+    }
+}
+
+// Report 2: Payout history CSV
+async function exportPayoutsCSV() {
+    if (!currentGroup) { alert('No group loaded.'); return; }
+    try {
+        const payouts = await fetchPayouts(currentGroup.groupId);
+        const rows    = [['Recipient Name', 'Date Initiated', 'Amount (ZAR)', 'Status', 'Transaction Ref']];
+        if (!payouts || payouts.length === 0) {
+            rows.push(['No payout data available', '', '', '', '']);
+        } else {
+            payouts.forEach(p => {
+                rows.push([
+                    p.recipientName || p.recipient?.name || '—',
+                    p.initiatedAt ? new Date(p.initiatedAt).toLocaleDateString('en-ZA') : '—',
+                    p.amount      ? parseFloat(p.amount).toFixed(2) : '—',
+                    p.status      || '—',
+                    p.transactionRef || '—'
+                ]);
+            });
+        }
+        downloadCSV(rows, currentGroup.name + '_payout_history.csv');
+    } catch (error) {
+        alert('Could not export: ' + error.message);
+    }
+}
+
+// Report 2: Payout history PDF
+async function exportPayoutsPDF() {
+    if (!currentGroup) { alert('No group loaded.'); return; }
+    try {
+        const payouts = await fetchPayouts(currentGroup.groupId);
+        const headers = ['Recipient', 'Date', 'Amount', 'Status', 'Reference'];
+        const rows    = [];
+        if (!payouts || payouts.length === 0) {
+            rows.push(['No payout data available', '', '', '', '']);
+        } else {
+            payouts.forEach(p => {
+                rows.push([
+                    p.recipientName || p.recipient?.name || '—',
+                    p.initiatedAt ? new Date(p.initiatedAt).toLocaleDateString('en-ZA') : '—',
+                    p.amount      ? 'R ' + parseFloat(p.amount).toFixed(2) : '—',
+                    p.status      || '—',
+                    p.transactionRef || '—'
+                ]);
+            });
+        }
+        downloadPDF('Payout History Report', headers, rows, currentGroup.name + '_payout_history.pdf');
+    } catch (error) {
+        alert('Could not export: ' + error.message);
+    }
+}
+
+// Report 3: Group summary CSV — uses currentGroup, no API call needed
+function exportSummaryCSV() {
+    if (!currentGroup) { alert('No group loaded.'); return; }
+    const g    = currentGroup;
+    const rows = [
+        ['GROUP SUMMARY REPORT'],
+        ['Group Name',    g.name],
+        ['Description',   g.description || '—'],
+        ['Status',        g.status],
+        ['Contribution',  g.contributionAmount],
+        ['Cycle Type',    g.cycleType],
+        ['Start Date',    g.startDate ? new Date(g.startDate).toLocaleDateString('en-ZA') : '—'],
+        ['Total Members', g.totalMembers],
+        [],
+        ['MEMBER LIST'],
+        ['Name', 'Email', 'Role', 'Joined']
+    ];
+    g.members.forEach(m => {
+        rows.push([m.name, m.email, m.role, m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-ZA') : '—']);
+    });
+    downloadCSV(rows, g.name + '_group_summary.csv');
+}
+
+// Report 3: Group summary PDF — uses currentGroup, no API call needed
+function exportSummaryPDF() {
+    if (!currentGroup) { alert('No group loaded.'); return; }
+    const g       = currentGroup;
+    const headers = ['Name', 'Email', 'Role', 'Joined'];
+    const rows    = g.members.map(m => [
+        m.name, m.email, m.role,
+        m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-ZA') : '—'
+    ]);
+    downloadPDF('Group Summary Report', headers, rows, g.name + '_group_summary.pdf');
+}
+
+
+// ─── Event listeners ──────────────────────────────────────────────────────────
 
 function setupEventListeners() {
     const addMemberBtn       = document.getElementById('btn-add-member');
@@ -749,8 +906,6 @@ function setupEventListeners() {
     const cancelPayBtn       = document.getElementById('cancel-payment-btn');
     const confirmPayBtn      = document.getElementById('confirm-payment-btn');
     const payModal           = document.getElementById('payment-confirm-modal');
-    const complianceBtn      = document.getElementById('btn-compliance-report');
-
 
     if (addMemberBtn) addMemberBtn.addEventListener('click', addMember);
     if (memberEmail)  memberEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') addMember(); });
@@ -770,19 +925,34 @@ function setupEventListeners() {
         loadAndShowPayouts(groupId);
     });
 
-    if (complianceBtn) complianceBtn.addEventListener('click', loadAndShowComplianceReport);
-    if (payNowBtn)   payNowBtn.addEventListener('click', handlePayNow);
-    if (closePayBtn) closePayBtn.addEventListener('click', closePaymentModal);
+    if (payNowBtn)    payNowBtn.addEventListener('click', handlePayNow);
+    if (closePayBtn)  closePayBtn.addEventListener('click', closePaymentModal);
     if (cancelPayBtn) cancelPayBtn.addEventListener('click', closePaymentModal);
     if (confirmPayBtn) confirmPayBtn.addEventListener('click', handleConfirmPayment);
-    if (payModal)    payModal.addEventListener('click', (e) => { if (e.target === payModal) closePaymentModal(); });
+    if (payModal)     payModal.addEventListener('click', (e) => { if (e.target === payModal) closePaymentModal(); });
 
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePaymentModal(); });
+
+    // ── Export buttons — Sprint 3 Story 6 ──
+    const exportMap = {
+        'btn-compliance-report':  loadAndShowComplianceReport,
+        'btn-payouts-report':     () => loadAndShowPayouts(currentGroup?.groupId),
+        'export-compliance-csv':  exportComplianceCSV,
+        'export-compliance-pdf':  exportCompliancePDF,
+        'export-payouts-csv':     exportPayoutsCSV,
+        'export-payouts-pdf':     exportPayoutsPDF,
+        'export-summary-csv':     exportSummaryCSV,
+        'export-summary-pdf':     exportSummaryPDF,
+    };
+
+    Object.entries(exportMap).forEach(([id, handler]) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', handler);
+    });
 }
 
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
-// onAuthReady is called by auth_service.js once auth0Client is fully initialised
 
 function onAuthReady() {
     setAvatar();
