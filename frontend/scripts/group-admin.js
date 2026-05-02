@@ -716,10 +716,9 @@ function displayContributionsModal(contributions) {
 }
 
 
-// ─── REPORT EXPORTS — Sprint 3 Story 6 ───────────────────────────────────────
-// CSV is built in the browser — no extra API calls needed.
-// PDF uses jsPDF from the CDN loaded in group-admin.html.
 
+// CSV is built in the browser
+// PDF uses jsPDF from the CDN loaded in group-admin.html.
 
 // Converts a 2D array into a CSV file and triggers a download.
 // Each cell is quoted to handle commas inside values safely.
