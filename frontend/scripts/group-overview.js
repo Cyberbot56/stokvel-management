@@ -40,6 +40,9 @@ const AVATAR_COLOURS = ["av-teal", "av-blue", "av-purple", "av-coral"];
 // Store current group for payment simulation
 let currentGroupForPayment = null;
 
+// Use URL params instead of group select dropdown
+const groupSelect = { value: new URLSearchParams(window.location.search).get('groupId') };
+
 
 // ─── Helper functions ─────────────────────────────────────────────────────────
 
@@ -76,7 +79,6 @@ function buildCycleSummary(cycleType, dueDayOfMonth) {
 
 // ─── API calls ────────────────────────────────────────────────────────────────
 
-// FIXED: use config.apiBase, send auth token
 async function fetchUserGroups(userId) {
   const token = await auth0Client.getTokenSilently();
   const response = await fetch(`${config.apiBase}/api/groups_members/${userId}`, {
@@ -171,14 +173,12 @@ async function handleConfirmPayment() {
     console.log('Payment successful:', result);
     closePaymentModal();
 
-    // Show success banner
     const banner = document.getElementById('status-banner');
     banner.textContent = `✅ Payment successful! Reference: ${result.transactionRef}`;
     banner.className   = 'status-banner success';
     banner.hidden      = false;
     setTimeout(() => { banner.hidden = true; }, 5000);
 
-    // Refresh contributions modal if it's open
     const contributionsModal = document.getElementById('contributions-modal');
     if (contributionsModal && !contributionsModal.hidden) {
       await loadAndShowContributions();
@@ -193,10 +193,6 @@ async function handleConfirmPayment() {
   }
 }
 
-// Renders the payment status card with three states:
-// unpaid → shows amount + Pay now button
-// pending → shows amount + Awaiting confirmation (treasurer must confirm)
-// paid → shows amount, paid date, and transaction reference
 function renderPaymentCard(statusData) {
   const icon  = document.getElementById('payment-status-icon');
   const label = document.getElementById('payment-status-label');
@@ -246,7 +242,6 @@ function renderPaymentCard(statusData) {
   }
 }
 
-// Pay now button checks status again before opening modal — guards against double-payment.
 async function handlePayNow() {
   const btn     = document.getElementById('pay-now-btn');
   const userId  = parseInt(btn.dataset.userid);
@@ -284,8 +279,6 @@ function setupPaymentModal() {
 
 // ─── DOM references ───────────────────────────────────────────────────────────
 
-const groupSelect         = document.getElementById("group-select");
-const refreshBtn          = document.getElementById("refresh-btn");
 const statusBanner        = document.getElementById("status-banner");
 const groupNameEl         = document.getElementById("group-name");
 const statusBadgeEl       = document.getElementById("status-badge");
@@ -302,7 +295,6 @@ const payoutDateEl        = document.getElementById("payout-date");
 const countdownEl         = document.getElementById("payout-countdown");
 const countdownNumEl      = document.getElementById("countdown-num");
 const membersGrid         = document.getElementById("members-grid");
-const viewPayoutsBtn      = document.getElementById("view-payouts-btn");
 const rulesModal          = document.getElementById("rules-modal");
 const closeModalBtn       = document.getElementById("close-modal-btn");
 const modalAmount         = document.getElementById("modal-amount");
@@ -376,40 +368,35 @@ function renderMembers(members) {
 }
 
 // ─── Role-based footer buttons ────────────────────────────────────────────────
-// Shows different buttons depending on whether user is admin, treasurer, or member
 
 function renderFooterButtons(group) {
   const footer = document.querySelector(".action-footer");
   if (!footer) return;
 
-  footer.innerHTML = ""; // Clear everything to prevent duplicates
+  footer.innerHTML = "";
 
-  //View Contributions Button
   const viewContribBtn = document.createElement("button");
   viewContribBtn.id = "view-contributions-btn";
   viewContribBtn.textContent = "View contributions";
   viewContribBtn.addEventListener("click", loadAndShowContributions);
   footer.appendChild(viewContribBtn);
 
-  //View Payouts Button
   const viewPayoutsBtn = document.createElement("button");
   viewPayoutsBtn.id = "view-payouts-btn";
   viewPayoutsBtn.textContent = "View payouts";
   viewPayoutsBtn.addEventListener("click", () => {
-    // Falls back to URL param if groupSelect isn't available (common on Admin/Treasurer pages)
     const gid = group?.groupId || new URLSearchParams(window.location.search).get('groupId');
     loadAndShowPayouts(gid);
   });
   footer.appendChild(viewPayoutsBtn);
 
-  //Notifications Button with Badge Container
   const badgeWrapper = document.createElement("div");
-  badgeWrapper.className = "badge-container"; 
+  badgeWrapper.className = "badge-container";
 
   const viewNotificationsBtn = document.createElement("button");
   viewNotificationsBtn.id = "view-notifications-btn";
   viewNotificationsBtn.textContent = "Notifications";
-  
+
   viewNotificationsBtn.addEventListener("click", () => {
     badgeWrapper.classList.remove("has-notification");
     loadAndShowNotifications(group.groupId);
@@ -418,11 +405,9 @@ function renderFooterButtons(group) {
   badgeWrapper.appendChild(viewNotificationsBtn);
   footer.appendChild(badgeWrapper);
 
-  // Check if we should show the red dot immediately
   checkNewNotifications(group.groupId, badgeWrapper);
 }
 
-// Helper to check for the red dot
 async function checkNewNotifications(groupId, wrapper) {
   try {
     const meetings = await fetchMeetings(groupId);
@@ -433,14 +418,6 @@ async function checkNewNotifications(groupId, wrapper) {
     console.error("Badge check failed", e);
   }
 }
-
-
-// ─── Initiate payout modal (moved to group-treasurer.js) ──────────────────────
-// The following functions have been commented out because payout initiation
-// is now handled by group-treasurer.html and group-treasurer.js.
-
-// function openInitiatePayoutModal(group) { ... }
-// function showPayoutFeedback(message, type) { ... }
 
 
 // ─── Rules modal ──────────────────────────────────────────────────────────────
@@ -504,14 +481,10 @@ function getGroupById(groupId) {
 }
 
 async function loadGroup(groupId) {
-  refreshBtn.textContent = "Loading...";
-  refreshBtn.disabled    = true;
-
   try {
     const group = getGroupById(groupId);
     if (!group) throw new Error("Group not found");
 
-    // Store current group for payment simulation
     currentGroupForPayment = group;
 
     const { cycle, nextPayout } = getMockCycleAndPayout();
@@ -521,15 +494,13 @@ async function loadGroup(groupId) {
     renderStats(group);
     renderNextPayout(nextPayout);
     renderMembers(group.members);
-    renderFooterButtons(group); // renders correct buttons based on role
+    renderFooterButtons(group);
 
-    // Fetch and render the current user's payment status for this group
     const userId = localStorage.getItem('userId');
     if (userId) {
       const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
       renderPaymentCard(statusData);
 
-      // Load projected savings growth chart
       await loadSavingsProjection(parseInt(userId), parseInt(groupId));
     }
 
@@ -537,10 +508,6 @@ async function loadGroup(groupId) {
     statusBanner.textContent = "Error: " + error.message;
     statusBanner.className   = "status-banner closed";
     statusBanner.hidden      = false;
-
-  } finally {
-    refreshBtn.textContent = "Refresh";
-    refreshBtn.disabled    = false;
   }
 }
 
@@ -571,15 +538,7 @@ async function loadUserGroups() {
   try {
     userGroups = await fetchUserGroups(userId);
 
-    userGroups.forEach(group => {
-      const option       = document.createElement("option");
-      option.value       = group.groupId;
-      option.textContent = group.name;
-      groupSelect.appendChild(option);
-    });
-
     if (selectedGroupId) {
-      groupSelect.value = selectedGroupId;
       loadGroup(selectedGroupId);
     } else if (userGroups.length > 0) {
       loadGroup(String(userGroups[0].groupId));
@@ -595,26 +554,20 @@ async function loadUserGroups() {
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
 
-groupSelect.addEventListener("change", () => {
-  loadGroup(groupSelect.value);
+const backBtn = document.getElementById('back-btn');
+if (backBtn) backBtn.addEventListener('click', () => {
+  window.location.href = '../pages/dashboard.html';
 });
 
-refreshBtn.addEventListener("click", () => {
-  groupSelect.innerHTML = "";
-  userGroups = [];
-  loadUserGroups();
-});
+if (closeModalBtn) closeModalBtn.addEventListener("click", closeRulesModal);
 
-closeModalBtn.addEventListener("click", closeRulesModal);
-
-rulesModal.addEventListener("click", (event) => {
+if (rulesModal) rulesModal.addEventListener("click", (event) => {
   if (event.target === rulesModal) closeRulesModal();
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !rulesModal.hidden) closeRulesModal();
+  if (event.key === "Escape" && rulesModal && !rulesModal.hidden) closeRulesModal();
 });
-
 
 
 // ─── Savings Projection ───────────────────────────────────────────────────────
@@ -634,13 +587,11 @@ function renderSavingsProjection(data) {
   const card = document.getElementById('savings-projection-card');
   if (!card) return;
 
-  // Fill summary stats
   document.getElementById('proj-total-contrib').textContent = formatCurrency(data.totalContributed);
   document.getElementById('proj-payout-cycle').textContent = data.payoutPosition;
   document.getElementById('proj-payout-amount').textContent = formatCurrency(data.potAmount);
   document.getElementById('proj-progress').textContent = data.paidSoFar + ' of ' + data.totalCycles + ' cycles';
 
-  // Note text
   const noteEl = document.getElementById('proj-note');
   if (data.paidSoFar >= data.payoutPosition && data.payoutsReceived > 0) {
     noteEl.textContent = 'You have already received your payout. Keep contributing for the remaining members.';
@@ -651,11 +602,9 @@ function renderSavingsProjection(data) {
     noteEl.textContent = remaining + ' contribution' + (remaining !== 1 ? 's' : '') + ' remaining before your payout.';
   }
 
-  // Build chart
   const ctx = document.getElementById('savings-chart');
   if (!ctx) return;
 
-  // Destroy previous chart instance if it exists
   if (savingsChartInstance) {
     savingsChartInstance.destroy();
     savingsChartInstance = null;
@@ -669,11 +618,7 @@ function renderSavingsProjection(data) {
   const contributedData = data.projectionData.map(d => d.contributed);
   const receivedData = data.projectionData.map(d => d.received);
   const netData = data.projectionData.map(d => d.netPosition);
-
-  // Find the payout cycle index for the annotation point
   const payoutIndex = data.projectionData.findIndex(d => d.isPayoutCycle);
-
-  // Point radius arrays — highlight the payout cycle
   const contributedRadius = data.projectionData.map((d, i) => i === payoutIndex ? 6 : 3);
   const receivedRadius = data.projectionData.map((d, i) => i === payoutIndex ? 8 : 0);
 
@@ -746,7 +691,6 @@ function renderSavingsProjection(data) {
               if (context.parsed.y !== null) {
                 label += ': ' + formatCurrency(context.parsed.y);
               }
-              // Mark payout cycle
               if (context.dataIndex === payoutIndex) {
                 label += ' ★ PAYOUT';
               }
@@ -803,7 +747,6 @@ async function loadAndShowPayouts(groupId) {
 
     if (!groupId) { alert('No group selected. Please refresh the page.'); return; }
 
-    // Always remove and recreate the modal so the content section is guaranteed fresh
     const existing = document.getElementById('payouts-modal');
     if (existing) existing.remove();
 
@@ -893,14 +836,15 @@ async function loadAndShowPayouts(groupId) {
     }
 }
 
+
 // ─── View contributions modal ─────────────────────────────────────────────────
 
 async function loadAndShowContributions() {
-  const groupId = groupSelect.value;
+  const groupId = new URLSearchParams(window.location.search).get('groupId');
   const userId  = localStorage.getItem('userId');
 
   if (!groupId) {
-    alert("Please select a group first");
+    alert("No group found. Please go back and select a group.");
     return;
   }
 
@@ -1026,7 +970,6 @@ function displayContributionsModal(contributions) {
 
 
 // ─── Initial page load ────────────────────────────────────────────────────────
-// onAuthReady is called by auth_service.js once auth0Client is fully initialised
 
 const setAvatar = () => {
   const name     = localStorage.getItem('userName') || '';
