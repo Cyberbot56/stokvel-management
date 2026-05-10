@@ -750,41 +750,41 @@ app.get('/api/groups/:groupId/savings-projection/:userId', requireAuth, async (r
 });
 
 // ─── Group Settings Routes ─────────────────────────────────────────────────────
-
+ 
 // PUT /api/groups/:groupId - Update group settings (name, description, contributionAmount, cycleType)
 app.put('/api/groups/:groupId', requireAuth, async (req, res) => {
     const { groupId } = req.params;
     const { name, description, contributionAmount, cycleType } = req.body;
     const userId = req.user.userId;
-
+ 
     try {
         // Verify user is admin of this group
         const membership = await prisma.group_members.findFirst({
-            where: { 
-                FgroupId: parseInt(groupId), 
-                SuserId: userId, 
-                role: 'admin' 
+            where: {
+                FgroupId: parseInt(groupId),
+                SuserId: userId,
+                role: 'admin'
             }
         });
-
+ 
         if (!membership) {
             return res.status(403).json({ error: 'Only group admins can update settings' });
         }
-
+ 
         // Check if group is already closed
         const group = await prisma.groups.findUnique({
             where: { groupId: parseInt(groupId) },
             select: { status: true }
         });
-
+ 
         if (!group) {
             return res.status(404).json({ error: 'Group not found' });
         }
-
+ 
         if (group.status === 'closed') {
             return res.status(400).json({ error: 'Cannot update a closed group' });
         }
-
+ 
         // Update group settings
         const updatedGroup = await prisma.groups.update({
             where: { groupId: parseInt(groupId) },
@@ -793,59 +793,57 @@ app.put('/api/groups/:groupId', requireAuth, async (req, res) => {
                 description: description,
                 contributionAmount: parseFloat(contributionAmount),
                 cycleType: cycleType,
-                // Add updated_at if you have this column, otherwise remove
-                // updatedAt: new Date()
             }
         });
-
+ 
         res.json({
             message: 'Group settings updated successfully',
             group: updatedGroup
         });
-
+ 
     } catch (error) {
         console.error('Error updating group settings:', error);
         res.status(500).json({ error: 'Failed to update group settings', details: error.message });
     }
 });
-
+ 
 // Alternative endpoint for /api/groups/update (for compatibility)
 app.put('/api/groups/update', requireAuth, async (req, res) => {
     const { groupId, name, description, contributionAmount, cycleType } = req.body;
     const userId = req.user.userId;
-
+ 
     if (!groupId) {
         return res.status(400).json({ error: 'groupId is required' });
     }
-
+ 
     try {
         // Verify user is admin of this group
         const membership = await prisma.group_members.findFirst({
-            where: { 
-                FgroupId: parseInt(groupId), 
-                SuserId: userId, 
-                role: 'admin' 
+            where: {
+                FgroupId: parseInt(groupId),
+                SuserId: userId,
+                role: 'admin'
             }
         });
-
+ 
         if (!membership) {
             return res.status(403).json({ error: 'Only group admins can update settings' });
         }
-
+ 
         // Check if group is already closed
         const group = await prisma.groups.findUnique({
             where: { groupId: parseInt(groupId) },
             select: { status: true }
         });
-
+ 
         if (!group) {
             return res.status(404).json({ error: 'Group not found' });
         }
-
+ 
         if (group.status === 'closed') {
             return res.status(400).json({ error: 'Cannot update a closed group' });
         }
-
+ 
         // Update group settings
         const updatedGroup = await prisma.groups.update({
             where: { groupId: parseInt(groupId) },
@@ -856,170 +854,47 @@ app.put('/api/groups/update', requireAuth, async (req, res) => {
                 cycleType: cycleType
             }
         });
-
+ 
         res.json({
             message: 'Group settings updated successfully',
             group: updatedGroup
         });
-
+ 
     } catch (error) {
         console.error('Error updating group settings:', error);
         res.status(500).json({ error: 'Failed to update group settings', details: error.message });
     }
 });
-
-// POST /api/groups/:groupId/close - Close a group
-app.post('/api/groups/:groupId/close', requireAuth, async (req, res) => {
-    const { groupId } = req.params;
-    const userId = req.user.userId;
-
-    try {
-        // Verify user is admin of this group
-        const membership = await prisma.group_members.findFirst({
-            where: { 
-                FgroupId: parseInt(groupId), 
-                SuserId: userId, 
-                role: 'admin' 
-            }
-        });
-
-        if (!membership) {
-            return res.status(403).json({ error: 'Only group admins can close the group' });
-        }
-
-        // Check if group exists and get its name
-        const group = await prisma.groups.findUnique({
-            where: { groupId: parseInt(groupId) },
-            select: { status: true, name: true }
-        });
-
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
-
-        if (group.status === 'closed') {
-            return res.status(400).json({ error: 'Group is already closed' });
-        }
-
-        // Close the group
-        const closedGroup = await prisma.groups.update({
-            where: { groupId: parseInt(groupId) },
-            data: { 
-                status: 'closed'
-                // Add closedAt if you have this column in your schema
-                // closedAt: new Date()
-            }
-        });
-
-        res.json({
-            message: `Group "${group.name}" has been closed successfully`,
-            group: closedGroup
-        });
-
-    } catch (error) {
-        console.error('Error closing group:', error);
-        res.status(500).json({ error: 'Failed to close group', details: error.message });
-    }
-});
-
-// Alternative endpoint for /api/groups/close (for compatibility)
+ 
 // POST /api/groups/:groupId/close - PERMANENTLY DELETE group
 app.post('/api/groups/:groupId/close', requireAuth, async (req, res) => {
     const { groupId } = req.params;
     const userId = req.user.userId;
-
+ 
     try {
         // Verify user is admin of this group
         const membership = await prisma.group_members.findFirst({
-            where: { 
-                FgroupId: parseInt(groupId), 
-                SuserId: userId, 
-                role: 'admin' 
+            where: {
+                FgroupId: parseInt(groupId),
+                SuserId: userId,
+                role: 'admin'
             }
         });
-
+ 
         if (!membership) {
-            return res.status(403).json({ error: 'Only group admins can close/delete the group' });
+            return res.status(403).json({ error: 'Only group admins can delete the group' });
         }
-
+ 
         // Get group name for the success message
         const group = await prisma.groups.findUnique({
             where: { groupId: parseInt(groupId) },
             select: { name: true }
         });
-
+ 
         if (!group) {
             return res.status(404).json({ error: 'Group not found' });
         }
-
-        // PERMANENT DELETE - Delete in correct order to handle foreign keys
-        await prisma.$transaction([
-            // Delete all contributions for this group
-            prisma.contributions.deleteMany({ 
-                where: { FKgroupId: parseInt(groupId) } 
-            }),
-            // Delete all payouts for this group
-            prisma.payout.deleteMany({ 
-                where: { groupId: parseInt(groupId) } 
-            }),
-            // Delete all meetings for this group
-            prisma.meetings.deleteMany({ 
-                where: { FKKgroupId: parseInt(groupId) } 
-            }),
-            // Delete all group members
-            prisma.group_members.deleteMany({ 
-                where: { FgroupId: parseInt(groupId) } 
-            }),
-            // Finally delete the group itself
-            prisma.groups.delete({ 
-                where: { groupId: parseInt(groupId) } 
-            })
-        ]);
-
-        res.json({ 
-            message: `Group "${group.name}" has been permanently deleted.`,
-            groupId: parseInt(groupId)
-        });
-
-    } catch (error) {
-        console.error('Error deleting group:', error);
-        res.status(500).json({ error: 'Failed to delete group', details: error.message });
-    }
-});
-
-// Also update the alternative endpoint
-app.post('/api/groups/close', requireAuth, async (req, res) => {
-    const { groupId } = req.body;
-    const userId = req.user.userId;
-
-    if (!groupId) {
-        return res.status(400).json({ error: 'groupId is required' });
-    }
-
-    try {
-        // Verify user is admin of this group
-        const membership = await prisma.group_members.findFirst({
-            where: { 
-                FgroupId: parseInt(groupId), 
-                SuserId: userId, 
-                role: 'admin' 
-            }
-        });
-
-        if (!membership) {
-            return res.status(403).json({ error: 'Only group admins can close/delete the group' });
-        }
-
-        // Get group name for the success message
-        const group = await prisma.groups.findUnique({
-            where: { groupId: parseInt(groupId) },
-            select: { name: true }
-        });
-
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
-
+ 
         // PERMANENT DELETE - Delete in correct order to handle foreign keys
         await prisma.$transaction([
             prisma.contributions.deleteMany({ where: { FKgroupId: parseInt(groupId) } }),
@@ -1028,16 +903,73 @@ app.post('/api/groups/close', requireAuth, async (req, res) => {
             prisma.group_members.deleteMany({ where: { FgroupId: parseInt(groupId) } }),
             prisma.groups.delete({ where: { groupId: parseInt(groupId) } })
         ]);
-
-        res.json({ 
+ 
+        res.json({
             message: `Group "${group.name}" has been permanently deleted.`,
             groupId: parseInt(groupId)
         });
-
+ 
     } catch (error) {
         console.error('Error deleting group:', error);
         res.status(500).json({ error: 'Failed to delete group', details: error.message });
     }
+});
+ 
+// Alternative endpoint for /api/groups/close (for compatibility)
+app.post('/api/groups/close', requireAuth, async (req, res) => {
+    const { groupId } = req.body;
+    const userId = req.user.userId;
+ 
+    if (!groupId) {
+        return res.status(400).json({ error: 'groupId is required' });
+    }
+ 
+    try {
+        // Verify user is admin of this group
+        const membership = await prisma.group_members.findFirst({
+            where: {
+                FgroupId: parseInt(groupId),
+                SuserId: userId,
+                role: 'admin'
+            }
+        });
+ 
+        if (!membership) {
+            return res.status(403).json({ error: 'Only group admins can delete the group' });
+        }
+ 
+        // Get group name for the success message
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { name: true }
+        });
+ 
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+ 
+        // PERMANENT DELETE - Delete in correct order to handle foreign keys
+        await prisma.$transaction([
+            prisma.contributions.deleteMany({ where: { FKgroupId: parseInt(groupId) } }),
+            prisma.payout.deleteMany({ where: { groupId: parseInt(groupId) } }),
+            prisma.meetings.deleteMany({ where: { FKKgroupId: parseInt(groupId) } }),
+            prisma.group_members.deleteMany({ where: { FgroupId: parseInt(groupId) } }),
+            prisma.groups.delete({ where: { groupId: parseInt(groupId) } })
+        ]);
+ 
+        res.json({
+            message: `Group "${group.name}" has been permanently deleted.`,
+            groupId: parseInt(groupId)
+        });
+ 
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        res.status(500).json({ error: 'Failed to delete group', details: error.message });
+    }
+});
+ 
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });
 
 app.get(/.*/, (req, res) => {
