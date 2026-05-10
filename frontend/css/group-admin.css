@@ -255,3 +255,82 @@ b.badge, b.admin-badge { font-weight: inherit; }
   box-shadow: 0 0 5px rgba(0,0,0,0.2);
   z-index: 10;
 }
+/* Dialog modal centering */
+dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 16px;
+    background: white;
+    max-width: 90%;
+    width: 450px;
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+}
+
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+}
+
+#close-modal {
+    padding: 24px;
+}
+
+#close-modal h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #034e52;
+    margin-bottom: 8px;
+}
+
+#close-modal p {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+#close-modal .settings-field {
+    margin-bottom: 20px;
+}
+
+#close-modal .settings-field label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+#close-modal .settings-field input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid rgba(14, 148, 144, 0.15);
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+#close-modal .error-msg {
+    display: none;
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+#close-modal .btn-danger {
+    padding: 10px 20px;
+    background: white;
+    color: #ef4444;
+    border: 1.5px solid #fecaca;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#close-modal .btn-danger:hover {
+    background: #fee2e2;
+}
