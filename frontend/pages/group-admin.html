@@ -6,280 +6,6 @@
   <title>Group Admin – Stokvel App</title>
   <link rel="stylesheet" href="../css/group-overview.css" />
   <link rel="stylesheet" href="../css/group-admin.css" />
-  <style>
-    /* ── Sidebar layout ── */
-    body { display: flex; flex-direction: column; min-height: 100vh; }
-
-    .page-shell {
-      display: flex;
-      flex: 1;
-      min-height: 0;
-    }
-
-    .sidebar {
-      width: 56px;
-      flex-shrink: 0;
-      background: #034e52;
-      display: flex;
-      flex-direction: column;
-      padding: 16px 0;
-      gap: 2px;
-      transition: width 0.22s ease;
-      overflow: hidden;
-      position: relative;
-      z-index: 10;
-    }
-
-    .sidebar:hover { width: 200px; }
-
-    .sidebar-group-info {
-      padding: 0 12px 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      margin-bottom: 8px;
-      white-space: nowrap;
-      overflow: hidden;
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      min-height: 44px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .sidebar:hover .sidebar-group-info { opacity: 1; }
-
-    .sidebar-group-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #2dd4bf;
-      line-height: 1.3;
-    }
-
-    .sidebar-group-meta {
-      font-size: 11px;
-      color: rgba(255,255,255,0.5);
-      margin-top: 2px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0 10px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.6);
-      cursor: pointer;
-      border: none;
-      background: none;
-      width: 100%;
-      text-align: left;
-      white-space: nowrap;
-      transition: background 0.15s, color 0.15s;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      border-left: 3px solid transparent;
-    }
-
-    .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
-
-    .nav-item.active {
-      background: rgba(45, 212, 191, 0.15);
-      color: #2dd4bf;
-      border-left-color: #2dd4bf;
-    }
-
-    .nav-icon {
-      font-size: 20px;
-      flex-shrink: 0;
-      width: 24px;
-      text-align: center;
-    }
-
-    .nav-label {
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      overflow: hidden;
-    }
-
-    .sidebar:hover .nav-label { opacity: 1; }
-
-    /* Content area */
-    .page-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.5rem 2rem 2rem;
-      min-width: 0;
-    }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .section-page-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #034e52;
-      margin-bottom: 1.25rem;
-    }
-
-    /* Settings */
-    .settings-fieldset {
-      border: none;
-      padding: 0;
-      margin: 0 0 24px;
-    }
-
-    .settings-legend {
-      font-size: 11px;
-      font-weight: 700;
-      color: #0e9490;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 16px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #e0f7f6;
-      width: 100%;
-      display: block;
-    }
-
-    .settings-field { margin-bottom: 18px; }
-
-    .settings-field label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: #374151;
-    }
-
-    .settings-field input,
-    .settings-field select {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid rgba(14, 148, 144, 0.15);
-      border-radius: 10px;
-      font-size: 14px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      outline: none;
-      background: white;
-      color: #0f172a;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .settings-field input:focus,
-    .settings-field select:focus {
-      border-color: #0e9490;
-      box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
-    }
-
-    .readonly-field {
-      display: block;
-      padding: 10px 14px;
-      background: #f0fafa;
-      border: 1.5px solid rgba(14, 148, 144, 0.15);
-      border-radius: 10px;
-      font-size: 14px;
-      color: #64748b;
-    }
-
-    .field-note {
-      font-size: 12px;
-      color: #64748b;
-      margin-bottom: 14px;
-    }
-
-    .danger-zone {
-      border: 1px solid #fecaca;
-      border-radius: 10px;
-      padding: 18px;
-      background: #fff9f9;
-      margin-top: 28px;
-    }
-
-    .danger-zone h3 {
-      font-size: 13px;
-      font-weight: 700;
-      color: #ef4444;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 6px;
-    }
-
-    .danger-zone p { font-size: 13px; color: #64748b; margin-bottom: 14px; }
-
-    .btn-danger {
-      padding: 10px 24px;
-      background: white;
-      color: #ef4444;
-      border: 1.5px solid #fecaca;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      transition: background 0.2s ease;
-    }
-
-    .btn-danger:hover { background: #fee2e2; }
-
-    .save-bar {
-      background: #034e52;
-      color: white;
-      border-radius: 10px;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      font-size: 14px;
-    }
-
-    .save-bar-actions { display: flex; gap: 8px; }
-
-    .btn-outline-sm {
-      padding: 6px 14px;
-      background: rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.85);
-      border: 1.5px solid rgba(255,255,255,0.3);
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .btn-cyan-sm {
-      padding: 6px 14px;
-      background: #2dd4bf;
-      color: #034e52;
-      border: none;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .tab-footer {
-      display: flex;
-      gap: 10px;
-      margin-top: 1.5rem;
-    }
-
-    .tab-footer button {
-      padding: 9px 20px;
-      border: 1.5px solid rgba(14, 148, 144, 0.35);
-      border-radius: 8px;
-      background: white;
-      color: #0e9490;
-      cursor: pointer;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      transition: background 0.2s ease;
-    }
-
-    .tab-footer button:hover { background: #e0f7f6; }
-  </style>
 </head>
 <body>
 
@@ -296,8 +22,7 @@
   </header>
 
   <div class="page-shell">
-
-    <!-- ── Sidebar ── -->
+    <!-- Sidebar -->
     <nav class="sidebar" aria-label="Group sections">
       <div class="sidebar-group-info">
         <div class="sidebar-group-name" id="sidebar-group-name">Loading…</div>
@@ -326,16 +51,13 @@
       </button>
     </nav>
 
-    <!-- ── Content ── -->
+    <!-- Content -->
     <main class="page-content">
-
       <button class="back-link" id="back-btn">← Back to my groups</button>
-
       <p id="status-banner" class="status-banner" hidden></p>
 
-      <!-- ══ OVERVIEW tab ══ -->
+      <!-- OVERVIEW tab -->
       <section id="tab-overview" class="tab-panel active">
-
         <article class="card" id="group-header-card">
           <header class="group-title-row">
             <section>
@@ -378,17 +100,41 @@
             <mark id="payment-status-icon" class="payment-status-icon"></mark>
             <section class="payment-status-body">
               <p id="payment-status-label" class="payment-status-label"></p>
-              <p id="payment-status-sub"   class="payment-status-sub"></p>
-              <small id="payment-ref"      class="payment-ref" hidden></small>
+              <p id="payment-status-sub" class="payment-status-sub"></p>
+              <small id="payment-ref" class="payment-ref" hidden></small>
             </section>
             <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
           </section>
         </article>
 
-      </section>
-      <!-- end OVERVIEW -->
+        <!-- Savings Projection Card -->
+        <article class="card" id="savings-projection-card" hidden>
+          <h2 class="card-title">Projected Savings Growth</h2>
+          <section class="projection-summary">
+            <section class="projection-stat">
+              <p class="projection-stat-label">Total you'll contribute</p>
+              <p id="proj-total-contrib" class="projection-stat-value"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
+              <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Contributions made</p>
+              <p id="proj-progress" class="projection-stat-value"></p>
+            </section>
+          </section>
+          <section class="projection-chart-wrap">
+            <canvas id="savings-chart"></canvas>
+          </section>
+          <p class="projection-note" id="proj-note"></p>
+        </article>
 
-      <!-- ══ MEMBERS tab ══ -->
+        <!-- Footer Actions -->
+        <footer class="action-footer"></footer>
+      </section>
+
+      <!-- MEMBERS tab -->
       <section id="tab-members" class="tab-panel">
         <h2 class="section-page-title">Members</h2>
 
@@ -426,9 +172,8 @@
           </section>
         </article>
       </section>
-      <!-- end MEMBERS -->
 
-      <!-- ══ CONTRIBUTIONS tab ══ -->
+      <!-- CONTRIBUTIONS tab -->
       <section id="tab-contributions" class="tab-panel">
         <h2 class="section-page-title">Contributions</h2>
         <div class="tab-footer">
@@ -436,7 +181,7 @@
         </div>
       </section>
 
-      <!-- ══ PAYOUTS tab ══ -->
+      <!-- PAYOUTS tab -->
       <section id="tab-payouts" class="tab-panel">
         <h2 class="section-page-title">Payouts</h2>
         <div class="tab-footer">
@@ -444,7 +189,7 @@
         </div>
       </section>
 
-      <!-- ══ SETTINGS tab ══ -->
+      <!-- SETTINGS tab -->
       <section id="tab-settings" class="tab-panel">
         <h2 class="section-page-title">Group Settings</h2>
 
@@ -469,34 +214,6 @@
               <label for="s-desc">Description</label>
               <input type="text" id="s-desc" name="s-desc" oninput="markDirty()">
             </div>
-    <!-- Savings Projection Card -->
-    <article class="card" id="savings-projection-card" hidden>
-      <h2 class="card-title">Projected Savings Growth</h2>
-      <section class="projection-summary">
-        <section class="projection-stat">
-          <p class="projection-stat-label">Total you'll contribute</p>
-          <p id="proj-total-contrib" class="projection-stat-value"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
-          <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Contributions made</p>
-          <p id="proj-progress" class="projection-stat-value"></p>
-        </section>
-      </section>
-      <section class="projection-chart-wrap">
-        <canvas id="savings-chart"></canvas>
-      </section>
-      <p class="projection-note" id="proj-note"></p>
-    </article>
-
-    <footer class="action-footer">
-      <button id="view-contributions-btn">View contributions</button>
-      <button id="view-payouts-btn">View payouts</button>
-      <button id="view-notifications-btn">Notifications</button>
-    </footer>
 
             <div class="settings-field">
               <label for="s-amount">Contribution amount (ZAR)</label>
@@ -534,13 +251,10 @@
           </div>
         </article>
       </section>
-      <!-- end SETTINGS -->
-
     </main>
   </div>
 
-
-  <!-- Payment confirmation modal (unchanged) -->
+  <!-- Payment confirmation modal -->
   <aside id="payment-confirm-modal" class="modal-overlay" hidden>
     <article class="modal payment-modal">
       <header class="modal-header">
@@ -555,7 +269,7 @@
         </p>
       </section>
       <footer class="modal-footer payment-modal-footer">
-        <button id="cancel-payment-btn"  class="print-btn">Cancel</button>
+        <button id="cancel-payment-btn" class="print-btn">Cancel</button>
         <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm payment</button>
       </footer>
     </article>
@@ -583,86 +297,7 @@
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="../scripts/auth_service.js"></script>
   <script src="../scripts/savings-projection.js"></script>
-  <script src="../scripts/group-admin.js"></script>
-  <script>
-    const TABS = ['overview','members','contributions','payouts','settings'];
-
-    function switchTab(name) {
-      TABS.forEach(t => {
-        document.getElementById('tab-' + t).classList.toggle('active', t === name);
-        document.getElementById('nav-' + t).classList.toggle('active', t === name);
-      });
-    }
-
-    let dirty = false;
-
-    function markDirty() {
-      dirty = true;
-      document.getElementById('save-bar').hidden = false;
-    }
-
-    function discardChanges() {
-      dirty = false;
-      document.getElementById('save-bar').hidden = true;
-      if (window._groupData) populateSettings(window._groupData);
-    }
-
-    function saveChanges() {
-      if (typeof window.saveGroupSettings === 'function') window.saveGroupSettings();
-    }
-
-    function openCloseModal() {
-      document.getElementById('close-modal').showModal();
-    }
-
-    function confirmClose() {
-      const input = document.getElementById('confirm-name').value.trim();
-      const name  = (document.getElementById('group-name') || {}).textContent || '';
-      if (input !== name) {
-        document.getElementById('err-confirm').style.display = 'block';
-        return;
-      }
-      if (typeof window.closeGroup === 'function') window.closeGroup();
-    }
-
-    function populateSettings(group) {
-      const sName   = document.getElementById('s-name');
-      const sDesc   = document.getElementById('s-desc');
-      const sAmount = document.getElementById('s-amount');
-      const sCycle  = document.getElementById('s-cycle');
-      const sStart  = document.getElementById('s-start-date');
-      if (sName   && group.name)               sName.value        = group.name;
-      if (sDesc   && group.description)        sDesc.value        = group.description;
-      if (sAmount && group.contributionAmount) sAmount.value      = group.contributionAmount;
-      if (sCycle  && group.cycleType)          sCycle.value       = group.cycleType;
-      if (sStart  && group.startDate)          sStart.textContent = group.startDate;
-      const meta = document.getElementById('sidebar-group-meta');
-      if (meta && group.contributionAmount && group.cycleType) {
-        meta.textContent = `R${group.contributionAmount} · ${group.cycleType}`;
-      }
-    }
-
-    const nameEl = document.getElementById('group-name');
-    if (nameEl) {
-      const obs = new MutationObserver(() => {
-        const sn = document.getElementById('sidebar-group-name');
-        if (sn) sn.textContent = nameEl.textContent || 'Group';
-      });
-      obs.observe(nameEl, { childList: true, characterData: true, subtree: true });
-    }
-  </script>
-
-  <style>
-    .avatar[onclick], .header-avatar[onclick] {
-      cursor: pointer;
-      transition: box-shadow 0.2s ease, transform 0.15s ease;
-    }
-    .avatar[onclick]:hover, .header-avatar[onclick]:hover {
-      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
-      transform: scale(1.07);
-    }
-  </style>
-
   <script src="../scripts/notifications.js"></script>
+  <script src="../scripts/group-admin.js"></script>
 </body>
 </html>
