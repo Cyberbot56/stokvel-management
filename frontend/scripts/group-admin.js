@@ -834,7 +834,9 @@ async function saveGroupSettings() {
         return;
     }
     
-    const saveBtn = document.querySelector('#save-bar .btn-cyan-sm');
+    const saveBar = document.getElementById('save-bar');
+    const saveBtn = saveBar?.querySelector('.btn-cyan-sm');
+    
     if (saveBtn) {
         saveBtn.disabled = true;
         saveBtn.textContent = 'Saving...';
@@ -842,13 +844,20 @@ async function saveGroupSettings() {
     
     try {
         const token = await auth0Client.getTokenSilently();
-        const response = await fetch(`${config.apiBase}/api/groups/${currentGroup.groupId}/settings`, {
+        
+        // Use the endpoint with groupId in the URL path
+        const response = await fetch(`${config.apiBase}/api/groups/${currentGroup.groupId}`, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json', 
                 'Authorization': `Bearer ${token}` 
             },
-            body: JSON.stringify(updatedData)
+            body: JSON.stringify({
+                name: updatedData.name,
+                description: updatedData.description,
+                contributionAmount: updatedData.contributionAmount,
+                cycleType: updatedData.cycleType
+            })
         });
         
         if (!response.ok) {
@@ -868,7 +877,6 @@ async function saveGroupSettings() {
         renderGroupHeader(currentGroup);
         populateSettings(currentGroup);
         
-        const saveBar = document.getElementById('save-bar');
         if (saveBar) saveBar.hidden = true;
         
         showFeedback('settings-feedback', 'Group settings updated successfully!', 'success');
@@ -879,11 +887,9 @@ async function saveGroupSettings() {
             meta.textContent = `R${updatedData.contributionAmount} · ${updatedData.cycleType}`;
         }
         
-        // Refresh members table to show updated contribution amount in compliance report
-        renderMembers(currentGroup.members);
-        
     } catch (error) {
-        showFeedback('settings-feedback', error.message, 'error');
+        console.error('Save error:', error);
+        showFeedback('settings-feedback', error.message || 'Failed to save settings. Please try again.', 'error');
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;
@@ -899,6 +905,8 @@ async function closeGroup() {
     }
     
     const closeBtn = document.querySelector('#close-modal .btn-danger');
+    const originalText = closeBtn?.textContent;
+    
     if (closeBtn) {
         closeBtn.disabled = true;
         closeBtn.textContent = 'Closing...';
@@ -906,6 +914,8 @@ async function closeGroup() {
     
     try {
         const token = await auth0Client.getTokenSilently();
+        
+        // Use the endpoint with groupId in the URL path
         const response = await fetch(`${config.apiBase}/api/groups/${currentGroup.groupId}/close`, {
             method: 'POST',
             headers: { 
@@ -925,6 +935,10 @@ async function closeGroup() {
         const modal = document.getElementById('close-modal');
         if (modal) modal.close();
         
+        // Clear the confirmation input
+        const confirmInput = document.getElementById('confirm-name');
+        if (confirmInput) confirmInput.value = '';
+        
         // Show success message
         const banner = document.getElementById('status-banner');
         banner.textContent = result.message || 'Group has been closed successfully.';
@@ -937,20 +951,15 @@ async function closeGroup() {
         }, 2000);
         
     } catch (error) {
+        console.error('Close group error:', error);
         alert('Failed to close group: ' + error.message);
     } finally {
         if (closeBtn) {
             closeBtn.disabled = false;
-            closeBtn.textContent = 'Close group';
+            closeBtn.textContent = originalText || 'Close group';
         }
-        // Clear the confirmation input
-        const confirmInput = document.getElementById('confirm-name');
-        if (confirmInput) confirmInput.value = '';
-        const errorSpan = document.getElementById('err-confirm');
-        if (errorSpan) errorSpan.style.display = 'none';
     }
 }
-
 // Add feedback element for settings
 function addSettingsFeedback() {
     const settingsTab = document.getElementById('tab-settings');
@@ -1084,3 +1093,9 @@ function onAuthReady() {
     setupEventListeners();
     loadGroupData();
 }
+// Make functions globally available for inline onclick handlers
+window.markDirty = markDirty;
+window.discardChanges = discardChanges;
+window.saveChanges = saveGroupSettings;
+window.closeGroup = closeGroup;
+window.populateSettings = populateSettings;
