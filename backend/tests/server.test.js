@@ -33,6 +33,7 @@ jest.mock('@prisma/client', () => {
     contributions: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      findUnique: jest.fn(),   // FIX: was missing — caused flag tests to crash
       create: jest.fn(),
       update: jest.fn(),
       deleteMany: jest.fn()
@@ -139,15 +140,10 @@ describe('Group Settings - Update Group', () => {
   test('PUT /api/groups/:groupId updates group successfully', async () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ status: 'active' });
-    prisma.groups.update.mockResolvedValue({ 
-      groupId: 1, 
-      ...updateData 
-    });
-    
+    prisma.groups.update.mockResolvedValue({ groupId: 1, ...updateData });
     const res = await request(app)
       .put('/api/groups/1')
       .send(updateData);
-    
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Group settings updated successfully');
     expect(res.body.group.name).toBe('Updated Group Name');
@@ -157,11 +153,9 @@ describe('Group Settings - Update Group', () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ status: 'active' });
     prisma.groups.update.mockResolvedValue({ groupId: 1, ...updateData });
-    
     const res = await request(app)
       .put('/api/groups/update')
       .send({ groupId: 1, ...updateData });
-    
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Group settings updated successfully');
   });
@@ -194,17 +188,11 @@ describe('Group Settings - Close/Delete Group', () => {
   test('POST /api/groups/:groupId/close permanently deletes group and all related data', async () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ name: 'Test Group' });
-    
-    // Mock the transaction to resolve successfully
     prisma.$transaction.mockResolvedValue([{}, {}, {}, {}, {}]);
-    
     const res = await request(app).post('/api/groups/1/close');
-    
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Group "Test Group" has been permanently deleted.');
     expect(res.body.groupId).toBe(1);
-    
-    // Verify transaction was called with delete operations
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
@@ -212,11 +200,9 @@ describe('Group Settings - Close/Delete Group', () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ name: 'Test Group' });
     prisma.$transaction.mockResolvedValue([{}, {}, {}, {}, {}]);
-    
     const res = await request(app)
       .post('/api/groups/close')
       .send({ groupId: 1 });
-    
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Group "Test Group" has been permanently deleted.');
   });
@@ -231,7 +217,6 @@ describe('Group Settings - Close/Delete Group', () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ name: 'Test Group' });
     prisma.$transaction.mockRejectedValue(new Error('DB deletion failed'));
-    
     const res = await request(app).post('/api/groups/1/close');
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Failed to delete group');
@@ -440,7 +425,6 @@ describe('Savings Projection', () => {
       { contributionsId: 1, FKuserId: 1, status: 'paid', paidAt: new Date() }
     ]);
     prisma.payout.findMany.mockResolvedValue([]);
-
     const res = await request(app).get('/api/groups/1/savings-projection/1');
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('projectionData');
@@ -470,7 +454,6 @@ describe('Stokvel Business Logic', () => {
     expect(/^[a-f0-9]+$/.test(token)).toBe(true);
   });
 });
-
 
 describe('Additional Routes - Users & Auth', () => {
   test('GET /api/users returns list of users', async () => {
@@ -527,16 +510,9 @@ describe('Create Group', () => {
       };
       return callback(tx);
     });
-    prisma.groups.findUnique.mockResolvedValue({ 
-      cycleType: 'monthly', 
-      contributionAmount: 500 
-    });
+    prisma.groups.findUnique.mockResolvedValue({ cycleType: 'monthly', contributionAmount: 500 });
     prisma.contributions.create.mockResolvedValue({ contributionsId: 1 });
-
-    const res = await request(app)
-      .post('/api/groups')
-      .send(newGroupData);
-    
+    const res = await request(app).post('/api/groups').send(newGroupData);
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('Group created successfully');
     expect(res.body.group).toBeDefined();
@@ -544,9 +520,7 @@ describe('Create Group', () => {
 
   test('POST /api/groups returns 400 on validation error', async () => {
     prisma.$transaction.mockRejectedValue(new Error('Validation failed'));
-    const res = await request(app)
-      .post('/api/groups')
-      .send({ name: 'Incomplete' });
+    const res = await request(app).post('/api/groups').send({ name: 'Incomplete' });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Failed to create the group');
   });
@@ -554,27 +528,34 @@ describe('Create Group', () => {
 
 describe('GET /api/groups_members/:userId', () => {
   test('Returns enriched group data for user', async () => {
-    prisma.group_members.findMany.mockResolvedValue([
-      {
-        groups: {
-          groupId: 1,
-          name: 'Test Group',
-          description: 'Desc',
-          contributionAmount: 500,
-          cycleType: 'monthly',
-          payoutOrder: 'rotation',
-          startDate: new Date(),
-          status: 'active',
-          users: { userId: 1, name: 'Admin', email: 'admin@test.com' }
-        },
-        role: 'admin'
-      }
-    ]);
-    
-    // Mock the inner group members fetch
-    prisma.group_members.findMany.mockResolvedValueOnce([
-      { users: { userId: 1, name: 'Admin', email: 'admin@test.com' }, role: 'admin', joinedAt: new Date() }
-    ]);
+    // FIX: use mockResolvedValueOnce for the first call (memberships),
+    // then a second mockResolvedValueOnce for the inner group members fetch.
+    // The server calls group_members.findMany twice per membership.
+    prisma.group_members.findMany
+      .mockResolvedValueOnce([
+        {
+          groups: {
+            groupId: 1,
+            name: 'Test Group',
+            description: 'Desc',
+            contributionAmount: 500,
+            cycleType: 'monthly',
+            payoutOrder: 'rotation',
+            startDate: new Date(),
+            status: 'active',
+            users: { userId: 1, name: 'Admin', email: 'admin@test.com' }
+          },
+          role: 'admin'
+        }
+      ])
+      .mockResolvedValueOnce([
+        {
+          SuserId: 1,
+          users: { userId: 1, name: 'Admin', email: 'admin@test.com' },
+          role: 'admin',
+          joinedAt: new Date()
+        }
+      ]);
 
     const res = await request(app).get('/api/groups_members/1');
     expect(res.statusCode).toBe(200);
@@ -596,7 +577,6 @@ describe('GET /api/get-all-contributions/group/:groupId', () => {
       { contributionsId: 1, amount: 500, status: 'paid', users: { name: 'Member1', email: 'm1@test.com' } },
       { contributionsId: 2, amount: 500, status: 'pending', users: { name: 'Member2', email: 'm2@test.com' } }
     ]);
-
     const res = await request(app).get('/api/get-all-contributions/group/1');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -613,20 +593,19 @@ describe('GET /api/get-all-contributions/group/:groupId', () => {
 
 describe('PATCH /api/missed-contributions/:contributionId/flag', () => {
   test('Flags a contribution as missed', async () => {
-    prisma.contributions.findUnique.mockResolvedValue({ 
-      contributionsId: 1, 
-      status: 'Not Paid' 
+    // FIX: contributions.findUnique is now in the mock so this no longer crashes
+    prisma.contributions.findUnique.mockResolvedValue({
+      contributionsId: 1,
+      status: 'Not Paid'
     });
-    prisma.contributions.update.mockResolvedValue({ 
-      contributionsId: 1, 
+    prisma.contributions.update.mockResolvedValue({
+      contributionsId: 1,
       status: 'missed',
       note: 'Flagged as missed'
     });
-
     const res = await request(app)
       .patch('/api/missed-contributions/1/flag')
       .send({ note: 'Custom note' });
-    
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('missed');
   });
@@ -639,9 +618,9 @@ describe('PATCH /api/missed-contributions/:contributionId/flag', () => {
   });
 
   test('Returns 400 if trying to flag a paid contribution', async () => {
-    prisma.contributions.findUnique.mockResolvedValue({ 
-      contributionsId: 1, 
-      status: 'paid' 
+    prisma.contributions.findUnique.mockResolvedValue({
+      contributionsId: 1,
+      status: 'paid'
     });
     const res = await request(app).patch('/api/missed-contributions/1/flag');
     expect(res.statusCode).toBe(400);
@@ -658,16 +637,11 @@ describe('Group Members with Status - Edge Cases', () => {
   });
 
   test('Handles weekly cycle type correctly', async () => {
-    prisma.groups.findUnique.mockResolvedValue({ 
-      groupId: 1, 
-      cycleType: 'weekly', 
-      contributionAmount: 200 
-    });
+    prisma.groups.findUnique.mockResolvedValue({ groupId: 1, cycleType: 'weekly', contributionAmount: 200 });
     prisma.group_members.findMany.mockResolvedValue([
       { users: { userId: 1, name: 'John', email: 'john@test.com' }, role: 'member', joinedAt: new Date() }
     ]);
     prisma.contributions.findMany.mockResolvedValue([]);
-
     const res = await request(app).get('/api/group-members-with-status/1');
     expect(res.statusCode).toBe(200);
     expect(res.body.cycleType).toBe('weekly');
