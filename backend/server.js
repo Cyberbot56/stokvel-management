@@ -203,7 +203,6 @@ app.post('/api/groups/add-member', async (req, res) => {
     }
 });
 
-
 app.post('/api/contributions', async (req, res) => {
     const { userId, groupId, amount, treasurerId, paidAt } = req.body;
     if (!userId || !groupId || !amount || !treasurerId || !paidAt) {
@@ -502,22 +501,14 @@ app.patch('/api/payouts/:payoutId', requireAuth, async (req, res) => {
     }
 });
 
-//This is an api to post meetings 
-//It is only accessed by the treasurer of the group
-//It will take in the groupId, title, agenda, date, time then will use the new Date() to get the day the meeting was scheduled.
 app.post('/api/meetings', requireAuth, async (req, res) => {
     const { groupId, title, agenda, date, time } = req.body;
     const scheduledBy = req.user.userId;
-
     try {
         const meeting = await prisma.meetings.create({
             data: {
-                FKKgroupId: parseInt(groupId),
-                title: title,
-                agenda: agenda,
-                Date: new Date(date),
-                Time: time, 
-                postedAt: new Date(),
+                FKKgroupId: parseInt(groupId), title, agenda,
+                Date: new Date(date), Time: time, postedAt: new Date(),
             }
         });
         res.status(201).json({ message: 'Meeting scheduled successfully', meeting });
@@ -526,71 +517,53 @@ app.post('/api/meetings', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Failed to schedule meeting', details: error.message });
     }
 });
-//An api to fetch meetings
+
 app.get('/api/meetings/group/:groupId', requireAuth, async (req, res) => {
     const { groupId } = req.params;
     const userId = req.user.userId;
-
     try {
-        //verifying the user is a member of this group
         const membership = await prisma.group_members.findFirst({
-            where: {
-                FgroupId: parseInt(groupId), SuserId: userId 
-            }});
-
+            where: { FgroupId: parseInt(groupId), SuserId: userId }
+        });
         if (!membership) {
             return res.status(403).json({ error: 'You do not have permission to view this group\'s meetings' });
         }
-        //Fetch meetings
         const meetings = await prisma.meetings.findMany({
             where: { FKKgroupId: parseInt(groupId) },
-            orderBy: { Date: 'desc'},
-            include: {groups: {select: {name: true}}}
+            orderBy: { Date: 'desc' },
+            include: { groups: { select: { name: true } } }
         });
-
         res.json(meetings);
-        } catch (error) {
+    } catch (error) {
         console.error('Error fetching meetings:', error);
-        res.status(500).json({ 
-            error: 'Failed to fetch meetings', 
-            details: error.message 
-        });
+        res.status(500).json({ error: 'Failed to fetch meetings', details: error.message });
     }
 });
-// This api aggregates contribution data per member and calculates compliance rates.
-app.get('/api/groups/:groupId/compliance-report', requireAuth, async(req, res) =>{
+
+app.get('/api/groups/:groupId/compliance-report', requireAuth, async (req, res) => {
     const { groupId } = req.params;
     const { from, to } = req.query;
-
-    // First checks if the user is admin if not then they get rejected
     try {
         const membership = await prisma.group_members.findFirst({
-        where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+            where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
         });
         if (!membership || membership.role !== 'admin') {
             return res.status(403).json({ error: 'Only admins can view compliance reports' });
         }
-
         const group = await prisma.groups.findUnique({
             where: { groupId: parseInt(groupId) },
             select: { cycleType: true, contributionAmount: true, name: true }
         });
         if (!group) return res.status(404).json({ error: 'Group not found' });
-
         const members = await prisma.group_members.findMany({
             where: { FgroupId: parseInt(groupId) },
             include: { users: { select: { userId: true, name: true, email: true } } }
         });
-
         const whereClause = {
             FKgroupId: parseInt(groupId),
-            ...(from && to && {
-                dueDate: { gte: new Date(from), lte: new Date(to) }
-            })
+            ...(from && to && { dueDate: { gte: new Date(from), lte: new Date(to) } })
         };
-
         const contributions = await prisma.contributions.findMany({ where: whereClause });
-
         const memberStats = members.map(member => {
             const memberContributions = contributions.filter(c => c.FKuserId === member.users.userId);
             const paid = memberContributions.filter(c => c.status === 'paid').length;
@@ -598,64 +571,33 @@ app.get('/api/groups/:groupId/compliance-report', requireAuth, async(req, res) =
             const pending = memberContributions.filter(c => c.status === 'pending').length;
             const total = memberContributions.length || 1;
             const complianceRate = Math.round((paid / total) * 100);
-
             let status = 'compliant';
             if (complianceRate < 66) status = 'defaulting';
             else if (complianceRate < 100) status = 'at-risk';
-
-            return {
-                memberId: member.users.userId,
-                name: member.users.name,
-                email: member.users.email,
-                role: member.role,
-                paid, missed, pending, complianceRate, status
-            };
+            return { memberId: member.users.userId, name: member.users.name, email: member.users.email, role: member.role, paid, missed, pending, complianceRate, status };
         });
-
         const totalExpected = members.length;
         const totalPaid = memberStats.filter(m => m.status === 'compliant').length;
         const groupComplianceRate = Math.round((totalPaid / totalExpected) * 100);
-
-        res.json({
-            groupId: parseInt(groupId),
-            groupName: group.name,
-            period: { from: from || null, to: to || null },
-            groupComplianceRate,
-            totalMembers: members.length,
-            totalPaid,
-            members: memberStats
-        });
-    }
-    catch (error) {
+        res.json({ groupId: parseInt(groupId), groupName: group.name, period: { from: from || null, to: to || null }, groupComplianceRate, totalMembers: members.length, totalPaid, members: memberStats });
+    } catch (error) {
         console.error('Error generating compliance report:', error);
         res.status(500).json({ error: 'Failed to generate compliance report', details: error.message });
     }
-})
+});
 
-// ── Savings Projection ────────────────────────────────────────────────────────
-// Returns projected savings growth data for a member in a group.
-// Calculates: cumulative contributions per cycle, payout position & amount,
-// and net savings position across the full stokvel rotation.
 app.get('/api/groups/:groupId/savings-projection/:userId', requireAuth, async (req, res) => {
     const { groupId, userId } = req.params;
-
     try {
-        // Verify the requesting user is a member of the group
         const membership = await prisma.group_members.findFirst({
             where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
         });
-        if (!membership) {
-            return res.status(403).json({ error: 'You are not a member of this group' });
-        }
-
-        // Fetch group details
+        if (!membership) return res.status(403).json({ error: 'You are not a member of this group' });
         const group = await prisma.groups.findUnique({
             where: { groupId: parseInt(groupId) },
             select: { name: true, contributionAmount: true, cycleType: true, startDate: true, status: true }
         });
         if (!group) return res.status(404).json({ error: 'Group not found' });
-
-        // Fetch all members to determine total cycles and payout position
         const members = await prisma.group_members.findMany({
             where: { FgroupId: parseInt(groupId) },
             orderBy: { joinedAt: 'asc' },
@@ -664,85 +606,32 @@ app.get('/api/groups/:groupId/savings-projection/:userId', requireAuth, async (r
         const totalMembers = members.length;
         const contributionAmount = parseFloat(group.contributionAmount);
         const potAmount = contributionAmount * totalMembers;
-
-        // Determine payout position (1-based, by join order)
         const memberIndex = members.findIndex(m => m.SuserId === parseInt(userId));
         const payoutPosition = memberIndex >= 0 ? memberIndex + 1 : totalMembers;
-
-        // Fetch this member's paid contributions for this group
         const paidContributions = await prisma.contributions.findMany({
-            where: {
-                FKgroupId: parseInt(groupId),
-                FKuserId: parseInt(userId),
-                status: 'paid'
-            },
+            where: { FKgroupId: parseInt(groupId), FKuserId: parseInt(userId), status: 'paid' },
             orderBy: { paidAt: 'asc' }
         });
-
-        // Fetch completed payouts for this member in this group
         const memberPayouts = await prisma.payout.findMany({
-            where: {
-                groupId: parseInt(groupId),
-                recipientId: parseInt(userId),
-                status: 'completed'
-            },
+            where: { groupId: parseInt(groupId), recipientId: parseInt(userId), status: 'completed' },
             orderBy: { cycleNumber: 'asc' }
         });
-
-        // Build cycle-by-cycle projection
-        const totalCycles = totalMembers; // one full rotation
+        const totalCycles = totalMembers;
         const projectionData = [];
         let cumulativeContributed = 0;
         let cumulativeReceived = 0;
-
         for (let cycle = 1; cycle <= totalCycles; cycle++) {
             cumulativeContributed += contributionAmount;
-
-            // Check if payout happens this cycle
             const isPayoutCycle = cycle === payoutPosition;
-            if (isPayoutCycle) {
-                cumulativeReceived += potAmount;
-            }
-
-            // Calculate the cycle date based on start date and cycle type
+            if (isPayoutCycle) cumulativeReceived += potAmount;
             const cycleDate = new Date(group.startDate);
-            if (group.cycleType.toLowerCase() === 'weekly') {
-                cycleDate.setDate(cycleDate.getDate() + (cycle - 1) * 7);
-            } else {
-                cycleDate.setMonth(cycleDate.getMonth() + (cycle - 1));
-            }
-
-            projectionData.push({
-                cycle,
-                cycleDate: cycleDate.toISOString().split('T')[0],
-                contributed: cumulativeContributed,
-                received: cumulativeReceived,
-                netPosition: cumulativeReceived - cumulativeContributed,
-                isPayoutCycle
-            });
+            if (group.cycleType.toLowerCase() === 'weekly') { cycleDate.setDate(cycleDate.getDate() + (cycle - 1) * 7); }
+            else { cycleDate.setMonth(cycleDate.getMonth() + (cycle - 1)); }
+            projectionData.push({ cycle, cycleDate: cycleDate.toISOString().split('T')[0], contributed: cumulativeContributed, received: cumulativeReceived, netPosition: cumulativeReceived - cumulativeContributed, isPayoutCycle });
         }
-
-        // Summary stats
         const totalContributed = contributionAmount * totalCycles;
-        const netGain = potAmount - totalContributed; // should be 0 in a fair stokvel
-
-        res.json({
-            groupId: parseInt(groupId),
-            groupName: group.name,
-            userId: parseInt(userId),
-            contributionAmount,
-            cycleType: group.cycleType,
-            totalMembers,
-            totalCycles,
-            potAmount,
-            payoutPosition,
-            totalContributed,
-            netGain,
-            paidSoFar: paidContributions.length,
-            payoutsReceived: memberPayouts.length,
-            projectionData
-        });
-
+        const netGain = potAmount - totalContributed;
+        res.json({ groupId: parseInt(groupId), groupName: group.name, userId: parseInt(userId), contributionAmount, cycleType: group.cycleType, totalMembers, totalCycles, potAmount, payoutPosition, totalContributed, netGain, paidSoFar: paidContributions.length, payoutsReceived: memberPayouts.length, projectionData });
     } catch (error) {
         console.error('Error generating savings projection:', error);
         res.status(500).json({ error: 'Failed to generate savings projection', details: error.message });
@@ -750,152 +639,127 @@ app.get('/api/groups/:groupId/savings-projection/:userId', requireAuth, async (r
 });
 
 // ─── Group Settings Routes ─────────────────────────────────────────────────────
- 
-// PUT /api/groups/:groupId - Update group settings (name, description, contributionAmount, cycleType)
+// FIX: specific routes (/update, /close) MUST be registered BEFORE param routes (/:groupId)
+// Express matches routes in order — if /:groupId comes first, "update" and "close" get
+// treated as groupId values and the specific handlers are never reached.
+
+// PUT /api/groups/update (alternative — body-based) — MUST be before PUT /api/groups/:groupId
+app.put('/api/groups/update', requireAuth, async (req, res) => {
+    const { groupId, name, description, contributionAmount, cycleType } = req.body;
+    const userId = req.user.userId;
+
+    if (!groupId) {
+        return res.status(400).json({ error: 'groupId is required' });
+    }
+
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: userId, role: 'admin' }
+        });
+        if (!membership) return res.status(403).json({ error: 'Only group admins can update settings' });
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { status: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+        if (group.status === 'closed') return res.status(400).json({ error: 'Cannot update a closed group' });
+
+        const updatedGroup = await prisma.groups.update({
+            where: { groupId: parseInt(groupId) },
+            data: { name, description, contributionAmount: parseFloat(contributionAmount), cycleType }
+        });
+        res.json({ message: 'Group settings updated successfully', group: updatedGroup });
+    } catch (error) {
+        console.error('Error updating group settings:', error);
+        res.status(500).json({ error: 'Failed to update group settings', details: error.message });
+    }
+});
+
+// POST /api/groups/close (alternative — body-based) — MUST be before POST /api/groups/:groupId/close
+app.post('/api/groups/close', requireAuth, async (req, res) => {
+    const { groupId } = req.body;
+    const userId = req.user.userId;
+
+    if (!groupId) {
+        return res.status(400).json({ error: 'groupId is required' });
+    }
+
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: userId, role: 'admin' }
+        });
+        if (!membership) return res.status(403).json({ error: 'Only group admins can delete the group' });
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { name: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        await prisma.$transaction([
+            prisma.contributions.deleteMany({ where: { FKgroupId: parseInt(groupId) } }),
+            prisma.payout.deleteMany({ where: { groupId: parseInt(groupId) } }),
+            prisma.meetings.deleteMany({ where: { FKKgroupId: parseInt(groupId) } }),
+            prisma.group_members.deleteMany({ where: { FgroupId: parseInt(groupId) } }),
+            prisma.groups.delete({ where: { groupId: parseInt(groupId) } })
+        ]);
+
+        res.json({ message: `Group "${group.name}" has been permanently deleted.`, groupId: parseInt(groupId) });
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        res.status(500).json({ error: 'Failed to delete group', details: error.message });
+    }
+});
+
+// PUT /api/groups/:groupId — param route, comes AFTER specific routes above
 app.put('/api/groups/:groupId', requireAuth, async (req, res) => {
     const { groupId } = req.params;
     const { name, description, contributionAmount, cycleType } = req.body;
     const userId = req.user.userId;
- 
+
     try {
-        // Verify user is admin of this group
         const membership = await prisma.group_members.findFirst({
-            where: {
-                FgroupId: parseInt(groupId),
-                SuserId: userId,
-                role: 'admin'
-            }
+            where: { FgroupId: parseInt(groupId), SuserId: userId, role: 'admin' }
         });
- 
-        if (!membership) {
-            return res.status(403).json({ error: 'Only group admins can update settings' });
-        }
- 
-        // Check if group is already closed
+        if (!membership) return res.status(403).json({ error: 'Only group admins can update settings' });
+
         const group = await prisma.groups.findUnique({
             where: { groupId: parseInt(groupId) },
             select: { status: true }
         });
- 
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
- 
-        if (group.status === 'closed') {
-            return res.status(400).json({ error: 'Cannot update a closed group' });
-        }
- 
-        // Update group settings
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+        if (group.status === 'closed') return res.status(400).json({ error: 'Cannot update a closed group' });
+
         const updatedGroup = await prisma.groups.update({
             where: { groupId: parseInt(groupId) },
-            data: {
-                name: name,
-                description: description,
-                contributionAmount: parseFloat(contributionAmount),
-                cycleType: cycleType,
-            }
+            data: { name, description, contributionAmount: parseFloat(contributionAmount), cycleType }
         });
- 
-        res.json({
-            message: 'Group settings updated successfully',
-            group: updatedGroup
-        });
- 
+        res.json({ message: 'Group settings updated successfully', group: updatedGroup });
     } catch (error) {
         console.error('Error updating group settings:', error);
         res.status(500).json({ error: 'Failed to update group settings', details: error.message });
     }
 });
- 
-// Alternative endpoint for /api/groups/update (for compatibility)
-app.put('/api/groups/update', requireAuth, async (req, res) => {
-    const { groupId, name, description, contributionAmount, cycleType } = req.body;
-    const userId = req.user.userId;
- 
-    if (!groupId) {
-        return res.status(400).json({ error: 'groupId is required' });
-    }
- 
-    try {
-        // Verify user is admin of this group
-        const membership = await prisma.group_members.findFirst({
-            where: {
-                FgroupId: parseInt(groupId),
-                SuserId: userId,
-                role: 'admin'
-            }
-        });
- 
-        if (!membership) {
-            return res.status(403).json({ error: 'Only group admins can update settings' });
-        }
- 
-        // Check if group is already closed
-        const group = await prisma.groups.findUnique({
-            where: { groupId: parseInt(groupId) },
-            select: { status: true }
-        });
- 
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
- 
-        if (group.status === 'closed') {
-            return res.status(400).json({ error: 'Cannot update a closed group' });
-        }
- 
-        // Update group settings
-        const updatedGroup = await prisma.groups.update({
-            where: { groupId: parseInt(groupId) },
-            data: {
-                name: name,
-                description: description,
-                contributionAmount: parseFloat(contributionAmount),
-                cycleType: cycleType
-            }
-        });
- 
-        res.json({
-            message: 'Group settings updated successfully',
-            group: updatedGroup
-        });
- 
-    } catch (error) {
-        console.error('Error updating group settings:', error);
-        res.status(500).json({ error: 'Failed to update group settings', details: error.message });
-    }
-});
- 
-// POST /api/groups/:groupId/close - PERMANENTLY DELETE group
+
+// POST /api/groups/:groupId/close — param route, comes AFTER /api/groups/close above
 app.post('/api/groups/:groupId/close', requireAuth, async (req, res) => {
     const { groupId } = req.params;
     const userId = req.user.userId;
- 
+
     try {
-        // Verify user is admin of this group
         const membership = await prisma.group_members.findFirst({
-            where: {
-                FgroupId: parseInt(groupId),
-                SuserId: userId,
-                role: 'admin'
-            }
+            where: { FgroupId: parseInt(groupId), SuserId: userId, role: 'admin' }
         });
- 
-        if (!membership) {
-            return res.status(403).json({ error: 'Only group admins can delete the group' });
-        }
- 
-        // Get group name for the success message
+        // FIX: updated error message to match test expectation
+        if (!membership) return res.status(403).json({ error: 'Only group admins can close/delete the group' });
+
         const group = await prisma.groups.findUnique({
             where: { groupId: parseInt(groupId) },
             select: { name: true }
         });
- 
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
- 
-        // PERMANENT DELETE - Delete in correct order to handle foreign keys
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
         await prisma.$transaction([
             prisma.contributions.deleteMany({ where: { FKgroupId: parseInt(groupId) } }),
             prisma.payout.deleteMany({ where: { groupId: parseInt(groupId) } }),
@@ -903,77 +767,18 @@ app.post('/api/groups/:groupId/close', requireAuth, async (req, res) => {
             prisma.group_members.deleteMany({ where: { FgroupId: parseInt(groupId) } }),
             prisma.groups.delete({ where: { groupId: parseInt(groupId) } })
         ]);
- 
-        res.json({
-            message: `Group "${group.name}" has been permanently deleted.`,
-            groupId: parseInt(groupId)
-        });
- 
+
+        res.json({ message: `Group "${group.name}" has been permanently deleted.`, groupId: parseInt(groupId) });
     } catch (error) {
         console.error('Error deleting group:', error);
         res.status(500).json({ error: 'Failed to delete group', details: error.message });
     }
 });
- 
-// Alternative endpoint for /api/groups/close (for compatibility)
-app.post('/api/groups/close', requireAuth, async (req, res) => {
-    const { groupId } = req.body;
-    const userId = req.user.userId;
- 
-    if (!groupId) {
-        return res.status(400).json({ error: 'groupId is required' });
-    }
- 
-    try {
-        // Verify user is admin of this group
-        const membership = await prisma.group_members.findFirst({
-            where: {
-                FgroupId: parseInt(groupId),
-                SuserId: userId,
-                role: 'admin'
-            }
-        });
- 
-        if (!membership) {
-            return res.status(403).json({ error: 'Only group admins can delete the group' });
-        }
- 
-        // Get group name for the success message
-        const group = await prisma.groups.findUnique({
-            where: { groupId: parseInt(groupId) },
-            select: { name: true }
-        });
- 
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
- 
-        // PERMANENT DELETE - Delete in correct order to handle foreign keys
-        await prisma.$transaction([
-            prisma.contributions.deleteMany({ where: { FKgroupId: parseInt(groupId) } }),
-            prisma.payout.deleteMany({ where: { groupId: parseInt(groupId) } }),
-            prisma.meetings.deleteMany({ where: { FKKgroupId: parseInt(groupId) } }),
-            prisma.group_members.deleteMany({ where: { FgroupId: parseInt(groupId) } }),
-            prisma.groups.delete({ where: { groupId: parseInt(groupId) } })
-        ]);
- 
-        res.json({
-            message: `Group "${group.name}" has been permanently deleted.`,
-            groupId: parseInt(groupId)
-        });
- 
-    } catch (error) {
-        console.error('Error deleting group:', error);
-        res.status(500).json({ error: 'Failed to delete group', details: error.message });
-    }
-});
- 
+
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });
 
-
-// Only start server when run directly, not when imported by tests
 if (require.main === module) {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
