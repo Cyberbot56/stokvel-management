@@ -226,10 +226,13 @@ function buildRatesCard(rates) {
   card.appendChild(srcLine);
 
   // ── DOM Manipulation: inject into groups-grid ─────────────────────────────
- const grid = document.querySelector('.groups-grid');
-if (grid && grid.parentNode) {
-    grid.parentNode.insertBefore(card, grid.nextSibling);
-}
+card.style.position = 'fixed';
+card.style.bottom = '24px';
+card.style.right = '24px';
+card.style.width = '220px';
+card.style.zIndex = '999';
+card.style.boxShadow = '0 8px 32px rgba(14,148,144,0.18)';
+document.body.appendChild(card);
 }
 
 // ─── Update DOM if rates change (bonus: shows how to mutate existing nodes) ──
