@@ -360,3 +360,156 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 [hidden] {
     display: none !important;
 }
+/* ═══════════════════════════════════════════════════════════════
+   rates.css  —  Styles for the SA rates ticker and card
+   Add this file to your <head> after dashboard.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Ticker bar ─────────────────────────────────────────────── */
+.rates-ticker {
+  background: #034e52;
+  padding: 6px 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border-bottom: 0.5px solid rgba(45, 212, 191, 0.2);
+}
+
+.ticker-label {
+  color: #2dd4bf;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ticker-items {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ticker-item {
+  color: #e0f7f6;
+  font-size: 12px;
+}
+
+.ticker-item strong {
+  color: #2dd4bf;
+  font-weight: 600;
+}
+
+.ticker-sep {
+  color: rgba(45, 212, 191, 0.3);
+  font-size: 11px;
+}
+
+.ticker-src {
+  color: rgba(224, 247, 246, 0.45);
+  font-size: 10px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ── Rates card (sits in .groups-grid) ──────────────────────── */
+.rates-card-special {
+  border-color: rgba(14, 148, 144, 0.25) !important;
+  background: linear-gradient(160deg, #ffffff 60%, #e0f7f6 100%);
+}
+
+/* Top accent line — override the transparent default */
+.rates-card-special::before {
+  background: linear-gradient(90deg, #2dd4bf, #0e9490) !important;
+  opacity: 1 !important;
+}
+
+.rates-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Live pill badge */
+.rates-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(14, 148, 144, 0.1);
+  color: #0e9490;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 0.5px solid rgba(14, 148, 144, 0.3);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #0e9490;
+  border-radius: 50%;
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Individual rate rows inside the card ───────────────────── */
+.rate-display-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 0.5px solid rgba(14, 148, 144, 0.1);
+  margin: 0;
+}
+
+.rate-display-row:last-of-type {
+  border-bottom: none;
+}
+
+.rate-tag {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+
+.rate-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #034e52;
+}
+
+.rate-big-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rate-repo  { color: #0e9490; }
+.rate-prime { color: #2dd4bf; }
+
+/* ── Note and source line ───────────────────────────────────── */
+.rates-note {
+  font-size: 11px !important;
+  color: #64748b !important;
+  background: rgba(14, 148, 144, 0.06);
+  border-radius: 7px;
+  padding: 8px 10px;
+  line-height: 1.6 !important;
+  margin-top: 4px;
+}
+
+.rates-src-line {
+  font-size: 10px;
+  color: #64748b;
+  text-align: center;
+  margin-top: 6px;
+  opacity: 0.75;
+}

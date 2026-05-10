@@ -127,14 +127,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "--prod --yes" # ← Added --yes here
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deployment notice
+        run: |
+          echo "✅ Vercel deploys automatically via Git integration."
+          echo "No manual deploy step needed."

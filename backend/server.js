@@ -526,7 +526,37 @@ app.post('/api/meetings', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Failed to schedule meeting', details: error.message });
     }
 });
+//An api to fetch meetings
+app.get('/api/meetings/group/:groupId', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+    const userId = req.user.userId;
 
+    try {
+        //verifying the user is a member of this group
+        const membership = await prisma.group_members.findFirst({
+            where: {
+                FgroupId: parseInt(groupId), SuserId: userId 
+            }});
+
+        if (!membership) {
+            return res.status(403).json({ error: 'You do not have permission to view this group\'s meetings' });
+        }
+        //Fetch meetings
+        const meetings = await prisma.meetings.findMany({
+            where: { FKKgroupId: parseInt(groupId) },
+            orderBy: { Date: 'desc'},
+            include: {groups: {select: {name: true}}}
+        });
+
+        res.json(meetings);
+        } catch (error) {
+        console.error('Error fetching meetings:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch meetings', 
+            details: error.message 
+        });
+    }
+});
 // This api aggregates contribution data per member and calculates compliance rates.
 app.get('/api/groups/:groupId/compliance-report', requireAuth, async(req, res) =>{
     const { groupId } = req.params;
@@ -601,6 +631,123 @@ app.get('/api/groups/:groupId/compliance-report', requireAuth, async(req, res) =
         res.status(500).json({ error: 'Failed to generate compliance report', details: error.message });
     }
 })
+
+// ── Savings Projection ────────────────────────────────────────────────────────
+// Returns projected savings growth data for a member in a group.
+// Calculates: cumulative contributions per cycle, payout position & amount,
+// and net savings position across the full stokvel rotation.
+app.get('/api/groups/:groupId/savings-projection/:userId', requireAuth, async (req, res) => {
+    const { groupId, userId } = req.params;
+
+    try {
+        // Verify the requesting user is a member of the group
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+        });
+        if (!membership) {
+            return res.status(403).json({ error: 'You are not a member of this group' });
+        }
+
+        // Fetch group details
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { name: true, contributionAmount: true, cycleType: true, startDate: true, status: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        // Fetch all members to determine total cycles and payout position
+        const members = await prisma.group_members.findMany({
+            where: { FgroupId: parseInt(groupId) },
+            orderBy: { joinedAt: 'asc' },
+            select: { SuserId: true, joinedAt: true }
+        });
+        const totalMembers = members.length;
+        const contributionAmount = parseFloat(group.contributionAmount);
+        const potAmount = contributionAmount * totalMembers;
+
+        // Determine payout position (1-based, by join order)
+        const memberIndex = members.findIndex(m => m.SuserId === parseInt(userId));
+        const payoutPosition = memberIndex >= 0 ? memberIndex + 1 : totalMembers;
+
+        // Fetch this member's paid contributions for this group
+        const paidContributions = await prisma.contributions.findMany({
+            where: {
+                FKgroupId: parseInt(groupId),
+                FKuserId: parseInt(userId),
+                status: 'paid'
+            },
+            orderBy: { paidAt: 'asc' }
+        });
+
+        // Fetch completed payouts for this member in this group
+        const memberPayouts = await prisma.payout.findMany({
+            where: {
+                groupId: parseInt(groupId),
+                recipientId: parseInt(userId),
+                status: 'completed'
+            },
+            orderBy: { cycleNumber: 'asc' }
+        });
+
+        // Build cycle-by-cycle projection
+        const totalCycles = totalMembers; // one full rotation
+        const projectionData = [];
+        let cumulativeContributed = 0;
+        let cumulativeReceived = 0;
+
+        for (let cycle = 1; cycle <= totalCycles; cycle++) {
+            cumulativeContributed += contributionAmount;
+
+            // Check if payout happens this cycle
+            const isPayoutCycle = cycle === payoutPosition;
+            if (isPayoutCycle) {
+                cumulativeReceived += potAmount;
+            }
+
+            // Calculate the cycle date based on start date and cycle type
+            const cycleDate = new Date(group.startDate);
+            if (group.cycleType.toLowerCase() === 'weekly') {
+                cycleDate.setDate(cycleDate.getDate() + (cycle - 1) * 7);
+            } else {
+                cycleDate.setMonth(cycleDate.getMonth() + (cycle - 1));
+            }
+
+            projectionData.push({
+                cycle,
+                cycleDate: cycleDate.toISOString().split('T')[0],
+                contributed: cumulativeContributed,
+                received: cumulativeReceived,
+                netPosition: cumulativeReceived - cumulativeContributed,
+                isPayoutCycle
+            });
+        }
+
+        // Summary stats
+        const totalContributed = contributionAmount * totalCycles;
+        const netGain = potAmount - totalContributed; // should be 0 in a fair stokvel
+
+        res.json({
+            groupId: parseInt(groupId),
+            groupName: group.name,
+            userId: parseInt(userId),
+            contributionAmount,
+            cycleType: group.cycleType,
+            totalMembers,
+            totalCycles,
+            potAmount,
+            payoutPosition,
+            totalContributed,
+            netGain,
+            paidSoFar: paidContributions.length,
+            payoutsReceived: memberPayouts.length,
+            projectionData
+        });
+
+    } catch (error) {
+        console.error('Error generating savings projection:', error);
+        res.status(500).json({ error: 'Failed to generate savings projection', details: error.message });
+    }
+});
 
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));

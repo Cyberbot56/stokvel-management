@@ -38,11 +38,13 @@ jest.mock('@prisma/client', () => {
     payout: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn()
     },
     meetings: {
-      create: jest.fn()
+      create: jest.fn(),
+      findMany: jest.fn()
     },
     $transaction: jest.fn(),
     $disconnect: jest.fn(),
@@ -292,5 +294,164 @@ describe('Stokvel Business Logic', () => {
     const token = crypto.randomBytes(32).toString('hex');
     expect(token).toHaveLength(64);
     expect(/^[a-f0-9]+$/.test(token)).toBe(true);
+  });
+});
+
+describe('Meetings API', () => {
+  
+  //beforeEach to clear mocks between tests so they don't interfere
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /api/meetings', () => {
+    test('should schedule a meeting and return 201', async () => {
+      prisma.meetings.create.mockResolvedValue({
+        meetingId: 1, 
+        title: 'Group Meeting',
+        Date: new Date('2024-12-25')
+      });
+
+      const res = await request(app)
+        .post('/api/meetings')
+        .send({
+          groupId: 1,
+          title: 'Group Meeting',
+          date: '2024-12-25'
+        });
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body.message).toBe('Meeting scheduled successfully');
+    });
+  });
+
+  describe('GET /api/meetings/group/:groupId', () => {
+    test('should return 200 and meetings list for members', async () => {
+      //mock permission check
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 123 });
+      
+      // mock data fetch
+      prisma.meetings.findMany.mockResolvedValue([
+        { title: 'Test Meeting', Date: new Date() }
+      ]);
+
+      const res = await request(app).get('/api/meetings/group/1');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body[0].title).toBe('Test Meeting');
+    });
+
+    test('should return 403 if user is not a member', async () => {
+      // Mock permission check to return null
+      prisma.group_members.findFirst.mockResolvedValue(null);
+
+      const res = await request(app).get('/api/meetings/group/1');
+
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toMatch(/permission/i);
+    });
+  });
+});
+
+describe('Savings Projection', () => {
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('GET /api/groups/:groupId/savings-projection/:userId returns 403 if user is not a member', async () => {
+    prisma.group_members.findFirst.mockResolvedValue(null);
+    const res = await request(app).get('/api/groups/1/savings-projection/1');
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('You are not a member of this group');
+  });
+
+  test('GET /api/groups/:groupId/savings-projection/:userId returns 404 if group not found', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+    prisma.groups.findUnique.mockResolvedValue(null);
+    const res = await request(app).get('/api/groups/99/savings-projection/1');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Group not found');
+  });
+
+  test('GET /api/groups/:groupId/savings-projection/:userId returns 200 with projection data', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+    prisma.groups.findUnique.mockResolvedValue({
+      name: 'Test Stokvel', contributionAmount: 500,
+      cycleType: 'monthly', startDate: new Date('2026-01-01'), status: 'active'
+    });
+    prisma.group_members.findMany.mockResolvedValue([
+      { SuserId: 1, joinedAt: new Date('2026-01-01') },
+      { SuserId: 2, joinedAt: new Date('2026-01-02') },
+      { SuserId: 3, joinedAt: new Date('2026-01-03') }
+    ]);
+    prisma.contributions.findMany.mockResolvedValue([
+      { contributionsId: 1, FKuserId: 1, status: 'paid', paidAt: new Date() }
+    ]);
+    prisma.payout.findMany.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/groups/1/savings-projection/1');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('projectionData');
+    expect(res.body).toHaveProperty('potAmount');
+    expect(res.body).toHaveProperty('payoutPosition');
+    expect(res.body).toHaveProperty('totalCycles');
+    expect(res.body).toHaveProperty('paidSoFar');
+    expect(Array.isArray(res.body.projectionData)).toBe(true);
+    expect(res.body.projectionData).toHaveLength(3);
+    expect(res.body.totalMembers).toBe(3);
+    expect(res.body.contributionAmount).toBe(500);
+    expect(res.body.potAmount).toBe(1500);
+    expect(res.body.payoutPosition).toBe(1);
+    expect(res.body.paidSoFar).toBe(1);
+  });
+
+  test('Projection data marks the correct payout cycle', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+    prisma.groups.findUnique.mockResolvedValue({
+      name: 'Test Stokvel', contributionAmount: 200,
+      cycleType: 'weekly', startDate: new Date('2026-01-01'), status: 'active'
+    });
+    prisma.group_members.findMany.mockResolvedValue([
+      { SuserId: 3, joinedAt: new Date('2026-01-01') },
+      { SuserId: 1, joinedAt: new Date('2026-01-02') },
+      { SuserId: 2, joinedAt: new Date('2026-01-03') }
+    ]);
+    prisma.contributions.findMany.mockResolvedValue([]);
+    prisma.payout.findMany.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/groups/1/savings-projection/1');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.payoutPosition).toBe(2);
+    expect(res.body.projectionData[0].isPayoutCycle).toBe(false);
+    expect(res.body.projectionData[1].isPayoutCycle).toBe(true);
+    expect(res.body.projectionData[1].received).toBe(600);
+  });
+
+  test('Cumulative contributions grow correctly each cycle', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+    prisma.groups.findUnique.mockResolvedValue({
+      name: 'Test Stokvel', contributionAmount: 100,
+      cycleType: 'monthly', startDate: new Date('2026-01-01'), status: 'active'
+    });
+    prisma.group_members.findMany.mockResolvedValue([
+      { SuserId: 1, joinedAt: new Date('2026-01-01') },
+      { SuserId: 2, joinedAt: new Date('2026-01-02') }
+    ]);
+    prisma.contributions.findMany.mockResolvedValue([]);
+    prisma.payout.findMany.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/groups/1/savings-projection/1');
+    expect(res.body.projectionData[0].contributed).toBe(100);
+    expect(res.body.projectionData[1].contributed).toBe(200);
+    expect(res.body.totalContributed).toBe(200);
+    expect(res.body.netGain).toBe(0);
+  });
+
+  test('GET /api/groups/:groupId/savings-projection/:userId returns 500 on DB error', async () => {
+    prisma.group_members.findFirst.mockRejectedValue(new Error('DB connection failed'));
+    const res = await request(app).get('/api/groups/1/savings-projection/1');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to generate savings projection');
   });
 });

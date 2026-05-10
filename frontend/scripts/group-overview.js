@@ -379,52 +379,59 @@ function renderMembers(members) {
 // Shows different buttons depending on whether user is admin, treasurer, or member
 
 function renderFooterButtons(group) {
-  const footer   = document.querySelector(".action-footer");
-  const userRole = group.userRole; // 'admin', 'treasurer', or 'member'
+  const footer = document.querySelector(".action-footer");
+  if (!footer) return;
 
-  footer.innerHTML = ""; // clear existing buttons
+  footer.innerHTML = ""; // Clear everything to prevent duplicates
 
-  // Everyone gets View contributions
+  //View Contributions Button
   const viewContribBtn = document.createElement("button");
-  viewContribBtn.id          = "view-contributions-btn";
+  viewContribBtn.id = "view-contributions-btn";
   viewContribBtn.textContent = "View contributions";
   viewContribBtn.addEventListener("click", loadAndShowContributions);
   footer.appendChild(viewContribBtn);
 
-  // Everyone gets View payouts
+  //View Payouts Button
   const viewPayoutsBtn = document.createElement("button");
-  viewPayoutsBtn.id          = "view-payouts-btn";
+  viewPayoutsBtn.id = "view-payouts-btn";
   viewPayoutsBtn.textContent = "View payouts";
   viewPayoutsBtn.addEventListener("click", () => {
-    loadAndShowPayouts(groupSelect.value);
+    // Falls back to URL param if groupSelect isn't available (common on Admin/Treasurer pages)
+    const gid = group?.groupId || new URLSearchParams(window.location.search).get('groupId');
+    loadAndShowPayouts(gid);
   });
   footer.appendChild(viewPayoutsBtn);
 
-  // Admin gets: go to admin dashboard
-  if (userRole === "admin") {
-    const adminBtn = document.createElement("button");
-    adminBtn.id          = "admin-btn";
-    adminBtn.textContent = "Admin dashboard";
-    adminBtn.addEventListener("click", () => {
-      window.location.href = `group-admin.html?groupId=${group.groupId}`;
-    });
-    footer.appendChild(adminBtn);
-  }
+  //Notifications Button with Badge Container
+  const badgeWrapper = document.createElement("div");
+  badgeWrapper.className = "badge-container"; 
 
-  // Treasurer gets: go to treasurer portal where payouts are initiated
-  if (userRole === "treasurer") {
-    const treasurerBtn = document.createElement("button");
-    treasurerBtn.id          = "treasurer-btn";
-    treasurerBtn.textContent = "Treasurer portal";
-    treasurerBtn.addEventListener("click", () => {
-      window.location.href = `group-treasurer.html?groupId=${group.groupId}`;
-    });
-    footer.appendChild(treasurerBtn);
-  }
+  const viewNotificationsBtn = document.createElement("button");
+  viewNotificationsBtn.id = "view-notifications-btn";
+  viewNotificationsBtn.textContent = "Notifications";
+  
+  viewNotificationsBtn.addEventListener("click", () => {
+    badgeWrapper.classList.remove("has-notification");
+    loadAndShowNotifications(group.groupId);
+  });
 
-  // NOTE: openInitiatePayoutModal has been removed from here.
-  // Payout initiation is now handled exclusively in group-treasurer.html
-  // via group-treasurer.js. Treasurers are redirected there via the button above.
+  badgeWrapper.appendChild(viewNotificationsBtn);
+  footer.appendChild(badgeWrapper);
+
+  // Check if we should show the red dot immediately
+  checkNewNotifications(group.groupId, badgeWrapper);
+}
+
+// Helper to check for the red dot
+async function checkNewNotifications(groupId, wrapper) {
+  try {
+    const meetings = await fetchMeetings(groupId);
+    if (meetings && meetings.length > 0) {
+      wrapper.classList.add("has-notification");
+    }
+  } catch (e) {
+    console.error("Badge check failed", e);
+  }
 }
 
 
@@ -521,6 +528,9 @@ async function loadGroup(groupId) {
     if (userId) {
       const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
       renderPaymentCard(statusData);
+
+      // Load projected savings growth chart
+      await loadSavingsProjection(parseInt(userId), parseInt(groupId));
     }
 
   } catch (error) {
@@ -605,6 +615,176 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !rulesModal.hidden) closeRulesModal();
 });
 
+
+
+// ─── Savings Projection ───────────────────────────────────────────────────────
+
+let savingsChartInstance = null;
+
+async function fetchSavingsProjection(userId, groupId) {
+  const token = await auth0Client.getTokenSilently();
+  const response = await fetch(`${config.apiBase}/api/groups/${groupId}/savings-projection/${userId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error('Failed to fetch savings projection');
+  return await response.json();
+}
+
+function renderSavingsProjection(data) {
+  const card = document.getElementById('savings-projection-card');
+  if (!card) return;
+
+  // Fill summary stats
+  document.getElementById('proj-total-contrib').textContent = formatCurrency(data.totalContributed);
+  document.getElementById('proj-payout-cycle').textContent = data.payoutPosition;
+  document.getElementById('proj-payout-amount').textContent = formatCurrency(data.potAmount);
+  document.getElementById('proj-progress').textContent = data.paidSoFar + ' of ' + data.totalCycles + ' cycles';
+
+  // Note text
+  const noteEl = document.getElementById('proj-note');
+  if (data.paidSoFar >= data.payoutPosition && data.payoutsReceived > 0) {
+    noteEl.textContent = 'You have already received your payout. Keep contributing for the remaining members.';
+  } else if (data.paidSoFar >= data.payoutPosition) {
+    noteEl.textContent = 'You are due for your payout this cycle. Contact your treasurer.';
+  } else {
+    const remaining = data.payoutPosition - data.paidSoFar;
+    noteEl.textContent = remaining + ' contribution' + (remaining !== 1 ? 's' : '') + ' remaining before your payout.';
+  }
+
+  // Build chart
+  const ctx = document.getElementById('savings-chart');
+  if (!ctx) return;
+
+  // Destroy previous chart instance if it exists
+  if (savingsChartInstance) {
+    savingsChartInstance.destroy();
+    savingsChartInstance = null;
+  }
+
+  const labels = data.projectionData.map(d => {
+    const dt = new Date(d.cycleDate);
+    return dt.toLocaleDateString('en-ZA', { month: 'short', year: '2-digit' });
+  });
+
+  const contributedData = data.projectionData.map(d => d.contributed);
+  const receivedData = data.projectionData.map(d => d.received);
+  const netData = data.projectionData.map(d => d.netPosition);
+
+  // Find the payout cycle index for the annotation point
+  const payoutIndex = data.projectionData.findIndex(d => d.isPayoutCycle);
+
+  // Point radius arrays — highlight the payout cycle
+  const contributedRadius = data.projectionData.map((d, i) => i === payoutIndex ? 6 : 3);
+  const receivedRadius = data.projectionData.map((d, i) => i === payoutIndex ? 8 : 0);
+
+  savingsChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Cumulative Contributions',
+          data: contributedData,
+          borderColor: '#0e9490',
+          backgroundColor: 'rgba(14, 148, 144, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: contributedRadius,
+          pointBackgroundColor: '#0e9490',
+          borderWidth: 2
+        },
+        {
+          label: 'Cumulative Received',
+          data: receivedData,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          fill: false,
+          tension: 0,
+          pointRadius: receivedRadius,
+          pointBackgroundColor: '#f59e0b',
+          borderWidth: 2,
+          borderDash: [6, 3],
+          stepped: 'before'
+        },
+        {
+          label: 'Net Position',
+          data: netData,
+          borderColor: '#6d28d9',
+          backgroundColor: 'rgba(109, 40, 217, 0.05)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+          pointBackgroundColor: '#6d28d9',
+          borderWidth: 2,
+          borderDash: [4, 2]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { size: 11, family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+            padding: 16,
+            usePointStyle: true,
+            pointStyleWidth: 10
+          }
+        },
+        tooltip: {
+          backgroundColor: '#034e52',
+          titleFont: { size: 12, family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+          bodyFont: { size: 12, family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (context.parsed.y !== null) {
+                label += ': ' + formatCurrency(context.parsed.y);
+              }
+              // Mark payout cycle
+              if (context.dataIndex === payoutIndex) {
+                label += ' ★ PAYOUT';
+              }
+              return label;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 10 }, color: '#64748b' }
+        },
+        y: {
+          grid: { color: 'rgba(14, 148, 144, 0.08)' },
+          ticks: {
+            font: { size: 10 },
+            color: '#64748b',
+            callback: function(value) { return 'R' + value.toLocaleString(); }
+          }
+        }
+      }
+    }
+  });
+
+  card.hidden = false;
+}
+
+async function loadSavingsProjection(userId, groupId) {
+  try {
+    const data = await fetchSavingsProjection(userId, groupId);
+    renderSavingsProjection(data);
+  } catch (error) {
+    console.error('Savings projection error:', error);
+    const card = document.getElementById('savings-projection-card');
+    if (card) card.hidden = true;
+  }
+}
 
 
 // ─── View payouts modal ───────────────────────────────────────────────────────

@@ -1,3 +1,5 @@
+const groupSelect = { value: new URLSearchParams(window.location.search).get('groupId') };
+
 // State
 let currentGroup = null;
 
@@ -409,9 +411,14 @@ async function loadGroupData() {
         renderGroupHeader(group);
         renderMembers(group.members);
 
+        renderFooterButtons(group);
+
         // Fetch and render the admin's own payment status for this group
         const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
         renderPaymentCard(statusData);
+
+        // Load projected savings growth chart for the admin
+        await loadSavingsProjection(parseInt(userId), parseInt(groupId));
 
     } catch (err) {
         console.error('Load error:', err);
@@ -419,6 +426,20 @@ async function loadGroupData() {
         banner.className   = 'status-banner closed';
         banner.hidden      = false;
     }
+}
+
+async function checkNewNotifications(groupId) {
+  try {
+    const meetings = await fetchMeetings(groupId);
+    const wrapper = document.querySelector(".badge-container");
+    
+    // If there is at least one meeting, show the dot
+    if (meetings && meetings.length > 0) {
+      wrapper.classList.add("has-notification");
+    }
+  } catch (e) {
+    console.error("Badge check failed", e);
+  }
 }
 
 
@@ -780,6 +801,61 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePaymentModal(); });
 }
 
+function renderFooterButtons(group) {
+  const footer = document.querySelector(".action-footer");
+  if (!footer) return;
+
+  footer.innerHTML = ""; // Clear everything to prevent duplicates
+
+  // 1. View Contributions Button
+  const viewContribBtn = document.createElement("button");
+  viewContribBtn.id = "view-contributions-btn";
+  viewContribBtn.textContent = "View contributions";
+  viewContribBtn.addEventListener("click", loadAndShowContributions);
+  footer.appendChild(viewContribBtn);
+
+  // 2. View Payouts Button
+  const viewPayoutsBtn = document.createElement("button");
+  viewPayoutsBtn.id = "view-payouts-btn";
+  viewPayoutsBtn.textContent = "View payouts";
+  viewPayoutsBtn.addEventListener("click", () => {
+    
+    const gid = group?.groupId || new URLSearchParams(window.location.search).get('groupId');
+    loadAndShowPayouts(gid);
+  });
+  footer.appendChild(viewPayoutsBtn);
+
+  //Notifications Button with Badge Container
+  const badgeWrapper = document.createElement("div");
+  badgeWrapper.className = "badge-container"; 
+
+  const viewNotificationsBtn = document.createElement("button");
+  viewNotificationsBtn.id = "view-notifications-btn";
+  viewNotificationsBtn.textContent = "Notifications";
+  
+  viewNotificationsBtn.addEventListener("click", () => {
+    badgeWrapper.classList.remove("has-notification");
+    loadAndShowNotifications(group.groupId);
+  });
+
+  badgeWrapper.appendChild(viewNotificationsBtn);
+  footer.appendChild(badgeWrapper);
+
+  // Check if we should show the red dot immediately
+  checkNewNotifications(group.groupId, badgeWrapper);
+}
+
+// Helper to check for the red dot
+async function checkNewNotifications(groupId, wrapper) {
+  try {
+    const meetings = await fetchMeetings(groupId);
+    if (meetings && meetings.length > 0) {
+      wrapper.classList.add("has-notification");
+    }
+  } catch (e) {
+    console.error("Badge check failed", e);
+  }
+}
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
 // onAuthReady is called by auth_service.js once auth0Client is fully initialised

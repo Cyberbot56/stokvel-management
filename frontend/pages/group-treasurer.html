@@ -422,6 +422,37 @@
         </article>
       </section>
       <!-- end MY CONTRIBUTION -->
+    </article>
+
+
+    <!-- Savings Projection Card -->
+    <article class="card" id="savings-projection-card" hidden>
+      <h2 class="card-title">Projected Savings Growth</h2>
+      <section class="projection-summary">
+        <section class="projection-stat">
+          <p class="projection-stat-label">Total you'll contribute</p>
+          <p id="proj-total-contrib" class="projection-stat-value"></p>
+        </section>
+        <section class="projection-stat">
+          <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
+          <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
+        </section>
+        <section class="projection-stat">
+          <p class="projection-stat-label">Contributions made</p>
+          <p id="proj-progress" class="projection-stat-value"></p>
+        </section>
+      </section>
+      <section class="projection-chart-wrap">
+        <canvas id="savings-chart"></canvas>
+      </section>
+      <p class="projection-note" id="proj-note"></p>
+    </article>
+
+    <footer class="action-footer">
+      <button id="view-contributions-btn">View contributions</button>
+      <button id="view-payouts-btn">View payouts</button>
+      <button id="view-notifications-btn">Notifications</button>
+    </footer>
 
     </main>
   </div>
@@ -487,9 +518,12 @@
     </menu>
   </dialog>
 
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="../scripts/auth_service.js"></script>
+  <script src="../scripts/savings-projection.js"></script>
   <script src="../scripts/Missed-contributions.js"></script>
   <script src="../scripts/group-treasurer.js"></script>
   <script>
@@ -538,5 +572,6 @@
     }
   </style>
 
+  <script src="../scripts/notifications.js"></script>
 </body>
 </html>
