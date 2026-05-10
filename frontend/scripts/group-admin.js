@@ -771,6 +771,14 @@ function setupEventListeners() {
     const confirmPayBtn      = document.getElementById('confirm-payment-btn');
     const payModal           = document.getElementById('payment-confirm-modal');
     const complianceBtn      = document.getElementById('btn-compliance-report');
+    const tabContribBtn      = document.getElementById('tab-view-contributions-btn');
+    const tabPayoutsBtn      = document.getElementById('tab-view-payouts-btn');
+    
+    if (tabContribBtn) tabContribBtn.addEventListener('click', loadAndShowContributions);
+    if (tabPayoutsBtn) tabPayoutsBtn.addEventListener('click', () => {
+        const groupId = new URLSearchParams(window.location.search).get('groupId');
+        loadAndShowPayouts(groupId);
+    });
 
 
     if (addMemberBtn) addMemberBtn.addEventListener('click', addMember);
