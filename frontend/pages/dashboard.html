@@ -16,7 +16,7 @@
         </figure>
         <p class="header-title">Dashboard</p>
         <nav class="header-right">
-            <address class="avatar" id="avatar"></address>
+            <address class="avatar" id="avatar" onclick="window.location.href='../pages/profile.html'" style="cursor:pointer;" title="My profile"></address>
             <button class="logout-btn" id="logoutBtn">Log out</button>
         </nav>
     </header>
@@ -46,5 +46,19 @@
     <script src="../scripts/auth_service.js"></script>
     <script src="../scripts/allGroups.js"></script>
     <script src="../scripts/rates.js"></script>
+
+
+  <style>
+    .avatar[onclick], .header-avatar[onclick] {
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
+    }
+    .avatar[onclick]:hover, .header-avatar[onclick]:hover {
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
+      transform: scale(1.07);
+    }
+  </style>
+
 </body>
 </html>
+

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile – Stokvel App</title>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: #f0fafa;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .profile-card {
+      background: white;
+      border: 1px solid rgba(14, 148, 144, 0.12);
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(14, 148, 144, 0.10), 0 1px 4px rgba(0,0,0,0.04);
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Decorative top band */
+    .profile-band {
+      height: 90px;
+      background: linear-gradient(120deg, #a8ede8 0%, #3cc8c0 35%, #0e9490 70%, #034e52 100%);
+      position: relative;
+    }
+
+    /* Avatar sits half on band, half below */
+    .avatar-wrap {
+      position: absolute;
+      bottom: -44px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .profile-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: #034e52;
+      border: 4px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: #2dd4bf;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 16px rgba(14, 148, 144, 0.25);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+    }
+
+    .profile-body {
+      padding: 60px 32px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .profile-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #034e52;
+      text-align: center;
+    }
+
+    .profile-email {
+      font-size: 14px;
+      color: #64748b;
+      text-align: center;
+    }
+
+    .profile-since {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* Info rows */
+    .profile-details {
+      width: 100%;
+      margin-top: 24px;
+      border: 1px solid rgba(14, 148, 144, 0.12);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(14, 148, 144, 0.08);
+      font-size: 13px;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-label {
+      color: #64748b;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+      color: #0f172a;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* Logout button */
+    .logout-full {
+      margin-top: 28px;
+      width: 100%;
+      padding: 13px;
+      background: white;
+      color: #ef4444;
+      border: 1.5px solid #fecaca;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    .logout-full:hover {
+      background: #fef2f2;
+      transform: translateY(-1px);
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      font-weight: 600;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0;
+      transition: color 0.2s ease;
+      text-decoration: none;
+    }
+
+    .back-link:hover { color: white; }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #e0f7f6 25%, #f0fafa 50%, #e0f7f6 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <figure class="header-logo">
+      <i class="logo-mark"></i>
+      <h1>STOKVEL</h1>
+    </figure>
+    <p class="header-title">My Profile</p>
+    <nav class="header-right">
+      <button class="back-link" onclick="history.back()">← Back</button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="profile-card">
+
+      <div class="profile-band">
+        <div class="avatar-wrap">
+          <div class="profile-avatar" id="profile-avatar">?</div>
+        </div>
+      </div>
+
+      <div class="profile-body">
+        <p class="profile-name"  id="profile-name"><span class="skeleton" style="width:160px;height:22px;">&nbsp;</span></p>
+        <p class="profile-email" id="profile-email"><span class="skeleton" style="width:200px;height:16px;">&nbsp;</span></p>
+        <p class="profile-since" id="profile-since"></p>
+
+        <div class="profile-details">
+          <div class="detail-row">
+            <span class="detail-label">Full name</span>
+            <span class="detail-value" id="detail-name">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Email</span>
+            <span class="detail-value" id="detail-email">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Member since</span>
+            <span class="detail-value" id="detail-since">—</span>
+          </div>
+        </div>
+
+        <button class="logout-full" id="logoutBtn">Log out</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="../scripts/config.js"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="../scripts/auth_service.js"></script>
+  <script>
+    // Populate profile once auth_service exposes the user
+    // auth_service.js is expected to set window.currentUser or call populateProfile()
+    // We poll briefly in case the user object loads asynchronously.
+
+    function getInitials(name) {
+      if (!name) return '?';
+      return name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      return d.toLocaleDateString('en-ZA', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function populateProfile(user) {
+      if (!user) return;
+
+      const name  = user.name || user.nickname || user.email || 'User';
+      const email = user.email || '—';
+      const since = user.created_at || user.updated_at || null;
+
+      // Avatar
+      const avatarEl = document.getElementById('profile-avatar');
+      if (avatarEl) avatarEl.textContent = getInitials(name);
+
+      // Header name / email
+      const nameEl  = document.getElementById('profile-name');
+      const emailEl = document.getElementById('profile-email');
+      if (nameEl)  nameEl.textContent  = name;
+      if (emailEl) emailEl.textContent = email;
+
+      // Member since
+      const sinceEl = document.getElementById('profile-since');
+      if (sinceEl && since) sinceEl.textContent = 'Member since ' + formatDate(since);
+
+      // Detail rows
+      document.getElementById('detail-name').textContent  = name;
+      document.getElementById('detail-email').textContent = email;
+      document.getElementById('detail-since').textContent = since ? formatDate(since) : '—';
+    }
+
+    // auth_service.js should call window.onUserReady(user) when ready.
+    // We expose the callback so auth_service can call it.
+    window.onUserReady = populateProfile;
+
+    // Fallback: if currentUser is already on window by the time this runs
+    if (window.currentUser) populateProfile(window.currentUser);
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (typeof logout === 'function') logout();
+      else if (window.auth0Client) window.auth0Client.logout({ returnTo: window.location.origin });
+    });
+  </script>
+</body>
+</html>

@@ -1,263 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Treasurer Dashboard – Stokvel App</title>
-  <link rel="stylesheet" href="../css/group-overview.css" />
-  <link rel="stylesheet" href="../css/group-treasurer.css" />
-</head>
-
-<body>
-
-  <header class="site-header">
-    <figure class="header-logo">
-      <i class="logo-mark"></i>
-      <h1>STOKVEL</h1>
-    </figure>
-    <p class="header-title">Treasurer Portal</p>
-    <nav class="header-right">
-      <address class="header-avatar" id="avatar"></address>
-      <button class="logout-btn" id="logoutBtn">Log out</button>
-    </nav>
-  </header>
-
-  <main class="page">
-
-    <button class="back-link" id="back-btn">← Back to Groups</button>
-
-    <output id="status-banner" class="status-banner" hidden></output>
-
-    <article class="card" id="group-header-card">
-      <header class="group-title-row">
-        <section>
-          <h2 id="group-name">—</h2>
-          <p id="group-desc" class="group-desc">—</p>
-        </section>
-        <section class="badge-group">
-          <strong id="status-badge" class="badge">—</strong>
-          <strong class="treasurer-badge">Treasurer</strong>
-        </section>
-      </header>
-
-      <dl class="group-stats-strip">
-        <section class="stat-group">
-          <dt>Total Collected</dt>
-          <dd id="stat-total-collected">R 0.00</dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Target</dt>
-          <dd id="stat-amount">—</dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Cycle Progress</dt>
-          <dd id="stat-cycle">—</dd>
-        </section>
-      </dl>
-    </article>
-
-
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Record Member Contribution</h2>
-      </header>
-
-      <form class="contribution-form" id="record-payment-form">
-        <section class="form-group">
-          <label for="member-select">Select Member</label>
-          <select id="member-select" required>
-            <option value="">Choose a member...</option>
-          </select>
-        </section>
-
-        <section class="form-group">
-          <label for="payment-amount">Amount Received (R)</label>
-          <input type="number" id="payment-amount" placeholder="0.00" step="0.01" required />
-        </section>
-
-        <section class="form-group">
-          <label for="payment-date">Date Received</label>
-          <input type="date" id="payment-date" required />
-        </section>
-
-        <button type="submit" class="btn-record" id="btn-record-payment">Confirm Payment</button>
-      </form>
-
-      <output class="form-feedback" id="payment-feedback" hidden></output>
-    </article>
-
-
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Payment Tracking</h2>
-        <output id="member-count">—</output>
-      </header>
-
-      <section id="members-container">
-        <table class="members-table">
-          <thead>
-            <tr>
-              <th>Member</th>
-              <th>Payment Due</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="member-list-body">
-            <tr>
-              <td colspan="4" style="text-align: center;">Loading members...</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </article>
-
-
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Missed Contributions</h2>
-        <output id="missedCount">—</output>
-      </header>
-
-      <nav class="filter-group" aria-label="Filter contributions by status">
-        <button class="filter-pill active" id="filter-all"     data-status="all">All</button>
-        <button class="filter-pill"        id="filter-pending" data-status="pending">Pending</button>
-        <button class="filter-pill"        id="filter-paid"    data-status="paid">Paid</button>
-        <button class="filter-pill"        id="filter-missed"  data-status="missed">Missed</button>
-      </nav>
-
-      <output id="errorBanner"  class="error-banner"  hidden></output>
-      <output id="loadingMsg"   class="loading-msg"   hidden>Loading contributions...</output>
-      <output id="emptyState"   class="empty-state"   hidden>No contributions found for this group.</output>
-
-      <section id="tableContainer" hidden>
-        <table class="members-table">
-          <thead>
-            <tr>
-              <th>Member</th>
-              <th>Due Date</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Note</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="contributionsBody"></tbody>
-        </table>
-      </section>
-    </article>
-
-    <!-- Initiate payout card -->
-<!-- <article class="card">
-  <header class="section-header">
-    <h2 class="card-title">Initiate a payout</h2>
-  </header>
-  <p>Select a member to receive the payout for this cycle.</p>
-  <section class="add-member-form">
-    <select id="payout-recipient">
-      <option value="">— Select a member —</option>
-    </select>
-    <input type="number" id="payout-cycle" placeholder="Cycle number" min="1" />
-    <textarea id="payout-notes" placeholder="Notes (optional)" rows="2"></textarea>
-    <p class="payout-amount-preview">
-      Payout amount: <strong id="payout-amount-display">—</strong>
-    </p>
-    <button class="btn-add" id="btn-initiate-payout">Initiate Payout</button>
-    <p class="form-feedback" id="payout-feedback" hidden></p>
-  </section>
-</article>
-
-<!-- Payout history card -->
-<!-- <article class="card">
-  <header class="section-header">
-    <h2 class="card-title">Payout history</h2>
-    <output id="payout-count"></output>
-  </header>
-  <section id="payouts-container">
-    <p class="empty-payouts">Loading payouts...</p>
-  </section>
-</article> -->
-
-
-    <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
-    <!-- <article class="card" id="payment-status-card">
-      <h2 class="card-title">My contribution this cycle</h2>
-      <section class="payment-status-row">
-        <mark id="payment-status-icon" class="payment-status-icon"></mark>
-        <section class="payment-status-body">
-          <p id="payment-status-label" class="payment-status-label"></p>
-          <p id="payment-status-sub"   class="payment-status-sub"></p>
-          <small id="payment-ref"      class="payment-ref" hidden></small>
-        </section>
-        <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
-      </section>
-    </article> -->
-<!-- 
-
-    <footer class="action-footer">
-      <button id="view-contributions-btn">View contributions</button>
-      <button id="view-payouts-btn">View payouts</button>
-    </footer>
-
-  </main>
-
-
-  <!-- Payment confirmation modal -->
-  <!-- <aside id="payment-confirm-modal" class="modal-overlay" hidden>
-    <article class="modal payment-modal">
-      <header class="modal-header">
-        <h2 class="modal-title">Confirm payment</h2>
-        <button id="close-payment-modal" class="modal-close" aria-label="Close payment modal">✕</button>
-      </header>
-      <section class="payment-confirm-body">
-        <p id="confirm-amount-display" class="payment-amount-display"></p>
-        <p class="payment-confirm-desc">
-          This is a simulated payment. Your contribution will be recorded
-          as pending until the treasurer confirms it.
-        </p>
-      </section>
-      <footer class="modal-footer payment-modal-footer">
-        <button id="cancel-payment-btn"  class="print-btn">Cancel</button>
-        <button id="confirm-payment-btn" class="confirm-pay-btn">Confirm payment</button>
-      </footer>
-    </article>
-  </aside> -->
-
-
-  <!-- Flag as missed dialog -->
-  <!-- <dialog id="flagModal"> -->
-    <!-- <h2>Flag as missed?</h2>
-    <p>
-      This will mark <strong id="modalMemberName"></strong>'s contribution
-      as missed and record a note.
-    </p>
-    <label class="dialog-label" for="flagNote">
-      Reason <span style="font-weight:400; text-transform:none;">(optional)</span>
-    </label>
-    <input
-      type="text"
-      id="flagNote"
-      class="dialog-input"
-      placeholder="e.g. No payment received by due date"
-      autocomplete="off"
-    />
-    <menu class="dialog-actions">
-      <li><button class="btn-cancel"       id="cancelFlagBtn">Cancel</button></li>
-      <li><button class="btn-confirm-flag" id="confirmFlagBtn">Flag as missed</button></li>
-    </menu>
-  </dialog>
-
-
-  <script src="../scripts/config.js"></script>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-  <script src="../scripts/auth_service.js"></script>
-  <script src="../scripts/Missed-contributions.js"></script>
-</body>
-</html> --> 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -266,8 +6,122 @@
   <title>Treasurer Dashboard – Stokvel App</title>
   <link rel="stylesheet" href="../css/group-overview.css" />
   <link rel="stylesheet" href="../css/group-treasurer.css" />
-</head>
+  <style>
+    /* ── Sidebar layout ── */
+    body { display: flex; flex-direction: column; min-height: 100vh; }
 
+    .page-shell {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .sidebar {
+      width: 56px;
+      flex-shrink: 0;
+      background: #034e52;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0;
+      gap: 2px;
+      transition: width 0.22s ease;
+      overflow: hidden;
+      position: relative;
+      z-index: 10;
+    }
+
+    .sidebar:hover { width: 200px; }
+
+    .sidebar-group-info {
+      padding: 0 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      min-height: 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .sidebar:hover .sidebar-group-info { opacity: 1; }
+
+    .sidebar-group-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2dd4bf;
+      line-height: 1.3;
+    }
+
+    .sidebar-group-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+
+    .nav-item.active {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fbbf24;
+      border-left-color: #f59e0b;
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      width: 24px;
+      text-align: center;
+    }
+
+    .nav-label {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      overflow: hidden;
+    }
+
+    .sidebar:hover .nav-label { opacity: 1; }
+
+    /* Content area */
+    .page-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem 2rem;
+      min-width: 0;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .section-page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #034e52;
+      margin-bottom: 1.25rem;
+    }
+  </style>
+</head>
 <body>
 
   <header class="site-header">
@@ -277,226 +131,297 @@
     </figure>
     <p class="header-title">Treasurer Portal</p>
     <nav class="header-right">
-      <address class="header-avatar" id="avatar"></address>
+      <address class="header-avatar" id="avatar" onclick="window.location.href='../pages/profile.html'" style="cursor:pointer;" title="My profile"></address>
       <button class="logout-btn" id="logoutBtn">Log out</button>
     </nav>
   </header>
 
-  <main class="page">
+  <div class="page-shell">
 
-    <button class="back-link" id="back-btn">← Back to Groups</button>
+    <!-- ── Sidebar ── -->
+    <nav class="sidebar" aria-label="Treasurer sections">
+      <div class="sidebar-group-info">
+        <div class="sidebar-group-name" id="sidebar-group-name">Loading…</div>
+        <div class="sidebar-group-meta" id="sidebar-group-meta"></div>
+      </div>
 
-    <output id="status-banner" class="status-banner" hidden></output>
+      <button class="nav-item active" id="nav-overview" onclick="switchTab('overview')">
+        <span class="nav-icon">⊞</span>
+        <span class="nav-label">Overview</span>
+      </button>
+      <button class="nav-item" id="nav-record" onclick="switchTab('record')">
+        <span class="nav-icon">✔</span>
+        <span class="nav-label">Record Payment</span>
+      </button>
+      <button class="nav-item" id="nav-tracking" onclick="switchTab('tracking')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Payment Tracking</span>
+      </button>
+      <button class="nav-item" id="nav-missed" onclick="switchTab('missed')">
+        <span class="nav-icon">⚠</span>
+        <span class="nav-label">Missed</span>
+      </button>
+      <button class="nav-item" id="nav-payouts" onclick="switchTab('payouts')">
+        <span class="nav-icon">💸</span>
+        <span class="nav-label">Payouts</span>
+      </button>
+      <button class="nav-item" id="nav-meetings" onclick="switchTab('meetings')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Meetings</span>
+      </button>
+      <button class="nav-item" id="nav-mycontrib" onclick="switchTab('mycontrib')">
+        <span class="nav-icon">💳</span>
+        <span class="nav-label">My Contribution</span>
+      </button>
+    </nav>
 
-    <article class="card" id="group-header-card">
-      <header class="group-title-row">
-        <section>
-          <h2 id="group-name">—</h2>
-          <p id="group-desc" class="group-desc">—</p>
-        </section>
-        <section class="badge-group">
-          <strong id="status-badge" class="badge">—</strong>
-          <strong class="treasurer-badge">Treasurer</strong>
-        </section>
-      </header>
+    <!-- ── Content ── -->
+    <main class="page-content">
 
-      <dl class="group-stats-strip">
-        <section class="stat-group">
-          <dt>Total Collected</dt>
-          <dd id="stat-total-collected">R 0.00</dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Target</dt>
-          <dd id="stat-amount">—</dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Cycle Progress</dt>
-          <dd id="stat-cycle">—</dd>
-        </section>
-      </dl>
-    </article>
-    
+      <button class="back-link" id="back-btn">← Back to Groups</button>
 
+      <output id="status-banner" class="status-banner" hidden></output>
 
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Record Member Contribution</h2>
-      </header>
+      <!-- ══ OVERVIEW tab ══ -->
+      <section id="tab-overview" class="tab-panel active">
 
-      <form class="contribution-form" id="record-payment-form">
-        <section class="form-group">
-          <label for="member-select">Select Member</label>
-          <select id="member-select" required>
-            <option value="">Choose a member...</option>
-          </select>
-        </section>
+        <article class="card" id="group-header-card">
+          <header class="group-title-row">
+            <section>
+              <h2 id="group-name">—</h2>
+              <p id="group-desc" class="group-desc">—</p>
+            </section>
+            <section class="badge-group">
+              <strong id="status-badge" class="badge">—</strong>
+              <strong class="treasurer-badge">Treasurer</strong>
+            </section>
+          </header>
 
-        <section class="form-group">
-          <label for="payment-amount">Amount Received (R)</label>
-          <input type="number" id="payment-amount" placeholder="0.00" step="0.01" required />
-        </section>
-
-        <section class="form-group">
-          <label for="payment-date">Date Received</label>
-          <input type="date" id="payment-date" required />
-        </section>
-
-        <button type="submit" class="btn-record" id="btn-record-payment">Confirm Payment</button>
-      </form>
-
-      <output class="form-feedback" id="payment-feedback" hidden></output>
-    </article>
-
-
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Payment Tracking</h2>
-        <output id="member-count">—</output>
-      </header>
-
-      <section id="members-container">
-        <table class="members-table">
-          <thead>
-            <tr>
-              <th scope="col">Member</th>
-              <th scope="col">Payment Due</th>
-              <th scope="col">Status</th>
-              <th scope="col">Action</th>
-            </tr>
-          </thead>
-          <tbody id="member-list-body">
-            <tr>
-              <td colspan="4" style="text-align: center;">Loading members...</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </article>
-
-
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Missed Contributions</h2>
-        <output id="missedCount">—</output>
-      </header>
-
-      <nav class="filter-group" aria-label="Filter contributions by status">
-        <button class="filter-pill active" id="filter-all"     data-status="all">All</button>
-        <button class="filter-pill"        id="filter-pending" data-status="pending">Pending</button>
-        <button class="filter-pill"        id="filter-paid"    data-status="paid">Paid</button>
-        <button class="filter-pill"        id="filter-missed"  data-status="missed">Missed</button>
-      </nav>
-
-      <output id="errorBanner"  class="error-banner"  hidden></output>
-      <output id="loadingMsg"   class="loading-msg"   hidden>Loading contributions...</output>
-      <output id="emptyState"   class="empty-state"   hidden>No contributions found for this group.</output>
-
-      <section id="tableContainer" hidden>
-        <table class="members-table">
-          <thead>
-            <tr>
-              <th scope="col">Member</th>
-              <th scope="col">Due Date</th>
-              <th scope="col">Amount</th>
-              <th scope="col">Status</th>
-              <th scope="col">Note</th>
-              <th scope="col">Action</th>
-            </tr>
-          </thead>
-          <tbody id="contributionsBody"></tbody>
-        </table>
-      </section>
-    </article>
-
-
-    <!-- Initiate payout card -->
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Initiate a payout</h2>
-      </header>
-      <p>Select a member to receive the payout for this cycle.</p>
-      <section class="add-member-form">
-        <label for="payout-recipient">Recipient</label>
-        <select id="payout-recipient">
-          <option value="">— Select a member —</option>
-        </select>
-
-        <label for="payout-cycle">Cycle number</label>
-        <input type="number" id="payout-cycle" placeholder="e.g. 1" min="1" />
-
-        <label for="payout-notes">Notes <small>(optional)</small></label>
-        <textarea id="payout-notes" placeholder="e.g. Regular monthly payout" rows="2"></textarea>
-
-        <p class="payout-amount-preview">
-          Payout amount: <strong id="payout-amount-display">—</strong>
-        </p>
-
-        <button class="btn-add" id="btn-initiate-payout">Initiate Payout</button>
-        <output class="form-feedback" id="payout-feedback" hidden></output>
-      </section>
-    </article>
-
-     <!--Schedule meetings-->
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Schedule meetings</h2>
-      </header>
-
-      <form class="add-member-form" id="schedule-meeting">
-
-
-      <section class="form-group">
-      <label for="meeting-title">Title</label>
-      <input type="text" id="meeting-title" required />
-       </section>
+          <dl class="group-stats-strip">
+            <section class="stat-group">
+              <dt>Total Collected</dt>
+              <dd id="stat-total-collected">R 0.00</dd>
+            </section>
+            <hr class="strip-divider">
+            <section class="stat-group">
+              <dt>Target</dt>
+              <dd id="stat-amount">—</dd>
+            </section>
+            <hr class="strip-divider">
+            <section class="stat-group">
+              <dt>Cycle Progress</dt>
+              <dd id="stat-cycle">—</dd>
+            </section>
+          </dl>
+        </article>
 
       </section>
-      <section class="form-group">
-      <label for="meeting-agenda">Agenda</label>
-      <input type="text" id="meeting-agenda" required />
-       </section>
+      <!-- end OVERVIEW -->
 
-      <section class="form-group">
-        <label for="payment-date">Date of meeting</label>
-        <input type="date" id="meeting-date" required />
+      <!-- ══ RECORD PAYMENT tab ══ -->
+      <section id="tab-record" class="tab-panel">
+        <h2 class="section-page-title">Record Member Contribution</h2>
+
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Record Member Contribution</h2>
+          </header>
+
+          <form class="contribution-form" id="record-payment-form">
+            <section class="form-group">
+              <label for="member-select">Select Member</label>
+              <select id="member-select" required>
+                <option value="">Choose a member...</option>
+              </select>
+            </section>
+
+            <section class="form-group">
+              <label for="payment-amount">Amount Received (R)</label>
+              <input type="number" id="payment-amount" placeholder="0.00" step="0.01" required />
+            </section>
+
+            <section class="form-group">
+              <label for="payment-date">Date Received</label>
+              <input type="date" id="payment-date" required />
+            </section>
+
+            <button type="submit" class="btn-record" id="btn-record-payment">Confirm Payment</button>
+          </form>
+
+          <output class="form-feedback" id="payment-feedback" hidden></output>
+        </article>
       </section>
-      <section class="form-group">
-      <label for="meeting-time">Time of meeting</label>
-      <input type="time" id="meeting-time" required step="60" />  
-       </section>
+      <!-- end RECORD -->
 
-      <button type="submit" class="btn-record" id="sch-meeting">Schedule Meeting</button>
-      </form>
+      <!-- ══ PAYMENT TRACKING tab ══ -->
+      <section id="tab-tracking" class="tab-panel">
+        <h2 class="section-page-title">Payment Tracking</h2>
 
-      <output class="form-feedback" id="meeting-feedback" hidden></output>
-    </article>
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Payment Tracking</h2>
+            <output id="member-count">—</output>
+          </header>
 
-    <!-- Payout history card -->
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Payout history</h2>
-        <output id="payout-count">—</output>
-      </header>
-      <section id="payouts-container">
-        <p class="empty-payouts">Loading payouts...</p>
+          <section id="members-container">
+            <table class="members-table">
+              <thead>
+                <tr>
+                  <th scope="col">Member</th>
+                  <th scope="col">Payment Due</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="member-list-body">
+                <tr>
+                  <td colspan="4" style="text-align: center;">Loading members...</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </article>
       </section>
-    </article>
+      <!-- end TRACKING -->
 
+      <!-- ══ MISSED CONTRIBUTIONS tab ══ -->
+      <section id="tab-missed" class="tab-panel">
+        <h2 class="section-page-title">Missed Contributions</h2>
 
-    <!-- My contribution this cycle -->
-    <article class="card" id="payment-status-card">
-      <h2 class="card-title">My contribution this cycle</h2>
-      <section class="payment-status-row">
-        <mark id="payment-status-icon" class="payment-status-icon"></mark>
-        <section class="payment-status-body">
-          <p id="payment-status-label" class="payment-status-label"></p>
-          <p id="payment-status-sub"   class="payment-status-sub"></p>
-          <small id="payment-ref"      class="payment-ref" hidden></small>
-        </section>
-        <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Missed Contributions</h2>
+            <output id="missedCount">—</output>
+          </header>
+
+          <nav class="filter-group" aria-label="Filter contributions by status">
+            <button class="filter-pill active" id="filter-all"     data-status="all">All</button>
+            <button class="filter-pill"        id="filter-pending" data-status="pending">Pending</button>
+            <button class="filter-pill"        id="filter-paid"    data-status="paid">Paid</button>
+            <button class="filter-pill"        id="filter-missed"  data-status="missed">Missed</button>
+          </nav>
+
+          <output id="errorBanner"  class="error-banner"  hidden></output>
+          <output id="loadingMsg"   class="loading-msg"   hidden>Loading contributions...</output>
+          <output id="emptyState"   class="empty-state"   hidden>No contributions found for this group.</output>
+
+          <section id="tableContainer" hidden>
+            <table class="members-table">
+              <thead>
+                <tr>
+                  <th scope="col">Member</th>
+                  <th scope="col">Due Date</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Note</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="contributionsBody"></tbody>
+            </table>
+          </section>
+        </article>
       </section>
+      <!-- end MISSED -->
+
+      <!-- ══ PAYOUTS tab ══ -->
+      <section id="tab-payouts" class="tab-panel">
+        <h2 class="section-page-title">Payouts</h2>
+
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Initiate a payout</h2>
+          </header>
+          <p>Select a member to receive the payout for this cycle.</p>
+          <section class="add-member-form">
+            <label for="payout-recipient">Recipient</label>
+            <select id="payout-recipient">
+              <option value="">— Select a member —</option>
+            </select>
+
+            <label for="payout-cycle">Cycle number</label>
+            <input type="number" id="payout-cycle" placeholder="e.g. 1" min="1" />
+
+            <label for="payout-notes">Notes <small>(optional)</small></label>
+            <textarea id="payout-notes" placeholder="e.g. Regular monthly payout" rows="2"></textarea>
+
+            <p class="payout-amount-preview">
+              Payout amount: <strong id="payout-amount-display">—</strong>
+            </p>
+
+            <button class="btn-add" id="btn-initiate-payout">Initiate Payout</button>
+            <output class="form-feedback" id="payout-feedback" hidden></output>
+          </section>
+        </article>
+
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Payout history</h2>
+            <output id="payout-count">—</output>
+          </header>
+          <section id="payouts-container">
+            <p class="empty-payouts">Loading payouts...</p>
+          </section>
+        </article>
+      </section>
+      <!-- end PAYOUTS -->
+
+      <!-- ══ MEETINGS tab ══ -->
+      <section id="tab-meetings" class="tab-panel">
+        <h2 class="section-page-title">Schedule Meetings</h2>
+
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Schedule meetings</h2>
+          </header>
+
+          <form class="add-member-form" id="schedule-meeting">
+            <section class="form-group">
+              <label for="meeting-title">Title</label>
+              <input type="text" id="meeting-title" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-agenda">Agenda</label>
+              <input type="text" id="meeting-agenda" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-date">Date of meeting</label>
+              <input type="date" id="meeting-date" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-time">Time of meeting</label>
+              <input type="time" id="meeting-time" required step="60" />
+            </section>
+
+            <button type="submit" class="btn-record" id="sch-meeting">Schedule Meeting</button>
+          </form>
+
+          <output class="form-feedback" id="meeting-feedback" hidden></output>
+        </article>
+      </section>
+      <!-- end MEETINGS -->
+
+      <!-- ══ MY CONTRIBUTION tab ══ -->
+      <section id="tab-mycontrib" class="tab-panel">
+        <h2 class="section-page-title">My Contribution This Cycle</h2>
+
+        <article class="card" id="payment-status-card">
+          <h2 class="card-title">My contribution this cycle</h2>
+          <section class="payment-status-row">
+            <mark id="payment-status-icon" class="payment-status-icon"></mark>
+            <section class="payment-status-body">
+              <p id="payment-status-label" class="payment-status-label"></p>
+              <p id="payment-status-sub"   class="payment-status-sub"></p>
+              <small id="payment-ref"      class="payment-ref" hidden></small>
+            </section>
+            <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+          </section>
+        </article>
+      </section>
+      <!-- end MY CONTRIBUTION -->
     </article>
 
 
@@ -529,10 +454,11 @@
       <button id="view-notifications-btn">Notifications</button>
     </footer>
 
-  </main>
+    </main>
+  </div>
 
 
-  <!-- Payment confirmation modal -->
+  <!-- Payment confirmation modal (unchanged) -->
   <aside id="payment-confirm-modal" class="modal-overlay" hidden>
     <article class="modal payment-modal">
       <header class="modal-header">
@@ -553,8 +479,7 @@
     </article>
   </aside>
 
-
-  <!-- Payout confirmation modal -->
+  <!-- Payout confirmation modal (unchanged) -->
   <aside id="confirm-modal" class="modal-overlay" hidden>
     <article class="modal payment-modal">
       <header class="modal-header">
@@ -570,8 +495,7 @@
     </article>
   </aside>
 
-
-  <!-- Flag as missed dialog -->
+  <!-- Flag as missed dialog (unchanged) -->
   <dialog id="flagModal">
     <h2>Flag as missed?</h2>
     <p>
@@ -602,6 +526,52 @@
   <script src="../scripts/savings-projection.js"></script>
   <script src="../scripts/Missed-contributions.js"></script>
   <script src="../scripts/group-treasurer.js"></script>
+  <script>
+    const TABS = ['overview','record','tracking','missed','payouts','meetings','mycontrib'];
+
+    function switchTab(name) {
+      TABS.forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('active', t === name);
+        document.getElementById('nav-' + t).classList.toggle('active', t === name);
+      });
+    }
+
+    // Mirror group name to sidebar when JS sets it
+    const nameEl = document.getElementById('group-name');
+    if (nameEl) {
+      const obs = new MutationObserver(() => {
+        const sn = document.getElementById('sidebar-group-name');
+        if (sn) sn.textContent = nameEl.textContent || 'Group';
+      });
+      obs.observe(nameEl, { childList: true, characterData: true, subtree: true });
+    }
+
+    // Mirror stats to sidebar meta
+    const amountEl = document.getElementById('stat-amount');
+    const cycleEl  = document.getElementById('stat-cycle');
+    if (amountEl && cycleEl) {
+      const obs2 = new MutationObserver(() => {
+        const meta = document.getElementById('sidebar-group-meta');
+        if (meta && amountEl.textContent && cycleEl.textContent) {
+          meta.textContent = `${amountEl.textContent} · ${cycleEl.textContent}`;
+        }
+      });
+      obs2.observe(amountEl, { childList: true, subtree: true });
+      obs2.observe(cycleEl,  { childList: true, subtree: true });
+    }
+  </script>
+
+  <style>
+    .avatar[onclick], .header-avatar[onclick] {
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
+    }
+    .avatar[onclick]:hover, .header-avatar[onclick]:hover {
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
+      transform: scale(1.07);
+    }
+  </style>
+
   <script src="../scripts/notifications.js"></script>
 </body>
 </html>
