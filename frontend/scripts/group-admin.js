@@ -417,6 +417,9 @@ async function loadGroupData() {
         const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
         renderPaymentCard(statusData);
 
+        // Load projected savings growth chart for the admin
+        await loadSavingsProjection(parseInt(userId), parseInt(groupId));
+
     } catch (err) {
         console.error('Load error:', err);
         banner.textContent = 'Error loading group data. Please try again.';

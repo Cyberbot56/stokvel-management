@@ -1305,3 +1305,64 @@ dialog::backdrop {
   z-index: 10;
 }
 
+/* ── Savings Projection Card ── */
+
+.projection-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 1.25rem;
+}
+
+.projection-stat {
+  background: #f0fafa;
+  border: 1px solid rgba(14, 148, 144, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.projection-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+
+.projection-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #034e52;
+}
+
+.projection-stat-value.highlight {
+  color: #0e9490;
+}
+
+.projection-chart-wrap {
+  position: relative;
+  height: 260px;
+  margin-bottom: 0.75rem;
+}
+
+.projection-note {
+  font-size: 12px;
+  color: #64748b;
+  background: #f0fafa;
+  border-left: 3px solid #2dd4bf;
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 540px) {
+  .projection-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .projection-chart-wrap {
+    height: 200px;
+  }
+}

@@ -1,4 +1,3 @@
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const sanitise = (str) => {
     const div = document.createElement('div');
@@ -328,6 +327,12 @@ async function loadGroupData() {
         populateRecipientDropdown(group.members);
         updatePayoutPreview();
         await loadPayouts();
+
+        // Load projected savings growth chart for the treasurer
+        const projUserId = localStorage.getItem('userId');
+        if (projUserId) {
+            await loadSavingsProjection(parseInt(projUserId), parseInt(groupId));
+        }
 
     } catch (err) {
         console.error('Load error:', err);
