@@ -972,10 +972,6 @@ app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });
 
-app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
-});
-
 
 // Only start server when run directly, not when imported by tests
 if (require.main === module) {
