@@ -385,6 +385,29 @@
           </section>
         </article>
 
+            <!-- Savings Projection Card -->
+    <article class="card" id="savings-projection-card" hidden>
+      <h2 class="card-title">Projected Savings Growth</h2>
+      <section class="projection-summary">
+        <section class="projection-stat">
+          <p class="projection-stat-label">Total you'll contribute</p>
+          <p id="proj-total-contrib" class="projection-stat-value"></p>
+        </section>
+        <section class="projection-stat">
+          <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
+          <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
+        </section>
+        <section class="projection-stat">
+          <p class="projection-stat-label">Contributions made</p>
+          <p id="proj-progress" class="projection-stat-value"></p>
+        </section>
+      </section>
+      <section class="projection-chart-wrap">
+        <canvas id="savings-chart"></canvas>
+      </section>
+      <p class="projection-note" id="proj-note"></p>
+    </article>
+
       </section>
       <!-- end OVERVIEW -->
 
@@ -469,34 +492,6 @@
               <label for="s-desc">Description</label>
               <input type="text" id="s-desc" name="s-desc" oninput="markDirty()">
             </div>
-    <!-- Savings Projection Card -->
-    <article class="card" id="savings-projection-card" hidden>
-      <h2 class="card-title">Projected Savings Growth</h2>
-      <section class="projection-summary">
-        <section class="projection-stat">
-          <p class="projection-stat-label">Total you'll contribute</p>
-          <p id="proj-total-contrib" class="projection-stat-value"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
-          <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Contributions made</p>
-          <p id="proj-progress" class="projection-stat-value"></p>
-        </section>
-      </section>
-      <section class="projection-chart-wrap">
-        <canvas id="savings-chart"></canvas>
-      </section>
-      <p class="projection-note" id="proj-note"></p>
-    </article>
-
-    <footer class="action-footer">
-      <button id="view-contributions-btn">View contributions</button>
-      <button id="view-payouts-btn">View payouts</button>
-      <button id="view-notifications-btn">Notifications</button>
-    </footer>
 
             <div class="settings-field">
               <label for="s-amount">Contribution amount (ZAR)</label>
@@ -569,7 +564,7 @@
       <div class="settings-field">
         <label for="confirm-name">Type group name to confirm</label>
         <input type="text" id="confirm-name" name="confirm-name" placeholder="Group name">
-        <span class="error-msg" id="err-confirm">Name does not match — please try again</span>
+        <span class="error-msg" id="err-confirm">Name does not match please try again</span>
       </div>
       <div style="display:flex;gap:10px;margin-top:16px">
         <button type="button" style="padding:10px 20px;border:1.5px solid rgba(14,148,144,0.25);border-radius:10px;background:white;color:#64748b;font-weight:700;cursor:pointer;font-family:inherit" onclick="document.getElementById('close-modal').close()">Cancel</button>
