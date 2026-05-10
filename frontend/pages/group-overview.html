@@ -308,7 +308,6 @@
     <p class="header-title">Group Overview</p>
     <nav class="header-right">
       <address class="header-avatar" id="avatar" onclick="window.location.href='../pages/profile.html'" style="cursor:pointer;" title="My profile"></address>
-      <button class="logout-btn" id="logoutBtn">Log out</button>
     </nav>
   </header>
 
@@ -347,13 +346,7 @@
       <!-- ══ OVERVIEW tab ══ -->
       <section id="tab-overview" class="tab-panel active">
 
-        <header class="top-bar">
-          <section class="group-switcher">
-            <label for="group-select">Group</label>
-            <select id="group-select"></select>
-          </section>
-          <button id="refresh-btn">↻ Refresh</button>
-        </header>
+      <button class="back-link" id="back-btn">← Back to my groups</button>
 
         <article class="card" id="group-header">
           <header class="group-title-row">
@@ -450,21 +443,21 @@
         </article>
       </section>
 
-      <!-- ══ CONTRIBUTIONS tab ══ -->
-      <section id="tab-contributions" class="tab-panel">
-        <h2 class="section-page-title">Contributions</h2>
-        <div class="tab-footer">
-          <button id="view-contributions-btn">View contributions</button>
-        </div>
-      </section>
-
-      <!-- ══ PAYOUTS tab ══ -->
-      <section id="tab-payouts" class="tab-panel">
-        <h2 class="section-page-title">Payouts</h2>
-        <div class="tab-footer">
-          <button id="view-payouts-btn">View payouts</button>
-        </div>
-      </section>
+          <!-- ══ CONTRIBUTIONS tab ══ -->
+    <section id="tab-contributions" class="tab-panel">
+      <h2 class="section-page-title">Contributions</h2>
+      <div class="tab-footer">
+        <button id="tab-view-contributions-btn">View contributions</button>
+      </div>
+    </section>
+    
+    <!-- ══ PAYOUTS tab ══ -->
+    <section id="tab-payouts" class="tab-panel">
+      <h2 class="section-page-title">Payouts</h2>
+      <div class="tab-footer">
+        <button id="tab-view-payouts-btn">View payouts</button>
+      </div>
+    </section>
 
     </main>
   </div>
