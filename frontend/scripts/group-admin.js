@@ -410,8 +410,11 @@ async function loadGroupData() {
         currentGroup = group;
         renderGroupHeader(group);
         renderMembers(group.members);
-
         renderFooterButtons(group);
+        
+        // Populate settings form
+        populateSettings(group);
+        addSettingsFeedback();
 
         // Fetch and render the admin's own payment status for this group
         const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
@@ -753,6 +756,214 @@ function displayContributionsModal(contributions) {
 
     content.innerHTML = html;
     modal.hidden = false;
+}
+
+// ─── Settings functions ─────────────────────────────────────────────────────────
+
+// Store original group data for comparison
+let originalGroupData = null;
+
+function populateSettings(group) {
+    const sName   = document.getElementById('s-name');
+    const sDesc   = document.getElementById('s-desc');
+    const sAmount = document.getElementById('s-amount');
+    const sCycle  = document.getElementById('s-cycle');
+    const sStart  = document.getElementById('s-start-date');
+    
+    if (sName && group.name)               sName.value = group.name;
+    if (sDesc && group.description)        sDesc.value = group.description || '';
+    if (sAmount && group.contributionAmount) sAmount.value = group.contributionAmount;
+    if (sCycle && group.cycleType)         sCycle.value = group.cycleType;
+    if (sStart && group.startDate)         sStart.textContent = formatDate(group.startDate);
+    
+    // Store original data for comparison
+    originalGroupData = {
+        name: group.name,
+        description: group.description || '',
+        contributionAmount: group.contributionAmount,
+        cycleType: group.cycleType
+    };
+    
+    const meta = document.getElementById('sidebar-group-meta');
+    if (meta && group.contributionAmount && group.cycleType) {
+        meta.textContent = `R${group.contributionAmount} · ${group.cycleType}`;
+    }
+}
+
+function markDirty() {
+    const saveBar = document.getElementById('save-bar');
+    if (saveBar) saveBar.hidden = false;
+}
+
+function discardChanges() {
+    if (originalGroupData && currentGroup) {
+        populateSettings(currentGroup);
+        const saveBar = document.getElementById('save-bar');
+        if (saveBar) saveBar.hidden = true;
+        showFeedback('settings-feedback', 'Changes discarded.', 'info');
+    }
+}
+
+async function saveGroupSettings() {
+    if (!currentGroup) {
+        showFeedback('settings-feedback', 'No group loaded.', 'error');
+        return;
+    }
+    
+    const sName   = document.getElementById('s-name');
+    const sDesc   = document.getElementById('s-desc');
+    const sAmount = document.getElementById('s-amount');
+    const sCycle  = document.getElementById('s-cycle');
+    
+    const updatedData = {
+        groupId: currentGroup.groupId,
+        name: sName.value.trim(),
+        description: sDesc.value.trim(),
+        contributionAmount: parseFloat(sAmount.value),
+        cycleType: sCycle.value
+    };
+    
+    // Validation
+    if (!updatedData.name) {
+        showFeedback('settings-feedback', 'Group name is required.', 'error');
+        return;
+    }
+    
+    if (updatedData.contributionAmount <= 0) {
+        showFeedback('settings-feedback', 'Contribution amount must be greater than 0.', 'error');
+        return;
+    }
+    
+    const saveBtn = document.querySelector('#save-bar .btn-cyan-sm');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+    
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/groups/${currentGroup.groupId}/settings`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(updatedData)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update settings');
+        }
+        
+        const result = await response.json();
+        
+        // Update currentGroup with new data
+        currentGroup.name = updatedData.name;
+        currentGroup.description = updatedData.description;
+        currentGroup.contributionAmount = updatedData.contributionAmount;
+        currentGroup.cycleType = updatedData.cycleType;
+        
+        // Update UI
+        renderGroupHeader(currentGroup);
+        populateSettings(currentGroup);
+        
+        const saveBar = document.getElementById('save-bar');
+        if (saveBar) saveBar.hidden = true;
+        
+        showFeedback('settings-feedback', 'Group settings updated successfully!', 'success');
+        
+        // Update sidebar meta
+        const meta = document.getElementById('sidebar-group-meta');
+        if (meta) {
+            meta.textContent = `R${updatedData.contributionAmount} · ${updatedData.cycleType}`;
+        }
+        
+        // Refresh members table to show updated contribution amount in compliance report
+        renderMembers(currentGroup.members);
+        
+    } catch (error) {
+        showFeedback('settings-feedback', error.message, 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save changes';
+        }
+    }
+}
+
+async function closeGroup() {
+    if (!currentGroup) {
+        alert('No group loaded.');
+        return;
+    }
+    
+    const closeBtn = document.querySelector('#close-modal .btn-danger');
+    if (closeBtn) {
+        closeBtn.disabled = true;
+        closeBtn.textContent = 'Closing...';
+    }
+    
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/groups/${currentGroup.groupId}/close`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to close group');
+        }
+        
+        const result = await response.json();
+        
+        // Close the modal
+        const modal = document.getElementById('close-modal');
+        if (modal) modal.close();
+        
+        // Show success message
+        const banner = document.getElementById('status-banner');
+        banner.textContent = result.message || 'Group has been closed successfully.';
+        banner.className = 'status-banner success';
+        banner.hidden = false;
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+            window.location.href = '../pages/dashboard.html';
+        }, 2000);
+        
+    } catch (error) {
+        alert('Failed to close group: ' + error.message);
+    } finally {
+        if (closeBtn) {
+            closeBtn.disabled = false;
+            closeBtn.textContent = 'Close group';
+        }
+        // Clear the confirmation input
+        const confirmInput = document.getElementById('confirm-name');
+        if (confirmInput) confirmInput.value = '';
+        const errorSpan = document.getElementById('err-confirm');
+        if (errorSpan) errorSpan.style.display = 'none';
+    }
+}
+
+// Add feedback element for settings
+function addSettingsFeedback() {
+    const settingsTab = document.getElementById('tab-settings');
+    if (settingsTab && !document.getElementById('settings-feedback')) {
+        const feedback = document.createElement('p');
+        feedback.id = 'settings-feedback';
+        feedback.className = 'form-feedback';
+        feedback.hidden = true;
+        const card = settingsTab.querySelector('.card');
+        if (card) {
+            card.insertBefore(feedback, card.firstChild);
+        }
+    }
 }
 
 
