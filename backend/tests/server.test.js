@@ -1,13 +1,11 @@
 // backend/tests/server.test.js
-jest.mock('@prisma/client', () => {
-  const mockPrisma = {
-    users: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn()
-    },
+const request = require('supertest');
+const crypto = require('crypto');
+const app = require('../server');
+const { PrismaClient } = require('@prisma/client');
+
+// Get the exact prisma instance the server is using
+const prisma = PrismaClient.mock.results[0].value;
     groups: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
