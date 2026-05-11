@@ -236,7 +236,7 @@
     </figure>
     <p class="header-title">Treasurer Portal</p>
     <nav class="header-right">
-      <address class="header-avatar" id="avatar"></address>
+      <address class="header-avatar" id="avatar" onclick="showProfileModal()" style="cursor:pointer;" title="My profile"></address>
       <button class="logout-btn" id="logoutBtn">Log out</button>
     </nav>
   </header>
@@ -311,6 +311,7 @@
   <script src="../config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="../auth_service.js"></script>
+  <script src="../scripts/profile-modal.js"></script>
   <script src="../js/Missed-contributions.js"></script>
 </body>
 </html>
