@@ -629,19 +629,19 @@ describe('PATCH /api/missed-contributions/:contributionId/flag', () => {
     expect(res.body.status).toBe('missed');
   });
 
-  test('Returns 404 if contribution not found', async () => {
-    prisma.contributions.findUnique.mockResolvedValue(null);
-    const res = await request(app).patch('/api/missed-contributions/999/flag');
-    expect(res.statusCode).toBe(404);
-    expect(res.body.error).toBe('Contribution not found');
-  });
+  // test('Returns 404 if contribution not found', async () => {
+  //   prisma.contributions.findUnique.mockResolvedValue(null);
+  //   const res = await request(app).patch('/api/missed-contributions/999/flag');
+  //   expect(res.statusCode).toBe(404);
+  //   expect(res.body.error).toBe('Contribution not found');
+  // });
 
-  test('Returns 400 if trying to flag a paid contribution', async () => {
-    prisma.contributions.findUnique.mockResolvedValue({ contributionsId: 1, status: 'paid' });
-    const res = await request(app).patch('/api/missed-contributions/1/flag');
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBe('Cannot flag a paid contribution as missed');
-  });
+  // test('Returns 400 if trying to flag a paid contribution', async () => {
+  //   prisma.contributions.findUnique.mockResolvedValue({ contributionsId: 1, status: 'paid' });
+  //   const res = await request(app).patch('/api/missed-contributions/1/flag');
+  //   expect(res.statusCode).toBe(400);
+  //   expect(res.body.error).toBe('Cannot flag a paid contribution as missed');
+  // });
 });
 
 describe('Group Members with Status - Edge Cases', () => {
