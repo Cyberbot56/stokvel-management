@@ -33,7 +33,7 @@ jest.mock('@prisma/client', () => {
     contributions: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
-      findUnique: jest.fn(),   // FIX: was missing — caused flag tests to crash
+      findUnique: jest.fn(),   // ← this line was missing
       create: jest.fn(),
       update: jest.fn(),
       deleteMany: jest.fn()
