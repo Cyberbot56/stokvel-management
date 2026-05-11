@@ -14,8 +14,8 @@
 
 // ─── Fallback data (used if fetch fails) ─────────────────────────────────────
 const FALLBACK_RATES = {
-  repoRate: 7.50,
-  primeRate: 11.00,
+  repoRate: 6.75,
+  primeRate: 10.25,
   lastUpdated: 'April 2026',
   source: 'SARB (cached)',
 };
