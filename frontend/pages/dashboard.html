@@ -161,30 +161,6 @@
             background: #fef2f2;
             transform: translateY(-1px);
         }
-
-        /* Scrollable Container */
-        .dashboard-scroll {
-            max-height: calc(100vh - 280px);
-            overflow-y: auto;
-            padding: 0 20px 20px 20px;
-        }
-
-        /* Custom scrollbar */
-        .dashboard-scroll::-webkit-scrollbar {
-            width: 8px;
-        }
-        .dashboard-scroll::-webkit-scrollbar-track {
-            background: #e0f7f6;
-            border-radius: 10px;
-        }
-        .dashboard-scroll::-webkit-scrollbar-thumb {
-            background: #0e9490;
-            border-radius: 10px;
-        }
-        .dashboard-scroll::-webkit-scrollbar-thumb:hover {
-            background: #034e52;
-        }
-
         .avatar[onclick], .header-avatar[onclick] {
             cursor: pointer;
             transition: box-shadow 0.2s ease, transform 0.15s ease;
@@ -206,7 +182,6 @@
         <p class="header-title">Dashboard</p>
         <nav class="header-right">
             <address class="avatar" id="avatar" style="cursor:pointer;" title="My profile"></address>
-            <button class="logout-btn" id="logoutBtn">Log out</button>
         </nav>
     </header>
 
@@ -224,17 +199,11 @@
         </nav>
     </section>
 
-    <!-- Scrollable Container for Groups and Rates -->
-    <div class="dashboard-scroll">
-        <main>
-            <p id="noGroups" hidden>You are not a member of any groups yet.</p>
-            <p id="loadError" class="state-message" hidden>Error loading groups. Please try again later.</p>
-            <section class="groups-grid" hidden></section>
-        </main>
-
-        <!-- Rates section will be inserted here by rates.js -->
-        <div id="rates-container"></div>
-    </div>
+    <main>
+        <p id="noGroups" hidden>You are not a member of any groups yet.</p>
+        <p id="loadError" class="state-message" hidden>Error loading groups. Please try again later.</p>
+        <section class="groups-grid" hidden></section>
+    </main>
 
     <!-- Profile Modal -->
     <div id="profileModal" class="profile-modal-overlay">
@@ -282,6 +251,7 @@
         const avatar = document.getElementById('avatar');
         const closeModalBtn = document.getElementById('closeProfileModal');
 
+        // Helper functions
         function getInitials(name) {
             if (!name) return '?';
             return name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
@@ -314,6 +284,7 @@
 
         function showProfileModal() {
             profileModal.classList.add('active');
+            // Try to get user data
             if (window.currentUser) {
                 populateProfile(window.currentUser);
             } else if (window.auth0Client) {
@@ -331,38 +302,53 @@
         }
 
         // Event listeners
-        if (avatar) avatar.addEventListener('click', showProfileModal);
-        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-        
+        if (avatar) {
+            avatar.addEventListener('click', showProfileModal);
+        }
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeModal);
+        }
+
+        // Close when clicking outside
         profileModal.addEventListener('click', (e) => {
             if (e.target === profileModal) closeModal();
         });
-        
+
+        // Close on escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && profileModal.classList.contains('active')) closeModal();
+            if (e.key === 'Escape' && profileModal.classList.contains('active')) {
+                closeModal();
+            }
         });
-        
-        // Modal logout
+
+        // Modal logout button
         const modalLogoutBtn = document.getElementById('modalLogoutBtn');
         if (modalLogoutBtn) {
             modalLogoutBtn.addEventListener('click', async () => {
-                if (typeof logout === 'function') await logout();
-                else if (window.auth0Client) await window.auth0Client.logout({ returnTo: window.location.origin });
+                if (typeof logout === 'function') {
+                    await logout();
+                } else if (window.auth0Client) {
+                    await window.auth0Client.logout({ returnTo: window.location.origin });
+                }
                 window.location.href = '../index.html';
             });
         }
-        
-        // Original logout
+
+        // Original logout button (keep both)
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', async () => {
-                if (typeof logout === 'function') await logout();
-                else if (window.auth0Client) await window.auth0Client.logout({ returnTo: window.location.origin });
+                if (typeof logout === 'function') {
+                    await logout();
+                } else if (window.auth0Client) {
+                    await window.auth0Client.logout({ returnTo: window.location.origin });
+                }
                 window.location.href = '../index.html';
             });
         }
-        
-        // Initialize
+
+        // Populate if user already exists
         if (window.currentUser) populateProfile(window.currentUser);
     </script>
 
