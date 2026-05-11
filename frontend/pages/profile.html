@@ -276,23 +276,8 @@
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="../scripts/auth_service.js"></script>
   <script>
-    // Global function to show the profile modal
-    window.showProfileModal = function() {
-      const modal = document.getElementById('profileModal');
-      if (modal) {
-        modal.classList.add('active');
-        // Refresh user data before showing
-        if (typeof getUserInfo === 'function') {
-          getUserInfo().then(user => {
-            if (user) populateProfile(user);
-          }).catch(() => {
-            if (window.currentUser) populateProfile(window.currentUser);
-          });
-        } else if (window.currentUser) {
-          populateProfile(window.currentUser);
-        }
-      }
-    };
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     function getInitials(name) {
       if (!name) return '?';
@@ -306,88 +291,115 @@
       return d.toLocaleDateString('en-ZA', { year: 'numeric', month: 'long', day: 'numeric' });
     }
 
+    // ── Populate modal with user data ──────────────────────────────────────────
+    // Accepts an Auth0 user object OR falls back to localStorage values set by
+    // auth_service.js (userId / userName stored after /api/auth/me succeeds).
+
     function populateProfile(user) {
-      if (!user) return;
+      // Build a unified data object — prefer Auth0 fields, fall back to localStorage
+      const name  = (user && (user.name || user.nickname || user.email))
+                    || localStorage.getItem('userName')
+                    || '—';
+      const email = (user && user.email) || '—';
+      const since = (user && (user.created_at || user.updated_at)) || null;
 
-      const name = user.name || user.nickname || user.email || 'User';
-      const email = user.email || '—';
-      const since = user.created_at || user.updated_at || null;
-
-      // Avatar
-      const avatarEl = document.getElementById('profile-avatar');
-      if (avatarEl) avatarEl.textContent = getInitials(name);
-
-      // Header name / email
-      const nameEl = document.getElementById('profile-name');
-      const emailEl = document.getElementById('profile-email');
-      if (nameEl) nameEl.textContent = name;
-      if (emailEl) emailEl.textContent = email;
-
-      // Member since
-      const sinceEl = document.getElementById('profile-since');
-      if (sinceEl && since) sinceEl.textContent = 'Member since ' + formatDate(since);
-
-      // Detail rows
-      const detailName = document.getElementById('detail-name');
+      const avatarEl    = document.getElementById('profile-avatar');
+      const nameEl      = document.getElementById('profile-name');
+      const emailEl     = document.getElementById('profile-email');
+      const sinceEl     = document.getElementById('profile-since');
+      const detailName  = document.getElementById('detail-name');
       const detailEmail = document.getElementById('detail-email');
       const detailSince = document.getElementById('detail-since');
-      
-      if (detailName) detailName.textContent = name;
-      if (detailEmail) detailEmail.textContent = email;
-      if (detailSince) detailSince.textContent = since ? formatDate(since) : '—';
+
+      if (avatarEl)    avatarEl.textContent    = getInitials(name);
+      if (nameEl)      nameEl.textContent       = name;
+      if (emailEl)     emailEl.textContent      = email;
+      if (detailName)  detailName.textContent   = name;
+      if (detailEmail) detailEmail.textContent  = email;
+
+      if (sinceEl)     sinceEl.textContent      = since ? 'Member since ' + formatDate(since) : '';
+      if (detailSince) detailSince.textContent  = since ? formatDate(since) : '—';
     }
 
-    // Close modal
+    // ── Fetch from Auth0 then populate ────────────────────────────────────────
+    // Called once auth0Client is ready (via onAuthReady below).
+
+    async function loadUserAndPopulate() {
+      try {
+        // auth0Client is guaranteed to exist here because onAuthReady()
+        // is only called after configureClient() succeeds in auth_service.js
+        const user = await auth0Client.getUser();
+        if (user) {
+          populateProfile(user);
+        } else {
+          // Not authenticated — fall back to whatever localStorage has
+          populateProfile(null);
+        }
+      } catch (err) {
+        console.error('Profile: could not fetch user from Auth0:', err);
+        populateProfile(null); // still render with localStorage fallback
+      }
+    }
+
+    // ── onAuthReady: called by auth_service.js after auth0Client is ready ─────
+
+    function onAuthReady() {
+      loadUserAndPopulate();
+    }
+
+    // ── Show / hide modal ─────────────────────────────────────────────────────
+
     function closeModal() {
       const modal = document.getElementById('profileModal');
       if (modal) modal.classList.remove('active');
     }
 
-    // Close on escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeModal();
+    window.showProfileModal = function () {
+      const modal = document.getElementById('profileModal');
+      if (!modal) return;
+      modal.classList.add('active');
+      // Re-fetch so the data is always fresh when the modal opens
+      if (typeof auth0Client !== 'undefined' && auth0Client) {
+        loadUserAndPopulate();
       }
+    };
+
+    window.closeProfileModal = closeModal;
+
+    // ── Close triggers ────────────────────────────────────────────────────────
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
     });
 
-    // Close when clicking outside the modal content
     const modalOverlay = document.getElementById('profileModal');
     if (modalOverlay) {
       modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
-          closeModal();
-        }
+        if (e.target === modalOverlay) closeModal();
       });
     }
 
-    // Close button
     const closeBtn = document.getElementById('closeProfileModal');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', closeModal);
-    }
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
-    // Logout
+    // ── Logout ────────────────────────────────────────────────────────────────
+
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
-        if (typeof logout === 'function') {
-          await logout();
-        } else if (window.auth0Client) {
-          await window.auth0Client.logout({ returnTo: window.location.origin });
+        try {
+          if (typeof auth0Client !== 'undefined' && auth0Client) {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            await auth0Client.logout({ logoutParams: { returnTo: window.location.origin + '/pages/index.html' } });
+          }
+        } catch (err) {
+          console.error('Logout error:', err);
+          window.location.href = '../index.html';
         }
-        closeModal();
-        // Redirect to home/welcome page after logout
-        window.location.href = '../index.html';
       });
     }
 
-    // Auto-initialize if currentUser is already available
-    if (window.currentUser) {
-      populateProfile(window.currentUser);
-    }
-
-    // Expose close function globally
-    window.closeProfileModal = closeModal;
   </script>
 </body>
 </html>

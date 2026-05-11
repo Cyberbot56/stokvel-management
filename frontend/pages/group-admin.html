@@ -19,7 +19,7 @@
     .sidebar {
       width: 56px;
       flex-shrink: 0;
-      background: #034e52;
+      background: linear-gradient(180deg, #0e9490 0%, #1bb3ae 100%);
       display: flex;
       flex-direction: column;
       padding: 16px 0;
@@ -28,13 +28,14 @@
       overflow: hidden;
       position: relative;
       z-index: 10;
+      box-shadow: 2px 0 12px rgba(14, 148, 144, 0.18);
     }
 
     .sidebar:hover { width: 200px; }
 
     .sidebar-group-info {
       padding: 0 12px 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.2);
       margin-bottom: 8px;
       white-space: nowrap;
       overflow: hidden;
@@ -51,13 +52,13 @@
     .sidebar-group-name {
       font-size: 13px;
       font-weight: 700;
-      color: #2dd4bf;
+      color: #fff;
       line-height: 1.3;
     }
 
     .sidebar-group-meta {
       font-size: 11px;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.65);
       margin-top: 2px;
     }
 
@@ -68,7 +69,7 @@
       padding: 10px 0 10px 16px;
       font-size: 13px;
       font-weight: 600;
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.75);
       cursor: pointer;
       border: none;
       background: none;
@@ -80,12 +81,13 @@
       border-left: 3px solid transparent;
     }
 
-    .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+    .nav-item:hover { background: rgba(255,255,255,0.15); color: white; }
 
     .nav-item.active {
-      background: rgba(45, 212, 191, 0.15);
-      color: #2dd4bf;
-      border-left-color: #2dd4bf;
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+      border-left-color: #fff;
+      font-weight: 700;
     }
 
     .nav-icon {
@@ -279,6 +281,90 @@
     }
 
     .tab-footer button:hover { background: #e0f7f6; }
+
+    /* ── Reports / Compliance styles ── */
+    .report-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+      flex-wrap: wrap;
+    }
+
+    .report-info { flex: 1; min-width: 180px; }
+
+    .report-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 4px;
+    }
+
+    .report-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    .btn-report-view {
+      padding: 8px 18px;
+      background: #0e9490;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    .btn-report-view:hover { background: #0a7a77; transform: translateY(-1px); }
+
+    .btn-export-csv {
+      padding: 8px 14px;
+      background: #e0f7f6;
+      color: #034e52;
+      border: 1.5px solid rgba(14, 148, 144, 0.3);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background 0.2s ease;
+    }
+
+    .btn-export-csv:hover { background: #b2efec; }
+
+    .btn-export-pdf {
+      padding: 8px 14px;
+      background: white;
+      color: #ef4444;
+      border: 1.5px solid #fecaca;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background 0.2s ease;
+    }
+
+    .btn-export-pdf:hover { background: #fef2f2; }
+
+    .report-divider {
+      border: none;
+      border-top: 1px solid #e0f7f6;
+      margin: 0;
+    }
 
     .avatar[onclick], .header-avatar[onclick] {
       cursor: pointer;
@@ -481,8 +567,8 @@
             </section>
             <section class="report-actions">
               <button class="btn-report-view" id="btn-compliance-report">View</button>
-              <button class="btn-export-csv"  id="export-compliance-csv">CSV</button>
-              <button class="btn-export-pdf"  id="export-compliance-pdf">PDF</button>
+              <button class="btn-export-csv"  id="export-compliance-csv">⬇ CSV</button>
+              <button class="btn-export-pdf"  id="export-compliance-pdf">⬇ PDF</button>
             </section>
           </section>
 
@@ -497,8 +583,8 @@
             </section>
             <section class="report-actions">
               <button class="btn-report-view" id="btn-payouts-report">View</button>
-              <button class="btn-export-csv"  id="export-payouts-csv">CSV</button>
-              <button class="btn-export-pdf"  id="export-payouts-pdf">PDF</button>
+              <button class="btn-export-csv"  id="export-payouts-csv">⬇ CSV</button>
+              <button class="btn-export-pdf"  id="export-payouts-pdf">⬇ PDF</button>
             </section>
           </section>
 
@@ -511,8 +597,8 @@
               <p class="report-desc">A full overview of the group — all members, their roles, contribution amount, cycle type, and start date.</p>
             </section>
             <section class="report-actions">
-              <button class="btn-export-csv" id="export-summary-csv">CSV</button>
-              <button class="btn-export-pdf" id="export-summary-pdf">PDF</button>
+              <button class="btn-export-csv" id="export-summary-csv">⬇ CSV</button>
+              <button class="btn-export-pdf" id="export-summary-pdf">⬇ PDF</button>
             </section>
           </section>
 
