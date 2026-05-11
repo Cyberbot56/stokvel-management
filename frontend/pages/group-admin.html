@@ -279,6 +279,15 @@
     }
 
     .tab-footer button:hover { background: #e0f7f6; }
+
+    .avatar[onclick], .header-avatar[onclick] {
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
+    }
+    .avatar[onclick]:hover, .header-avatar[onclick]:hover {
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
+      transform: scale(1.07);
+    }
   </style>
 </head>
 <body>
@@ -290,7 +299,7 @@
     </figure>
     <p class="header-title">Group Admin</p>
     <nav class="header-right">
-      <address class="avatar" id="avatar" onclick="showProfileModal()" style="cursor:pointer;" title="My profile"></address>
+      <address class="avatar" id="avatar" onclick="window.location.href='../pages/profile.html'" style="cursor:pointer;" title="My profile"></address>
     </nav>
   </header>
 
@@ -370,7 +379,7 @@
           </dl>
         </article>
 
-        <!-- Payment status card -->
+        <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
         <article class="card" id="payment-status-card">
           <h2 class="card-title">My contribution this cycle</h2>
           <section class="payment-status-row">
@@ -384,34 +393,34 @@
           </section>
         </article>
 
-            <!-- Savings Projection Card -->
-    <article class="card" id="savings-projection-card" hidden>
-      <h2 class="card-title">Projected Savings Growth</h2>
-      <section class="projection-summary">
-        <section class="projection-stat">
-          <p class="projection-stat-label">Total you'll contribute</p>
-          <p id="proj-total-contrib" class="projection-stat-value"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
-          <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Contributions made</p>
-          <p id="proj-progress" class="projection-stat-value"></p>
-        </section>
-      </section>
-      <section class="projection-chart-wrap">
-        <canvas id="savings-chart"></canvas>
-      </section>
-      <p class="projection-note" id="proj-note"></p>
-    </article>
+        <!-- Savings Projection Card -->
+        <article class="card" id="savings-projection-card" hidden>
+          <h2 class="card-title">Projected Savings Growth</h2>
+          <section class="projection-summary">
+            <section class="projection-stat">
+              <p class="projection-stat-label">Total you'll contribute</p>
+              <p id="proj-total-contrib" class="projection-stat-value"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
+              <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Contributions made</p>
+              <p id="proj-progress" class="projection-stat-value"></p>
+            </section>
+          </section>
+          <section class="projection-chart-wrap">
+            <canvas id="savings-chart"></canvas>
+          </section>
+          <p class="projection-note" id="proj-note"></p>
+        </article>
 
-    <footer class="action-footer">
-      <button id="view-contributions-btn">View contributions</button>
-      <button id="view-payouts-btn">View payouts</button>
-      <button id="view-notifications-btn">Notifications</button>
-    </footer>
+        <footer class="action-footer">
+          <button id="view-contributions-btn">View contributions</button>
+          <button id="view-payouts-btn">View payouts</button>
+          <button id="view-notifications-btn">Notifications</button>
+        </footer>
 
       </section>
       <!-- end OVERVIEW -->
@@ -454,31 +463,80 @@
           </section>
         </article>
 
-        <article class="card">
+        <!-- Reports card — Sprint 3 Story 6 -->
+        <!-- Admin can view reports and export them as CSV or PDF -->
+        <!-- Placed under Members tab as requested — compliance is directly accessible here -->
+        <article class="card" id="reports-card">
           <header class="section-header">
-            <h2 class="card-title">Contribution Compliance</h2>
-            <button class="btn-add" id="btn-compliance-report">View Report</button>
+            <h2 class="card-title">Reports</h2>
           </header>
-          <p>Monitor member payment health and contribution compliance for this group.</p>
+
+          <!-- Report 1: Contribution compliance -->
+          <!-- View opens your teammate's existing compliance modal -->
+          <!-- CSV and PDF export are new — added by Dev 6 for Sprint 3 Story 6 -->
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Contribution Compliance</p>
+              <p class="report-desc">Shows each member's payment history — who has paid, who is pending, and who has missed contributions.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-report-view" id="btn-compliance-report">View</button>
+              <button class="btn-export-csv"  id="export-compliance-csv">CSV</button>
+              <button class="btn-export-pdf"  id="export-compliance-pdf">PDF</button>
+            </section>
+          </section>
+
+          <hr class="report-divider" />
+
+          <!-- Report 2: Payout history -->
+          <!-- View opens your teammate's existing payouts modal -->
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Payout History</p>
+              <p class="report-desc">Shows all payouts for the group — who has received the pot, when, the amount, and the current status.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-report-view" id="btn-payouts-report">View</button>
+              <button class="btn-export-csv"  id="export-payouts-csv">CSV</button>
+              <button class="btn-export-pdf"  id="export-payouts-pdf">PDF</button>
+            </section>
+          </section>
+
+          <hr class="report-divider" />
+
+          <!-- Report 3: Group summary — members, roles, group settings -->
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Group Summary</p>
+              <p class="report-desc">A full overview of the group — all members, their roles, contribution amount, cycle type, and start date.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-export-csv" id="export-summary-csv">CSV</button>
+              <button class="btn-export-pdf" id="export-summary-pdf">PDF</button>
+            </section>
+          </section>
+
         </article>
+
       </section>
       <!-- end MEMBERS -->
 
-    <!-- ══ CONTRIBUTIONS tab ══ -->
-    <section id="tab-contributions" class="tab-panel">
-      <h2 class="section-page-title">Contributions</h2>
-      <div class="tab-footer">
-        <button id="tab-view-contributions-btn">View contributions</button>
-      </div>
-    </section>
-    
-    <!-- ══ PAYOUTS tab ══ -->
-    <section id="tab-payouts" class="tab-panel">
-      <h2 class="section-page-title">Payouts</h2>
-      <div class="tab-footer">
-        <button id="tab-view-payouts-btn">View payouts</button>
-      </div>
-    </section>
+      <!-- ══ CONTRIBUTIONS tab ══ -->
+      <section id="tab-contributions" class="tab-panel">
+        <h2 class="section-page-title">Contributions</h2>
+        <div class="tab-footer">
+          <button id="tab-view-contributions-btn">View contributions</button>
+        </div>
+      </section>
+
+      <!-- ══ PAYOUTS tab ══ -->
+      <section id="tab-payouts" class="tab-panel">
+        <h2 class="section-page-title">Payouts</h2>
+        <div class="tab-footer">
+          <button id="tab-view-payouts-btn">View payouts</button>
+        </div>
+      </section>
+
       <!-- ══ SETTINGS tab ══ -->
       <section id="tab-settings" class="tab-panel">
         <h2 class="section-page-title">Group Settings</h2>
@@ -547,7 +605,7 @@
   </div>
 
 
-  <!-- Payment confirmation modal (unchanged) -->
+  <!-- Payment confirmation modal -->
   <aside id="payment-confirm-modal" class="modal-overlay" hidden>
     <article class="modal payment-modal">
       <header class="modal-header">
@@ -576,7 +634,7 @@
       <div class="settings-field">
         <label for="confirm-name">Type group name to confirm</label>
         <input type="text" id="confirm-name" name="confirm-name" placeholder="Group name">
-        <span class="error-msg" id="err-confirm">Name does not match please try again</span>
+        <span class="error-msg" id="err-confirm">Name does not match — please try again</span>
       </div>
       <div style="display:flex;gap:10px;margin-top:16px">
         <button type="button" style="padding:10px 20px;border:1.5px solid rgba(14,148,144,0.25);border-radius:10px;background:white;color:#64748b;font-weight:700;cursor:pointer;font-family:inherit" onclick="document.getElementById('close-modal').close()">Cancel</button>
@@ -585,12 +643,17 @@
     </form>
   </dialog>
 
+  <!-- chart.js for savings projection chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <!-- jsPDF — browser PDF library, must load before group-admin.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="../scripts/auth_service.js"></script>
   <script src="../scripts/savings-projection.js"></script>
   <script src="../scripts/group-admin.js"></script>
+  <script src="../scripts/notifications.js"></script>
   <script>
     const TABS = ['overview','members','contributions','payouts','settings'];
 
@@ -599,23 +662,6 @@
         document.getElementById('tab-' + t).classList.toggle('active', t === name);
         document.getElementById('nav-' + t).classList.toggle('active', t === name);
       });
-    }
-
-    let dirty = false;
-
-    function markDirty() {
-      dirty = true;
-      document.getElementById('save-bar').hidden = false;
-    }
-
-    function discardChanges() {
-      dirty = false;
-      document.getElementById('save-bar').hidden = true;
-      if (window._groupData) populateSettings(window._groupData);
-    }
-
-    function saveChanges() {
-      if (typeof window.saveGroupSettings === 'function') window.saveGroupSettings();
     }
 
     function openCloseModal() {
@@ -632,44 +678,8 @@
       if (typeof window.closeGroup === 'function') window.closeGroup();
     }
 
-    function populateSettings(group) {
-      const sName   = document.getElementById('s-name');
-      const sDesc   = document.getElementById('s-desc');
-      const sAmount = document.getElementById('s-amount');
-      const sCycle  = document.getElementById('s-cycle');
-      const sStart  = document.getElementById('s-start-date');
-      if (sName   && group.name)               sName.value        = group.name;
-      if (sDesc   && group.description)        sDesc.value        = group.description;
-      if (sAmount && group.contributionAmount) sAmount.value      = group.contributionAmount;
-      if (sCycle  && group.cycleType)          sCycle.value       = group.cycleType;
-      if (sStart  && group.startDate)          sStart.textContent = group.startDate;
-      const meta = document.getElementById('sidebar-group-meta');
-      if (meta && group.contributionAmount && group.cycleType) {
-        meta.textContent = `R${group.contributionAmount} · ${group.cycleType}`;
-      }
-    }
-
-    const nameEl = document.getElementById('group-name');
-    if (nameEl) {
-      const obs = new MutationObserver(() => {
-        const sn = document.getElementById('sidebar-group-name');
-        if (sn) sn.textContent = nameEl.textContent || 'Group';
-      });
-      obs.observe(nameEl, { childList: true, characterData: true, subtree: true });
-    }
+    // Expose switchTab globally so group-admin.js can call it if needed
+    window.switchTab = switchTab;
   </script>
-
-  <style>
-    .avatar[onclick], .header-avatar[onclick] {
-      cursor: pointer;
-      transition: box-shadow 0.2s ease, transform 0.15s ease;
-    }
-    .avatar[onclick]:hover, .header-avatar[onclick]:hover {
-      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
-      transform: scale(1.07);
-    }
-  </style>
-
-  <script src="../scripts/notifications.js"></script>
 </body>
 </html>
