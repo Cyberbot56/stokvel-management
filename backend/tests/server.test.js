@@ -1,11 +1,13 @@
 // backend/tests/server.test.js
-const request = require('supertest');
-const crypto = require('crypto');
-const app = require('../server');
-const { PrismaClient } = require('@prisma/client');
-
-// Get the exact prisma instance the server is using
-const prisma = PrismaClient.mock.results[0].value;
+jest.mock('@prisma/client', () => {
+  const mockPrisma = {
+    users: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn()
+    },
     groups: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -31,7 +33,7 @@ const prisma = PrismaClient.mock.results[0].value;
     contributions: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
-      findUnique: jest.fn(),   // ← this line was missing
+      findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       deleteMany: jest.fn()
@@ -108,9 +110,7 @@ describe('Group Settings - Update Group', () => {
 
   test('PUT /api/groups/:groupId returns 403 if user is not admin', async () => {
     prisma.group_members.findFirst.mockResolvedValue(null);
-    const res = await request(app)
-      .put('/api/groups/1')
-      .send(updateData);
+    const res = await request(app).put('/api/groups/1').send(updateData);
     expect(res.statusCode).toBe(403);
     expect(res.body.error).toBe('Only group admins can update settings');
   });
@@ -118,9 +118,7 @@ describe('Group Settings - Update Group', () => {
   test('PUT /api/groups/:groupId returns 404 if group not found', async () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue(null);
-    const res = await request(app)
-      .put('/api/groups/999')
-      .send(updateData);
+    const res = await request(app).put('/api/groups/999').send(updateData);
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toBe('Group not found');
   });
@@ -128,9 +126,7 @@ describe('Group Settings - Update Group', () => {
   test('PUT /api/groups/:groupId returns 400 if group is closed', async () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ status: 'closed' });
-    const res = await request(app)
-      .put('/api/groups/1')
-      .send(updateData);
+    const res = await request(app).put('/api/groups/1').send(updateData);
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Cannot update a closed group');
   });
@@ -139,9 +135,7 @@ describe('Group Settings - Update Group', () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ status: 'active' });
     prisma.groups.update.mockResolvedValue({ groupId: 1, ...updateData });
-    const res = await request(app)
-      .put('/api/groups/1')
-      .send(updateData);
+    const res = await request(app).put('/api/groups/1').send(updateData);
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Group settings updated successfully');
     expect(res.body.group.name).toBe('Updated Group Name');
@@ -151,17 +145,13 @@ describe('Group Settings - Update Group', () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ status: 'active' });
     prisma.groups.update.mockResolvedValue({ groupId: 1, ...updateData });
-    const res = await request(app)
-      .put('/api/groups/update')
-      .send({ groupId: 1, ...updateData });
+    const res = await request(app).put('/api/groups/update').send({ groupId: 1, ...updateData });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Group settings updated successfully');
   });
 
   test('PUT /api/groups/update returns 400 if groupId missing', async () => {
-    const res = await request(app)
-      .put('/api/groups/update')
-      .send({ name: 'Test' });
+    const res = await request(app).put('/api/groups/update').send({ name: 'Test' });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('groupId is required');
   });
@@ -198,9 +188,7 @@ describe('Group Settings - Close/Delete Group', () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
     prisma.groups.findUnique.mockResolvedValue({ name: 'Test Group' });
     prisma.$transaction.mockResolvedValue([{}, {}, {}, {}, {}]);
-    const res = await request(app)
-      .post('/api/groups/close')
-      .send({ groupId: 1 });
+    const res = await request(app).post('/api/groups/close').send({ groupId: 1 });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Group "Test Group" has been permanently deleted.');
   });
@@ -316,9 +304,7 @@ describe('Payment Simulation', () => {
 describe('Treasurer Assignment', () => {
   test('POST /api/groups/assign-treasurer assigns treasurer role', async () => {
     prisma.users.findUnique.mockResolvedValue({ userId: 2, email: 'treasurer@test.com', name: 'Treasurer' });
-    prisma.group_members.findFirst.mockResolvedValue({
-      group_memberId: 1, FgroupId: 1, SuserId: 2, role: 'member'
-    });
+    prisma.group_members.findFirst.mockResolvedValue({ group_memberId: 1, FgroupId: 1, SuserId: 2, role: 'member' });
     prisma.group_members.updateMany.mockResolvedValue({ count: 1 });
     prisma.group_members.update.mockResolvedValue({ role: 'treasurer' });
     const res = await request(app).post('/api/groups/assign-treasurer').send({
@@ -372,9 +358,7 @@ describe('Compliance Report', () => {
 
   test('GET /api/groups/:groupId/compliance-report returns 200 with report data for admin', async () => {
     prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
-    prisma.groups.findUnique.mockResolvedValue({
-      groupId: 1, name: 'Test Stokvel', cycleType: 'monthly', contributionAmount: 500
-    });
+    prisma.groups.findUnique.mockResolvedValue({ groupId: 1, name: 'Test Stokvel', cycleType: 'monthly', contributionAmount: 500 });
     prisma.group_members.findMany.mockResolvedValue([
       { role: 'admin', users: { userId: 1, name: 'Thabo', email: 'thabo@test.com' } },
       { role: 'member', users: { userId: 2, name: 'Nomsa', email: 'nomsa@test.com' } }
@@ -526,9 +510,6 @@ describe('Create Group', () => {
 
 describe('GET /api/groups_members/:userId', () => {
   test('Returns enriched group data for user', async () => {
-    // FIX: use mockResolvedValueOnce for the first call (memberships),
-    // then a second mockResolvedValueOnce for the inner group members fetch.
-    // The server calls group_members.findMany twice per membership.
     prisma.group_members.findMany
       .mockResolvedValueOnce([
         {
@@ -591,16 +572,8 @@ describe('GET /api/get-all-contributions/group/:groupId', () => {
 
 describe('PATCH /api/missed-contributions/:contributionId/flag', () => {
   test('Flags a contribution as missed', async () => {
-    // FIX: contributions.findUnique is now in the mock so this no longer crashes
-    prisma.contributions.findUnique.mockResolvedValue({
-      contributionsId: 1,
-      status: 'Not Paid'
-    });
-    prisma.contributions.update.mockResolvedValue({
-      contributionsId: 1,
-      status: 'missed',
-      note: 'Flagged as missed'
-    });
+    prisma.contributions.findUnique.mockResolvedValue({ contributionsId: 1, status: 'Not Paid' });
+    prisma.contributions.update.mockResolvedValue({ contributionsId: 1, status: 'missed', note: 'Flagged as missed' });
     const res = await request(app)
       .patch('/api/missed-contributions/1/flag')
       .send({ note: 'Custom note' });
@@ -616,10 +589,7 @@ describe('PATCH /api/missed-contributions/:contributionId/flag', () => {
   });
 
   test('Returns 400 if trying to flag a paid contribution', async () => {
-    prisma.contributions.findUnique.mockResolvedValue({
-      contributionsId: 1,
-      status: 'paid'
-    });
+    prisma.contributions.findUnique.mockResolvedValue({ contributionsId: 1, status: 'paid' });
     const res = await request(app).patch('/api/missed-contributions/1/flag');
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Cannot flag a paid contribution as missed');
