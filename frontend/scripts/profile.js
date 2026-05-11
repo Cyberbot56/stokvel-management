@@ -2,13 +2,14 @@
  * profile-modal.js
  * Drop-in profile modal for every page.
  *
- * Usage: add ONE script tag after auth_service.js:
- *   <script src="../scripts/profile-modal.js"></script>
+ * Usage: add ONE script tag AFTER auth_service.js but AFTER any page script
+ * that defines its own onAuthReady. Load order should be:
+ *   1. config.js
+ *   2. auth_service.js
+ *   3. <page script e.g. group-admin.js>   ← defines onAuthReady
+ *   4. profile.js                           ← chains onto it
  *
  * Then make your avatar call:  onclick="showProfileModal()"
- *
- * The script injects the modal HTML automatically and hooks into
- * onAuthReady (called by auth_service.js) to load the user.
  */
 
 (function () {
@@ -223,7 +224,6 @@
   }
 
   // ── 3. Populate ───────────────────────────────────────────────────────────
-  // Accepts Auth0 user object; falls back to localStorage for name.
 
   function populateProfile(user) {
     const name  = (user && (user.name || user.nickname || user.email))
@@ -239,13 +239,13 @@
     set('pm-detail-email', email);
     set('pm-detail-since', since ? formatDate(since) : '—');
     set('pm-since',        since ? 'Member since ' + formatDate(since) : '');
+
+    // FIX: sync the header avatar initials every time the profile is populated
+    const headerAvatar = document.getElementById('avatar');
+    if (headerAvatar) headerAvatar.textContent = getInitials(name);
   }
 
   // ── 4. Load user from Auth0 ───────────────────────────────────────────────
-  // Strategy:
-  //  • Paint immediately from localStorage (instant, no flicker)
-  //  • Then fetch Auth0 profile for full data (name, email, created_at)
-  //  • If getUser() returns nothing, do a silent token refresh first
 
   async function loadProfile() {
     // Instant paint from localStorage so modal never looks blank
@@ -257,7 +257,6 @@
       let user = await auth0Client.getUser();
 
       if (!user) {
-        // Force session hydration then try again
         await auth0Client.getTokenSilently();
         user = await auth0Client.getUser();
       }
@@ -265,7 +264,6 @@
       if (user) populateProfile(user);
 
     } catch (err) {
-      // Silently fall through — localStorage paint is already shown
       console.warn('profile-modal: could not load Auth0 user:', err.message);
     }
   }
@@ -275,7 +273,7 @@
   function openModal() {
     const modal = document.getElementById('profileModal');
     if (modal) modal.classList.add('active');
-    loadProfile(); // always refresh on open
+    loadProfile();
   }
 
   function closeModal() {
@@ -300,9 +298,6 @@
   });
 
   // ── 7. Logout ─────────────────────────────────────────────────────────────
-  // Uses openUrl:false to clear Auth0 cache without any redirect — avoids
-  // "allowed logout URL" mismatches in the Auth0 dashboard entirely.
-  // We then navigate manually to the index page.
 
   document.getElementById('pm-logout-btn').addEventListener('click', async () => {
     localStorage.removeItem('userId');
@@ -320,26 +315,24 @@
   });
 
   // ── 8. Hook into onAuthReady ──────────────────────────────────────────────
-  // auth_service.js calls onAuthReady() once auth0Client is initialised.
-  // We store any existing onAuthReady (e.g. from group-admin.js) and chain it.
+  // FIX: capture the page's onAuthReady *after* a DOM-ready tick so that page
+  // scripts which are loaded synchronously before profile.js have already set
+  // their own onAuthReady by the time we wrap it.
+  //
+  // auth_service.js calls window.onload, so there is always a small async gap
+  // between script evaluation and onAuthReady being invoked. We use
+  // setTimeout(0) to push our wrapping to the end of the current call stack,
+  // after all synchronous <script> tags on the page have run.
 
-  const _prevOnAuthReady = typeof onAuthReady === 'function' ? onAuthReady : null;
+  setTimeout(function () {
+    const pageOnAuthReady = typeof window.onAuthReady === 'function'
+      ? window.onAuthReady
+      : null;
 
-  window.onAuthReady = function () {
-    loadProfile();                          // load profile on every page
-    if (_prevOnAuthReady) _prevOnAuthReady(); // run the page's own onAuthReady too
-  };
-
-  // Also update the header avatar initials once profile loads
-  // (many pages use id="avatar" for the initials circle in the header)
-  const _origPopulate = populateProfile;
-  function populateAndSyncHeader(user) {
-    _origPopulate(user);
-    const name    = (user && (user.name || user.nickname || user.email))
-                    || localStorage.getItem('userName') || '';
-    const initials = getInitials(name);
-    const headerAvatar = document.getElementById('avatar');
-    if (headerAvatar) headerAvatar.textContent = initials;
-  }
+    window.onAuthReady = function () {
+      loadProfile();
+      if (pageOnAuthReady) pageOnAuthReady();
+    };
+  }, 0);
 
 })();

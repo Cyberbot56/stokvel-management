@@ -181,7 +181,7 @@
         </figure>
         <p class="header-title">Dashboard</p>
         <nav class="header-right">
-            <address class="avatar" id="avatar" style="cursor:pointer;" title="My profile"></address>
+            <address class="avatar" id="avatar" onclick="showProfileModal()" style="cursor:pointer;" title="My profile"></address>
         </nav>
     </header>
 
@@ -205,152 +205,13 @@
         <section class="groups-grid" hidden></section>
     </main>
 
-    <!-- Profile Modal -->
-    <div id="profileModal" class="profile-modal-overlay">
-        <div class="profile-modal">
-            <div class="profile-card">
-                <button class="modal-close" id="closeProfileModal">✕</button>
-                <div class="profile-band">
-                    <div class="avatar-wrap">
-                        <div class="profile-avatar" id="profile-avatar">?</div>
-                    </div>
-                </div>
-                <div class="profile-body">
-                    <h2 class="profile-name" id="profile-name">Loading...</h2>
-                    <p class="profile-email" id="profile-email">Loading...</p>
-                    <p class="profile-since" id="profile-since"></p>
-                    <div class="profile-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Full name</span>
-                            <span class="detail-value" id="detail-name">—</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Email</span>
-                            <span class="detail-value" id="detail-email">—</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Member since</span>
-                            <span class="detail-value" id="detail-since">—</span>
-                        </div>
-                    </div>
-                    <button class="logout-full" id="modalLogoutBtn">Log out</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="../scripts/config.js"></script>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
     <script src="../scripts/auth_service.js"></script>
     <script src="../scripts/allGroups.js"></script>
     <script src="../scripts/rates.js"></script>
-
-    <script>
-        // Profile Modal Functionality
-        const profileModal = document.getElementById('profileModal');
-        const avatar = document.getElementById('avatar');
-        const closeModalBtn = document.getElementById('closeProfileModal');
-
-        // Helper functions
-        function getInitials(name) {
-            if (!name) return '?';
-            return name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '—';
-            const d = new Date(dateStr);
-            if (isNaN(d)) return dateStr;
-            return d.toLocaleDateString('en-ZA', { year: 'numeric', month: 'long', day: 'numeric' });
-        }
-
-        function populateProfile(user) {
-            if (!user) return;
-            const name = user.name || user.nickname || user.email || 'User';
-            const email = user.email || '—';
-            const since = user.created_at || user.updated_at || null;
-            
-            document.getElementById('profile-avatar').textContent = getInitials(name);
-            document.getElementById('profile-name').textContent = name;
-            document.getElementById('profile-email').textContent = email;
-            document.getElementById('detail-name').textContent = name;
-            document.getElementById('detail-email').textContent = email;
-            
-            if (since) {
-                document.getElementById('profile-since').textContent = 'Member since ' + formatDate(since);
-                document.getElementById('detail-since').textContent = formatDate(since);
-            }
-        }
-
-        function showProfileModal() {
-            profileModal.classList.add('active');
-            // Try to get user data
-            if (window.currentUser) {
-                populateProfile(window.currentUser);
-            } else if (window.auth0Client) {
-                window.auth0Client.getUser().then(user => {
-                    if (user) {
-                        window.currentUser = user;
-                        populateProfile(user);
-                    }
-                }).catch(err => console.error('Error getting user:', err));
-            }
-        }
-
-        function closeModal() {
-            profileModal.classList.remove('active');
-        }
-
-        // Event listeners
-        if (avatar) {
-            avatar.addEventListener('click', showProfileModal);
-        }
-
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', closeModal);
-        }
-
-        // Close when clicking outside
-        profileModal.addEventListener('click', (e) => {
-            if (e.target === profileModal) closeModal();
-        });
-
-        // Close on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && profileModal.classList.contains('active')) {
-                closeModal();
-            }
-        });
-
-        // Modal logout button
-        const modalLogoutBtn = document.getElementById('modalLogoutBtn');
-        if (modalLogoutBtn) {
-            modalLogoutBtn.addEventListener('click', async () => {
-                if (typeof logout === 'function') {
-                    await logout();
-                } else if (window.auth0Client) {
-                    await window.auth0Client.logout({ returnTo: window.location.origin });
-                }
-                window.location.href = '../index.html';
-            });
-        }
-
-        // Original logout button (keep both)
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', async () => {
-                if (typeof logout === 'function') {
-                    await logout();
-                } else if (window.auth0Client) {
-                    await window.auth0Client.logout({ returnTo: window.location.origin });
-                }
-                window.location.href = '../index.html';
-            });
-        }
-
-        // Populate if user already exists
-        if (window.currentUser) populateProfile(window.currentUser);
-    </script>
+    <script src="../scripts/profile-modal.js"></script>
 
 </body>
 </html>
