@@ -671,3 +671,208 @@ describe('Frontend Catch-all Route', () => {
     expect(res.headers['content-type']).toMatch(/html/);
   });
 });
+
+describe('Analytics - Overview', () => {
+  test('GET /api/groups/:groupId/analytics/overview returns 403 if user is not admin', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+    const res = await request(app).get('/api/groups/1/analytics/overview');
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('Only admins can view analytics');
+  });
+
+  test('GET /api/groups/:groupId/analytics/overview returns 404 if group not found', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue(null);
+    const res = await request(app).get('/api/groups/999/analytics/overview');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Group not found');
+  });
+
+  test('GET /api/groups/:groupId/analytics/overview returns 200 with overview data', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue({
+      name: 'Test Stokvel', contributionAmount: 500,
+      cycleType: 'monthly', startDate: new Date(), status: 'active'
+    });
+    prisma.group_members.findMany.mockResolvedValue([
+      { SuserId: 1 }, { SuserId: 2 }
+    ]);
+    prisma.contributions.findMany.mockResolvedValue([
+      { status: 'paid', amount: 500 },
+      { status: 'missed', amount: 500 },
+      { status: 'pending', amount: 500 }
+    ]);
+    prisma.payout.findMany.mockResolvedValue([
+      { status: 'completed', amount: 1000 },
+      { status: 'pending', amount: 1000 }
+    ]);
+    const res = await request(app).get('/api/groups/1/analytics/overview');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('totalCollected');
+    expect(res.body).toHaveProperty('totalPayedOut');
+    expect(res.body).toHaveProperty('balance');
+    expect(res.body).toHaveProperty('totalMembers');
+    expect(res.body).toHaveProperty('contributionStats');
+    expect(res.body.totalMembers).toBe(2);
+    expect(res.body.totalCollected).toBe(500);
+  });
+
+  test('GET /api/groups/:groupId/analytics/overview returns 500 on DB error', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockRejectedValue(new Error('DB error'));
+    const res = await request(app).get('/api/groups/1/analytics/overview');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to fetch analytics overview');
+  });
+});
+
+describe('Analytics - Contribution Trends', () => {
+  test('GET /api/groups/:groupId/analytics/contributions returns 403 if user is not admin', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+    const res = await request(app).get('/api/groups/1/analytics/contributions');
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('Only admins can view analytics');
+  });
+
+  test('GET /api/groups/:groupId/analytics/contributions returns 404 if group not found', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue(null);
+    const res = await request(app).get('/api/groups/999/analytics/contributions');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Group not found');
+  });
+
+  test('GET /api/groups/:groupId/analytics/contributions returns 200 with trends data', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue({ cycleType: 'monthly', contributionAmount: 500 });
+    prisma.contributions.findMany.mockResolvedValue([
+      { status: 'paid',   amount: 500, dueDate: new Date('2026-01-01') },
+      { status: 'missed', amount: 500, dueDate: new Date('2026-01-15') },
+      { status: 'paid',   amount: 500, dueDate: new Date('2026-02-01') }
+    ]);
+    const res = await request(app).get('/api/groups/1/analytics/contributions');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('trends');
+    expect(Array.isArray(res.body.trends)).toBe(true);
+    expect(res.body.trends.length).toBeGreaterThan(0);
+    expect(res.body.trends[0]).toHaveProperty('period');
+    expect(res.body.trends[0]).toHaveProperty('paid');
+    expect(res.body.trends[0]).toHaveProperty('missed');
+  });
+
+  test('GET /api/groups/:groupId/analytics/contributions returns 500 on DB error', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockRejectedValue(new Error('DB error'));
+    const res = await request(app).get('/api/groups/1/analytics/contributions');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to fetch contribution trends');
+  });
+});
+
+describe('Analytics - Member Performance', () => {
+  test('GET /api/groups/:groupId/analytics/members returns 403 if user is not admin', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+    const res = await request(app).get('/api/groups/1/analytics/members');
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('Only admins can view analytics');
+  });
+
+  test('GET /api/groups/:groupId/analytics/members returns 404 if group not found', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue(null);
+    const res = await request(app).get('/api/groups/999/analytics/members');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Group not found');
+  });
+
+  test('GET /api/groups/:groupId/analytics/members returns 200 with member performance', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue({ contributionAmount: 500, cycleType: 'monthly' });
+    prisma.group_members.findMany.mockResolvedValue([
+      { role: 'admin',  joinedAt: new Date(), users: { userId: 1, name: 'Thabo', email: 'thabo@test.com' } },
+      { role: 'member', joinedAt: new Date(), users: { userId: 2, name: 'Nomsa', email: 'nomsa@test.com' } }
+    ]);
+    prisma.contributions.findMany.mockResolvedValue([
+      { FKuserId: 1, status: 'paid' },
+      { FKuserId: 1, status: 'paid' },
+      { FKuserId: 2, status: 'paid' },
+      { FKuserId: 2, status: 'missed' }
+    ]);
+    const res = await request(app).get('/api/groups/1/analytics/members');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('members');
+    expect(res.body).toHaveProperty('summary');
+    expect(Array.isArray(res.body.members)).toBe(true);
+    expect(res.body.members).toHaveLength(2);
+    expect(res.body.members[0]).toHaveProperty('complianceRate');
+    expect(res.body.members[0]).toHaveProperty('performanceLabel');
+    expect(res.body.summary).toHaveProperty('excellent');
+    expect(res.body.summary).toHaveProperty('average');
+    expect(res.body.summary).toHaveProperty('poor');
+  });
+
+  test('GET /api/groups/:groupId/analytics/members returns 500 on DB error', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockRejectedValue(new Error('DB error'));
+    const res = await request(app).get('/api/groups/1/analytics/members');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to fetch member analytics');
+  });
+});
+
+describe('Analytics - Payout History', () => {
+  test('GET /api/groups/:groupId/analytics/payouts returns 403 if user is not admin', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+    const res = await request(app).get('/api/groups/1/analytics/payouts');
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('Only admins can view analytics');
+  });
+
+  test('GET /api/groups/:groupId/analytics/payouts returns 404 if group not found', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue(null);
+    const res = await request(app).get('/api/groups/999/analytics/payouts');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Group not found');
+  });
+
+  test('GET /api/groups/:groupId/analytics/payouts returns 200 with payout history', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockResolvedValue({
+      name: 'Test Stokvel', contributionAmount: 500, cycleType: 'monthly'
+    });
+    prisma.payout.findMany.mockResolvedValue([
+      {
+        payoutId: 1, cycleNumber: 1, recipientName: 'Thabo',
+        amount: 5000, status: 'completed', transactionRef: 'PAY-001',
+        initiatedAt: new Date(), processedAt: new Date(),
+        recipient: { name: 'Thabo', email: 'thabo@test.com' }
+      },
+      {
+        payoutId: 2, cycleNumber: 2, recipientName: 'Nomsa',
+        amount: 5000, status: 'pending', transactionRef: 'PAY-002',
+        initiatedAt: new Date(), processedAt: null,
+        recipient: { name: 'Nomsa', email: 'nomsa@test.com' }
+      }
+    ]);
+    const res = await request(app).get('/api/groups/1/analytics/payouts');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('payouts');
+    expect(res.body).toHaveProperty('summary');
+    expect(Array.isArray(res.body.payouts)).toBe(true);
+    expect(res.body.payouts).toHaveLength(2);
+    expect(res.body.summary).toHaveProperty('totalCompleted');
+    expect(res.body.summary).toHaveProperty('totalPending');
+    expect(res.body.summary).toHaveProperty('totalAmount');
+    expect(res.body.summary.totalCompleted).toBe(1);
+    expect(res.body.summary.totalAmount).toBe(5000);
+  });
+
+  test('GET /api/groups/:groupId/analytics/payouts returns 500 on DB error', async () => {
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+    prisma.groups.findUnique.mockRejectedValue(new Error('DB error'));
+    const res = await request(app).get('/api/groups/1/analytics/payouts');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to fetch payout analytics');
+  });
+});
