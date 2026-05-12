@@ -19,7 +19,7 @@
     .sidebar {
       width: 56px;
       flex-shrink: 0;
-      background: #034e52;
+      background: linear-gradient(180deg, #0e9490 0%, #1bb3ae 100%);
       display: flex;
       flex-direction: column;
       padding: 16px 0;
@@ -28,13 +28,14 @@
       overflow: hidden;
       position: relative;
       z-index: 10;
+      box-shadow: 2px 0 12px rgba(14, 148, 144, 0.18);
     }
 
     .sidebar:hover { width: 200px; }
 
     .sidebar-group-info {
       padding: 0 12px 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.2);
       margin-bottom: 8px;
       white-space: nowrap;
       overflow: hidden;
@@ -51,13 +52,13 @@
     .sidebar-group-name {
       font-size: 13px;
       font-weight: 700;
-      color: #2dd4bf;
+      color: #fff;
       line-height: 1.3;
     }
 
     .sidebar-group-meta {
       font-size: 11px;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.65);
       margin-top: 2px;
     }
 
@@ -68,7 +69,7 @@
       padding: 10px 0 10px 16px;
       font-size: 13px;
       font-weight: 600;
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.75);
       cursor: pointer;
       border: none;
       background: none;
@@ -80,12 +81,13 @@
       border-left: 3px solid transparent;
     }
 
-    .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+    .nav-item:hover { background: rgba(255,255,255,0.15); color: white; }
 
     .nav-item.active {
-      background: rgba(45, 212, 191, 0.15);
-      color: #2dd4bf;
-      border-left-color: #2dd4bf;
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+      border-left-color: #fff;
+      font-weight: 700;
     }
 
     .nav-icon {
@@ -279,6 +281,99 @@
     }
 
     .tab-footer button:hover { background: #e0f7f6; }
+
+    /* ── Reports / Compliance styles ── */
+    .report-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+      flex-wrap: wrap;
+    }
+
+    .report-info { flex: 1; min-width: 180px; }
+
+    .report-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 4px;
+    }
+
+    .report-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    .btn-report-view {
+      padding: 8px 18px;
+      background: #0e9490;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    .btn-report-view:hover { background: #0a7a77; transform: translateY(-1px); }
+
+    .btn-export-csv {
+      padding: 8px 14px;
+      background: #e0f7f6;
+      color: #034e52;
+      border: 1.5px solid rgba(14, 148, 144, 0.3);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background 0.2s ease;
+    }
+
+    .btn-export-csv:hover { background: #b2efec; }
+
+    .btn-export-pdf {
+      padding: 8px 14px;
+      background: white;
+      color: #ef4444;
+      border: 1.5px solid #fecaca;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background 0.2s ease;
+    }
+
+    .btn-export-pdf:hover { background: #fef2f2; }
+
+    .report-divider {
+      border: none;
+      border-top: 1px solid #e0f7f6;
+      margin: 0;
+    }
+
+    .avatar[onclick], .header-avatar[onclick] {
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
+    }
+    .avatar[onclick]:hover, .header-avatar[onclick]:hover {
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
+      transform: scale(1.07);
+    }
   </style>
 </head>
 <body>
@@ -370,7 +465,7 @@
           </dl>
         </article>
 
-        <!-- Payment status card -->
+        <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
         <article class="card" id="payment-status-card">
           <h2 class="card-title">My contribution this cycle</h2>
           <section class="payment-status-row">
@@ -384,34 +479,34 @@
           </section>
         </article>
 
-            <!-- Savings Projection Card -->
-    <article class="card" id="savings-projection-card" hidden>
-      <h2 class="card-title">Projected Savings Growth</h2>
-      <section class="projection-summary">
-        <section class="projection-stat">
-          <p class="projection-stat-label">Total you'll contribute</p>
-          <p id="proj-total-contrib" class="projection-stat-value"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
-          <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Contributions made</p>
-          <p id="proj-progress" class="projection-stat-value"></p>
-        </section>
-      </section>
-      <section class="projection-chart-wrap">
-        <canvas id="savings-chart"></canvas>
-      </section>
-      <p class="projection-note" id="proj-note"></p>
-    </article>
+        <!-- Savings Projection Card -->
+        <article class="card" id="savings-projection-card" hidden>
+          <h2 class="card-title">Projected Savings Growth</h2>
+          <section class="projection-summary">
+            <section class="projection-stat">
+              <p class="projection-stat-label">Total you'll contribute</p>
+              <p id="proj-total-contrib" class="projection-stat-value"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
+              <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Contributions made</p>
+              <p id="proj-progress" class="projection-stat-value"></p>
+            </section>
+          </section>
+          <section class="projection-chart-wrap">
+            <canvas id="savings-chart"></canvas>
+          </section>
+          <p class="projection-note" id="proj-note"></p>
+        </article>
 
-    <footer class="action-footer">
-      <button id="view-contributions-btn">View contributions</button>
-      <button id="view-payouts-btn">View payouts</button>
-      <button id="view-notifications-btn">Notifications</button>
-    </footer>
+        <footer class="action-footer">
+          <button id="view-contributions-btn">View contributions</button>
+          <button id="view-payouts-btn">View payouts</button>
+          <button id="view-notifications-btn">Notifications</button>
+        </footer>
 
       </section>
       <!-- end OVERVIEW -->
@@ -454,31 +549,80 @@
           </section>
         </article>
 
-        <article class="card">
+        <!-- Reports card — Sprint 3 Story 6 -->
+        <!-- Admin can view reports and export them as CSV or PDF -->
+        <!-- Placed under Members tab as requested — compliance is directly accessible here -->
+        <article class="card" id="reports-card">
           <header class="section-header">
-            <h2 class="card-title">Contribution Compliance</h2>
-            <button class="btn-add" id="btn-compliance-report">View Report</button>
+            <h2 class="card-title">Reports</h2>
           </header>
-          <p>Monitor member payment health and contribution compliance for this group.</p>
+
+          <!-- Report 1: Contribution compliance -->
+          <!-- View opens your teammate's existing compliance modal -->
+          <!-- CSV and PDF export are new — added by Dev 6 for Sprint 3 Story 6 -->
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Contribution Compliance</p>
+              <p class="report-desc">Shows each member's payment history — who has paid, who is pending, and who has missed contributions.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-report-view" id="btn-compliance-report">View</button>
+              <button class="btn-export-csv"  id="export-compliance-csv">⬇ CSV</button>
+              <button class="btn-export-pdf"  id="export-compliance-pdf">⬇ PDF</button>
+            </section>
+          </section>
+
+          <hr class="report-divider" />
+
+          <!-- Report 2: Payout history -->
+          <!-- View opens your teammate's existing payouts modal -->
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Payout History</p>
+              <p class="report-desc">Shows all payouts for the group — who has received the pot, when, the amount, and the current status.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-report-view" id="btn-payouts-report">View</button>
+              <button class="btn-export-csv"  id="export-payouts-csv">⬇ CSV</button>
+              <button class="btn-export-pdf"  id="export-payouts-pdf">⬇ PDF</button>
+            </section>
+          </section>
+
+          <hr class="report-divider" />
+
+          <!-- Report 3: Group summary — members, roles, group settings -->
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Group Summary</p>
+              <p class="report-desc">A full overview of the group — all members, their roles, contribution amount, cycle type, and start date.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-export-csv" id="export-summary-csv">⬇ CSV</button>
+              <button class="btn-export-pdf" id="export-summary-pdf">⬇ PDF</button>
+            </section>
+          </section>
+
         </article>
+
       </section>
       <!-- end MEMBERS -->
 
-    <!-- ══ CONTRIBUTIONS tab ══ -->
-    <section id="tab-contributions" class="tab-panel">
-      <h2 class="section-page-title">Contributions</h2>
-      <div class="tab-footer">
-        <button id="tab-view-contributions-btn">View contributions</button>
-      </div>
-    </section>
-    
-    <!-- ══ PAYOUTS tab ══ -->
-    <section id="tab-payouts" class="tab-panel">
-      <h2 class="section-page-title">Payouts</h2>
-      <div class="tab-footer">
-        <button id="tab-view-payouts-btn">View payouts</button>
-      </div>
-    </section>
+      <!-- ══ CONTRIBUTIONS tab ══ -->
+      <section id="tab-contributions" class="tab-panel">
+        <h2 class="section-page-title">Contributions</h2>
+        <div class="tab-footer">
+          <button id="tab-view-contributions-btn">View contributions</button>
+        </div>
+      </section>
+
+      <!-- ══ PAYOUTS tab ══ -->
+      <section id="tab-payouts" class="tab-panel">
+        <h2 class="section-page-title">Payouts</h2>
+        <div class="tab-footer">
+          <button id="tab-view-payouts-btn">View payouts</button>
+        </div>
+      </section>
+
       <!-- ══ SETTINGS tab ══ -->
       <section id="tab-settings" class="tab-panel">
         <h2 class="section-page-title">Group Settings</h2>
@@ -547,7 +691,7 @@
   </div>
 
 
-  <!-- Payment confirmation modal (unchanged) -->
+  <!-- Payment confirmation modal -->
   <aside id="payment-confirm-modal" class="modal-overlay" hidden>
     <article class="modal payment-modal">
       <header class="modal-header">
@@ -576,7 +720,7 @@
       <div class="settings-field">
         <label for="confirm-name">Type group name to confirm</label>
         <input type="text" id="confirm-name" name="confirm-name" placeholder="Group name">
-        <span class="error-msg" id="err-confirm">Name does not match please try again</span>
+        <span class="error-msg" id="err-confirm">Name does not match — please try again</span>
       </div>
       <div style="display:flex;gap:10px;margin-top:16px">
         <button type="button" style="padding:10px 20px;border:1.5px solid rgba(14,148,144,0.25);border-radius:10px;background:white;color:#64748b;font-weight:700;cursor:pointer;font-family:inherit" onclick="document.getElementById('close-modal').close()">Cancel</button>
@@ -585,12 +729,18 @@
     </form>
   </dialog>
 
+  <!-- chart.js for savings projection chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <!-- jsPDF — browser PDF library, must load before group-admin.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="../scripts/auth_service.js"></script>
   <script src="../scripts/savings-projection.js"></script>
   <script src="../scripts/group-admin.js"></script>
+  <script src="../scripts/notifications.js"></script>
+  <script src="../scripts/profile-modal.js"></script>
   <script>
     const TABS = ['overview','members','contributions','payouts','settings'];
 
@@ -599,23 +749,6 @@
         document.getElementById('tab-' + t).classList.toggle('active', t === name);
         document.getElementById('nav-' + t).classList.toggle('active', t === name);
       });
-    }
-
-    let dirty = false;
-
-    function markDirty() {
-      dirty = true;
-      document.getElementById('save-bar').hidden = false;
-    }
-
-    function discardChanges() {
-      dirty = false;
-      document.getElementById('save-bar').hidden = true;
-      if (window._groupData) populateSettings(window._groupData);
-    }
-
-    function saveChanges() {
-      if (typeof window.saveGroupSettings === 'function') window.saveGroupSettings();
     }
 
     function openCloseModal() {
@@ -632,44 +765,8 @@
       if (typeof window.closeGroup === 'function') window.closeGroup();
     }
 
-    function populateSettings(group) {
-      const sName   = document.getElementById('s-name');
-      const sDesc   = document.getElementById('s-desc');
-      const sAmount = document.getElementById('s-amount');
-      const sCycle  = document.getElementById('s-cycle');
-      const sStart  = document.getElementById('s-start-date');
-      if (sName   && group.name)               sName.value        = group.name;
-      if (sDesc   && group.description)        sDesc.value        = group.description;
-      if (sAmount && group.contributionAmount) sAmount.value      = group.contributionAmount;
-      if (sCycle  && group.cycleType)          sCycle.value       = group.cycleType;
-      if (sStart  && group.startDate)          sStart.textContent = group.startDate;
-      const meta = document.getElementById('sidebar-group-meta');
-      if (meta && group.contributionAmount && group.cycleType) {
-        meta.textContent = `R${group.contributionAmount} · ${group.cycleType}`;
-      }
-    }
-
-    const nameEl = document.getElementById('group-name');
-    if (nameEl) {
-      const obs = new MutationObserver(() => {
-        const sn = document.getElementById('sidebar-group-name');
-        if (sn) sn.textContent = nameEl.textContent || 'Group';
-      });
-      obs.observe(nameEl, { childList: true, characterData: true, subtree: true });
-    }
+    // Expose switchTab globally so group-admin.js can call it if needed
+    window.switchTab = switchTab;
   </script>
-
-  <style>
-    .avatar[onclick], .header-avatar[onclick] {
-      cursor: pointer;
-      transition: box-shadow 0.2s ease, transform 0.15s ease;
-    }
-    .avatar[onclick]:hover, .header-avatar[onclick]:hover {
-      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
-      transform: scale(1.07);
-    }
-  </style>
-
-  <script src="../scripts/notifications.js"></script>
 </body>
 </html>

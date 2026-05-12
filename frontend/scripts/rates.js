@@ -14,8 +14,8 @@
 
 // ─── Fallback data (used if fetch fails) ─────────────────────────────────────
 const FALLBACK_RATES = {
-  repoRate: 7.50,
-  primeRate: 11.00,
+  repoRate: 6.75,
+  primeRate: 10.25,
   lastUpdated: 'April 2026',
   source: 'SARB (cached)',
 };
@@ -132,8 +132,8 @@ function buildTicker(rates) {
 
 // ─── Build rates card ─────────────────────────────────────────────────────────
 /**
- * Creates the rates card and injects it as the last child of .groups-grid,
- * OR just before the grid if the grid is empty/hidden.
+ * Creates the rates card — same as original but hidden by default.
+ * The toggle button controls its visibility.
  *
  * @param {{ repoRate: number, primeRate: number, lastUpdated: string, source: string }} rates
  */
@@ -225,14 +225,72 @@ function buildRatesCard(rates) {
   srcLine.textContent = `Source: ${rates.source} · ${rates.lastUpdated}`;
   card.appendChild(srcLine);
 
-  // ── DOM Manipulation: inject into groups-grid ─────────────────────────────
-card.style.position = 'fixed';
-card.style.bottom = '24px';
-card.style.right = '24px';
-card.style.width = '220px';
-card.style.zIndex = '999';
-card.style.boxShadow = '0 8px 32px rgba(14,148,144,0.18)';
-document.body.appendChild(card);
+  // ── DOM Manipulation: inject as fixed floating card, hidden by default ────
+  card.style.position = 'fixed';
+  card.style.bottom = '68px'; // sits above the toggle button
+  card.style.right = '24px';
+  card.style.width = '220px';
+  card.style.zIndex = '999';
+  card.style.boxShadow = '0 8px 32px rgba(14,148,144,0.18)';
+  card.style.display = 'none'; // hidden until toggle is clicked
+  document.body.appendChild(card);
+}
+
+// ─── Build toggle button ──────────────────────────────────────────────────────
+/**
+ * Creates a small fixed pill button in the bottom-right corner.
+ * Clicking it shows/hides the rates card above it.
+ */
+function buildToggleButton() {
+  const btn = document.createElement('button');
+  btn.id = 'ratesToggleBtn';
+  btn.setAttribute('aria-expanded', 'false');
+  btn.setAttribute('aria-controls', 'ratesCard');
+  btn.textContent = 'SA Rates';
+
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    padding: 8px 16px;
+    background: #0e9490;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(14,148,144,0.35);
+    transition: background 0.2s, transform 0.15s;
+  `;
+
+  btn.addEventListener('mouseenter', () => {
+    btn.style.transform = 'translateY(-2px)';
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = 'translateY(0)';
+  });
+
+  btn.addEventListener('click', () => {
+    const card   = document.getElementById('ratesCard');
+    const isOpen = card.style.display === 'none' || card.style.display === '';
+
+    if (isOpen) {
+      card.style.display   = 'block';
+      btn.textContent      = 'Hide Rates';
+      btn.style.background = '#034e52';
+      btn.setAttribute('aria-expanded', 'true');
+    } else {
+      card.style.display   = 'none';
+      btn.textContent      = 'SA Rates';
+      btn.style.background = '#0e9490';
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  document.body.appendChild(btn);
 }
 
 // ─── Update DOM if rates change (bonus: shows how to mutate existing nodes) ──
@@ -261,10 +319,13 @@ async function initRates() {
   // 2. Build and inject ticker bar (DOM manipulation)
   buildTicker(rates);
 
-  // 3. Build and inject rates card into the groups grid (DOM manipulation)
+  // 3. Build and inject rates card (hidden by default)
   buildRatesCard(rates);
 
-  // 4. (Optional) Re-fetch every 30 minutes in case user leaves tab open
+  // 4. Build the toggle button that shows/hides the card
+  buildToggleButton();
+
+  // 5. (Optional) Re-fetch every 30 minutes in case user leaves tab open
   //    and SARB updates mid-session — demonstrates chained async behaviour
   setInterval(async () => {
     const fresh = await fetchSARates();
