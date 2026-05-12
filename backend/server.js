@@ -85,6 +85,39 @@ function calculateDueDate(cycleType, startDate) {
     return dueDate;
 }
 
+async function ensureGroupHasAdmin(groupId, userIdBeingChanged, newRole) {
+
+    // Only care if removing admin privileges
+    if (newRole === 'admin') return true;
+
+    const membership = await prisma.group_members.findFirst({
+        where: {
+            FgroupId: parseInt(groupId),
+            SuserId: parseInt(userIdBeingChanged)
+        }
+    });
+
+    // User is not admin → safe
+    if (!membership || membership.role !== 'admin') {
+        return true;
+    }
+
+    // Count admins
+    const adminCount = await prisma.group_members.count({
+        where: {
+            FgroupId: parseInt(groupId),
+            role: 'admin'
+        }
+    });
+
+    // Prevent removing last admin
+    if (adminCount <= 1) {
+        return false;
+    }
+
+    return true;
+}
+
 async function createContributionForNewMember(userId, groupId, role) {
     try {
         const group = await prisma.groups.findUnique({
@@ -419,23 +452,120 @@ app.patch('/api/missed-contributions/:contributionId/flag', async (req, res) => 
 
 app.post('/api/groups/assign-treasurer', async (req, res) => {
     const { email, groupId } = req.body;
+
     if (!email || !groupId) {
-        return res.status(400).json({ error: "Missing required fields", required: ["email", "groupId"] });
+        return res.status(400).json({
+            error: "Missing required fields",
+            required: ["email", "groupId"]
+        });
     }
+
     try {
-        const user = await prisma.users.findUnique({ where: { email } });
-        if (!user) return res.status(404).json({ error: "User not found. Please ask the user to create an account first." });
-        const membership = await prisma.group_members.findFirst({ where: { FgroupId: parseInt(groupId), SuserId: user.userId } });
-        if (!membership) return res.status(400).json({ error: "User is not a member of the group. Please add the user to the group first." });
-        await prisma.group_members.updateMany({ where: { FgroupId: parseInt(groupId), role: "treasurer" }, data: { role: "member" } });
-        const updatedMembership = await prisma.group_members.update({ where: { group_memberId: membership.group_memberId }, data: { role: "treasurer" } });
+        const parsedGroupId = parseInt(groupId);
+
+        // Logged-in admin from Auth middleware
+        const adminEmail = req.auth?.payload?.email?.toLowerCase();
+
+        // Prevent self assignment
+        if (adminEmail === email.toLowerCase()) {
+            return res.status(400).json({
+                error: "You cannot assign yourself as treasurer."
+            });
+        }
+
+        // Find target user
+        const user = await prisma.users.findUnique({
+            where: { email: email.toLowerCase() }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                error: "User not found. Please ask the user to create an account first."
+            });
+        }
+
+        // Find membership
+        const membership = await prisma.group_members.findFirst({
+            where: {
+                FgroupId: parsedGroupId,
+                SuserId: user.userId
+            },
+            include: {
+                groups: true
+            }
+        });
+
+        if (!membership) {
+            return res.status(400).json({
+                error: "User is not a member of the group. Please add the user to the group first."
+            });
+        }
+
+        // Prevent admins becoming treasurer
+        if (membership.role === "admin") {
+            return res.status(400).json({
+                error: "Admins cannot be assigned as treasurer."
+            });
+        }
+
+        // Already treasurer
+        if (membership.role === "treasurer") {
+            return res.status(400).json({
+                error: "This user is already the treasurer."
+            });
+        }
+
+        const canRemoveAdmin = await ensureGroupHasAdmin(
+                parsedGroupId,
+                user.userId,
+                'treasurer'
+            );
+
+        if (!canRemoveAdmin) {
+            return res.status(400).json({
+                error: 'Cannot remove the last admin from the group.'
+            });
+        }
+        // Remove previous treasurer
+        await prisma.group_members.updateMany({
+            where: {
+                FgroupId: parsedGroupId,
+                role: "treasurer"
+            },
+            data: {
+                role: "member"
+            }
+        });
+
+        // Assign new treasurer
+        const updatedMembership = await prisma.group_members.update({
+            where: {
+                group_memberId: membership.group_memberId
+            },
+            data: {
+                role: "treasurer"
+            }
+        });
+
         res.status(200).json({
             message: "Treasurer assigned successfully",
-            member: { groupId: parseInt(groupId), userEmail: user.email, userName: user.name, groupName: membership.groups?.name || "the group", role: updatedMembership.role, joinedAt: updatedMembership.joinedAt }
+            member: {
+                groupId: parsedGroupId,
+                userEmail: user.email,
+                userName: user.name,
+                groupName: membership.groups?.name || "the group",
+                role: updatedMembership.role,
+                joinedAt: updatedMembership.joinedAt
+            }
         });
+
     } catch (error) {
         console.error("Error assigning treasurer:", error);
-        res.status(500).json({ error: "Failed to assign treasurer", details: error.message });
+
+        res.status(500).json({
+            error: "Failed to assign treasurer",
+            details: error.message
+        });
     }
 });
 
@@ -1019,6 +1149,257 @@ app.get('/api/groups/:groupId/analytics/payouts', requireAuth, async (req, res) 
     } catch (error) {
         console.error('Error fetching payout analytics:', error);
         res.status(500).json({ error: 'Failed to fetch payout analytics', details: error.message });
+    }
+});
+
+// ─── ML Financial Health Scoring ─────────────────────────────────────────────
+const tf = require('@tensorflow/tfjs-node');
+
+let healthModel = null;
+
+// Synthetic training data based on realistic stokvel contribution patterns
+// Features: [paymentRate, missedRatio, pendingRatio, consistency]
+// Labels:   [healthScore between 0 and 1]
+async function trainHealthModel() {
+    const trainingData = [
+        // Perfect payers
+        { input: [1.00, 0.00, 0.00, 1], output: [0.98] },
+        { input: [1.00, 0.00, 0.00, 1], output: [0.96] },
+        { input: [0.95, 0.00, 0.05, 1], output: [0.90] },
+
+        // Good payers — occasional pending
+        { input: [0.90, 0.00, 0.10, 0], output: [0.82] },
+        { input: [0.85, 0.05, 0.10, 0], output: [0.78] },
+        { input: [0.80, 0.10, 0.10, 0], output: [0.72] },
+        { input: [0.80, 0.05, 0.15, 0], output: [0.70] },
+
+        // Average payers — some misses
+        { input: [0.70, 0.20, 0.10, 0], output: [0.58] },
+        { input: [0.65, 0.25, 0.10, 0], output: [0.52] },
+        { input: [0.60, 0.30, 0.10, 0], output: [0.48] },
+        { input: [0.60, 0.20, 0.20, 0], output: [0.45] },
+
+        // Struggling — missing frequently
+        { input: [0.50, 0.40, 0.10, 0], output: [0.35] },
+        { input: [0.45, 0.45, 0.10, 0], output: [0.30] },
+        { input: [0.40, 0.50, 0.10, 0], output: [0.25] },
+        { input: [0.35, 0.55, 0.10, 0], output: [0.22] },
+
+        // Critical — barely paying
+        { input: [0.20, 0.70, 0.10, 0], output: [0.12] },
+        { input: [0.10, 0.80, 0.10, 0], output: [0.08] },
+        { input: [0.00, 1.00, 0.00, 0], output: [0.02] },
+        { input: [0.00, 0.90, 0.10, 0], output: [0.03] },
+
+        // Mixed patterns
+        { input: [0.75, 0.15, 0.10, 0], output: [0.65] },
+        { input: [0.55, 0.35, 0.10, 0], output: [0.40] },
+        { input: [0.88, 0.02, 0.10, 1], output: [0.85] },
+        { input: [0.30, 0.60, 0.10, 0], output: [0.18] },
+        { input: [0.66, 0.24, 0.10, 0], output: [0.55] },
+    ];
+
+    const xs = tf.tensor2d(trainingData.map(d => d.input));
+    const ys = tf.tensor2d(trainingData.map(d => d.output));
+
+    // Neural network — 3 layers
+    const model = tf.sequential();
+    model.add(tf.layers.dense({ inputShape: [4], units: 16, activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 8,  activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 1,  activation: 'sigmoid' }));
+
+    model.compile({
+        optimizer: tf.train.adam(0.01),
+        loss: 'meanSquaredError',
+        metrics: ['mae']
+    });
+
+    await model.fit(xs, ys, {
+        epochs: 300,
+        shuffle: true,
+        verbose: 0  // silent training — no console spam
+    });
+
+    xs.dispose();
+    ys.dispose();
+
+    console.log('✅ Financial health model trained successfully');
+    return model;
+}
+
+// Train the model once when the server starts
+trainHealthModel().then(model => {
+    healthModel = model;
+}).catch(err => {
+    console.error('❌ Failed to train health model:', err);
+});
+
+// Helper — extract features from member contribution data
+function extractFeatures(paid, missed, pending) {
+    const total       = paid + missed + pending || 1;
+    const paymentRate = paid    / total;
+    const missedRatio = missed  / total;
+    const pendingRatio= pending / total;
+    const consistency = paymentRate === 1.0 ? 1 : 0;
+    return [paymentRate, missedRatio, pendingRatio, consistency];
+}
+
+// Helper — convert score to label
+function scoreToLabel(score) {
+    if (score >= 80) return { label: 'Excellent', risk: 'Low Risk',      emoji: '🟢' };
+    if (score >= 60) return { label: 'Good',      risk: 'Moderate Risk', emoji: '🟡' };
+    if (score >= 40) return { label: 'Fair',      risk: 'High Risk',     emoji: '🟠' };
+    return              { label: 'Poor',      risk: 'Critical',      emoji: '🔴' };
+}
+
+// GET /api/groups/:groupId/health-scores
+// Returns ML-predicted financial health score per member
+app.get('/api/groups/:groupId/health-scores', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+
+    try {
+        // Admin only
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+        });
+        if (!membership || !['admin', 'treasurer'].includes(membership.role)) {
+            return res.status(403).json({ error: 'Only admins can view health scores' });
+        }
+
+        // Check model is ready
+        if (!healthModel) {
+            return res.status(503).json({ error: 'Health scoring model is not ready yet. Please try again in a moment.' });
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { name: true, contributionAmount: true, cycleType: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        const members = await prisma.group_members.findMany({
+            where: { FgroupId: parseInt(groupId) },
+            include: { users: { select: { userId: true, name: true, email: true } } }
+        });
+
+        const contributions = await prisma.contributions.findMany({
+            where: { FKgroupId: parseInt(groupId) }
+        });
+
+        // Score each member using the trained model
+        const scoredMembers = await Promise.all(members.map(async (member) => {
+            const memberContribs = contributions.filter(c => c.FKuserId === member.users.userId);
+            const paid    = memberContribs.filter(c => c.status === 'paid').length;
+            const missed  = memberContribs.filter(c => c.status === 'missed').length;
+            const pending = memberContribs.filter(c => c.status === 'pending').length;
+
+            const features   = extractFeatures(paid, missed, pending);
+            const inputTensor = tf.tensor2d([features]);
+            const prediction  = healthModel.predict(inputTensor);
+            const rawScore    = (await prediction.data())[0];
+            const score       = Math.round(rawScore * 100);
+
+            inputTensor.dispose();
+            prediction.dispose();
+
+            const { label, risk } = scoreToLabel(score);
+
+            return {
+                userId:   member.users.userId,
+                name:     member.users.name,
+                email:    member.users.email,
+                role:     member.role,
+                score,
+                label,
+                risk,
+                breakdown: { paid, missed, pending, total: paid + missed + pending }
+            };
+        }));
+
+        // Sort by score descending
+        scoredMembers.sort((a, b) => b.score - a.score);
+
+        // Group average score
+        const avgScore = scoredMembers.length > 0
+            ? Math.round(scoredMembers.reduce((sum, m) => sum + m.score, 0) / scoredMembers.length)
+            : 0;
+
+        const { label: groupLabel, risk: groupRisk } = scoreToLabel(avgScore);
+
+        res.json({
+            groupId:    parseInt(groupId),
+            groupName:  group.name,
+            groupScore: avgScore,
+            groupLabel,
+            groupRisk,
+            modelInfo: {
+                type:     'Neural Network',
+                library:  'TensorFlow.js',
+                features: ['paymentRate', 'missedRatio', 'pendingRatio', 'consistency'],
+                trainedOn: 'Synthetic stokvel contribution patterns'
+            },
+            members: scoredMembers
+        });
+
+    } catch (error) {
+        console.error('Error generating health scores:', error);
+        res.status(500).json({ error: 'Failed to generate health scores', details: error.message });
+    }
+});
+
+// GET /api/groups/:groupId/health-scores/me
+// Returns only the current user's own health score
+app.get('/api/groups/:groupId/health-scores/me', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+    const userId = req.user.userId;
+
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: userId }
+        });
+        if (!membership) {
+            return res.status(403).json({ error: 'You are not a member of this group' });
+        }
+
+        if (!healthModel) {
+            return res.status(503).json({ error: 'Health scoring model is not ready yet. Please try again in a moment.' });
+        }
+
+        const contributions = await prisma.contributions.findMany({
+            where: { FKgroupId: parseInt(groupId), FKuserId: userId }
+        });
+
+        const paid    = contributions.filter(c => c.status === 'paid').length;
+        const missed  = contributions.filter(c => c.status === 'missed').length;
+        const pending = contributions.filter(c => c.status === 'pending').length;
+
+        const features    = extractFeatures(paid, missed, pending);
+        const inputTensor = tf.tensor2d([features]);
+        const prediction  = healthModel.predict(inputTensor);
+        const rawScore    = (await prediction.data())[0];
+        const score       = Math.round(rawScore * 100);
+
+        inputTensor.dispose();
+        prediction.dispose();
+
+        const { label, risk } = scoreToLabel(score);
+
+        res.json({
+            groupId:  parseInt(groupId),
+            userId,
+            score,
+            label,
+            risk,
+            breakdown: { paid, missed, pending, total: paid + missed + pending },
+            modelInfo: {
+                type:    'Neural Network',
+                library: 'TensorFlow.js'
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching personal health score:', error);
+        res.status(500).json({ error: 'Failed to fetch health score', details: error.message });
     }
 });
 

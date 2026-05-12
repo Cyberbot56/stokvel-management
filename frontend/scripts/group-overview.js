@@ -471,6 +471,40 @@ function closeRulesModal() {
   rulesModal.hidden = true;
 }
 
+async function loadPersonalHealthScore(userId, groupId) {
+    const card = document.getElementById('personal-health-card');
+    if (!card) return;
+
+    try {
+        const token    = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/groups/${groupId}/health-scores/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch health score');
+        const data = await response.json();
+
+        const scoreEl = document.getElementById('my-health-score');
+        const labelEl = document.getElementById('my-health-label');
+        const riskEl  = document.getElementById('my-health-risk');
+
+        if (scoreEl) scoreEl.textContent = data.score + '%';
+        if (labelEl) {
+            labelEl.textContent = data.label;
+            if (data.score >= 80)      labelEl.style.color = '#034e52';
+            else if (data.score >= 60) labelEl.style.color = '#b45309';
+            else if (data.score >= 40) labelEl.style.color = '#c2410c';
+            else                       labelEl.style.color = '#991b1b';
+        }
+        if (riskEl) riskEl.textContent = data.risk;
+
+        card.hidden = false;
+
+    } catch (error) {
+        console.error('Personal health score error:', error);
+        if (card) card.hidden = true;
+    }
+}
+
 
 // ─── Group loading ────────────────────────────────────────────────────────────
 
@@ -502,6 +536,7 @@ async function loadGroup(groupId) {
       renderPaymentCard(statusData);
 
       await loadSavingsProjection(parseInt(userId), parseInt(groupId));
+      await loadPersonalHealthScore(parseInt(userId), parseInt(groupId));
     }
 
   } catch (error) {
