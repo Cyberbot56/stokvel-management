@@ -1,4 +1,31 @@
 // backend/tests/server.test.js
+jest.mock('@tensorflow/tfjs-node', () => {
+  const mockModel = {
+    predict: jest.fn().mockReturnValue({
+      data: jest.fn().mockResolvedValue([0.85]),
+      dispose: jest.fn()
+    }),
+    fit: jest.fn().mockResolvedValue({}),
+    compile: jest.fn()
+  };
+
+  const mockTensor = {
+    dispose: jest.fn()
+  };
+
+  return {
+    sequential: jest.fn().mockReturnValue(mockModel),
+    layers: {
+      dense: jest.fn().mockReturnValue({})
+    },
+    train: {
+      adam: jest.fn()
+    },
+    tensor2d: jest.fn().mockReturnValue(mockTensor),
+    fit: jest.fn().mockResolvedValue({})
+  };
+});
+
 jest.mock('@prisma/client', () => {
   const mockPrisma = {
     users: {
