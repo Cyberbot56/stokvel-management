@@ -775,6 +775,253 @@ app.post('/api/groups/:groupId/close', requireAuth, async (req, res) => {
     }
 });
 
+// ─── Analytics Routes ─────────────────────────────────────────────────────────
+
+// GET /api/groups/:groupId/analytics/overview
+// Returns high-level group performance stats
+app.get('/api/groups/:groupId/analytics/overview', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+        });
+        if (!membership || membership.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can view analytics' });
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { name: true, contributionAmount: true, cycleType: true, startDate: true, status: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        const members = await prisma.group_members.findMany({
+            where: { FgroupId: parseInt(groupId) }
+        });
+
+        const contributions = await prisma.contributions.findMany({
+            where: { FKgroupId: parseInt(groupId) }
+        });
+
+        const payouts = await prisma.payout.findMany({
+            where: { groupId: parseInt(groupId) }
+        });
+
+        const totalCollected = contributions
+            .filter(c => c.status === 'paid')
+            .reduce((sum, c) => sum + parseFloat(c.amount), 0);
+
+        const totalPayedOut = payouts
+            .filter(p => p.status === 'completed')
+            .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+        const paidCount    = contributions.filter(c => c.status === 'paid').length;
+        const missedCount  = contributions.filter(c => c.status === 'missed').length;
+        const pendingCount = contributions.filter(c => c.status === 'pending').length;
+
+        res.json({
+            groupId: parseInt(groupId),
+            groupName: group.name,
+            status: group.status,
+            startDate: group.startDate,
+            cycleType: group.cycleType,
+            contributionAmount: group.contributionAmount,
+            totalMembers: members.length,
+            totalCollected,
+            totalPayedOut,
+            balance: totalCollected - totalPayedOut,
+            completedPayouts: payouts.filter(p => p.status === 'completed').length,
+            pendingPayouts: payouts.filter(p => p.status === 'pending').length,
+            contributionStats: { paid: paidCount, missed: missedCount, pending: pendingCount, total: contributions.length }
+        });
+    } catch (error) {
+        console.error('Error fetching analytics overview:', error);
+        res.status(500).json({ error: 'Failed to fetch analytics overview', details: error.message });
+    }
+});
+
+// GET /api/groups/:groupId/analytics/contributions
+// Returns contribution trends over time grouped by month or week
+app.get('/api/groups/:groupId/analytics/contributions', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+        });
+        if (!membership || membership.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can view analytics' });
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { cycleType: true, contributionAmount: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        const contributions = await prisma.contributions.findMany({
+            where: { FKgroupId: parseInt(groupId) },
+            orderBy: { dueDate: 'asc' }
+        });
+
+        // Group contributions by month (YYYY-MM)
+        const trendsMap = {};
+        contributions.forEach(c => {
+            const date  = new Date(c.dueDate);
+            const key   = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            if (!trendsMap[key]) {
+                trendsMap[key] = { period: key, paid: 0, missed: 0, pending: 0, notPaid: 0, total: 0 };
+            }
+            trendsMap[key].total++;
+            if (c.status === 'paid')          trendsMap[key].paid++;
+            else if (c.status === 'missed')   trendsMap[key].missed++;
+            else if (c.status === 'pending')  trendsMap[key].pending++;
+            else                              trendsMap[key].notPaid++;
+        });
+
+        const trends = Object.values(trendsMap);
+
+        res.json({
+            groupId: parseInt(groupId),
+            cycleType: group.cycleType,
+            contributionAmount: group.contributionAmount,
+            trends
+        });
+    } catch (error) {
+        console.error('Error fetching contribution trends:', error);
+        res.status(500).json({ error: 'Failed to fetch contribution trends', details: error.message });
+    }
+});
+
+// GET /api/groups/:groupId/analytics/members
+// Returns per-member performance summary
+app.get('/api/groups/:groupId/analytics/members', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+        });
+        if (!membership || membership.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can view analytics' });
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { contributionAmount: true, cycleType: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        const members = await prisma.group_members.findMany({
+            where: { FgroupId: parseInt(groupId) },
+            include: { users: { select: { userId: true, name: true, email: true } } }
+        });
+
+        const contributions = await prisma.contributions.findMany({
+            where: { FKgroupId: parseInt(groupId) }
+        });
+
+        const memberPerformance = members.map(member => {
+            const memberContribs = contributions.filter(c => c.FKuserId === member.users.userId);
+            const paid    = memberContribs.filter(c => c.status === 'paid').length;
+            const missed  = memberContribs.filter(c => c.status === 'missed').length;
+            const pending = memberContribs.filter(c => c.status === 'pending').length;
+            const total   = memberContribs.length || 1;
+            const complianceRate = Math.round((paid / total) * 100);
+            const totalAmountPaid = paid * parseFloat(group.contributionAmount);
+
+            let performanceLabel = 'Excellent';
+            if (complianceRate < 66)       performanceLabel = 'Poor';
+            else if (complianceRate < 100) performanceLabel = 'Average';
+
+            return {
+                userId: member.users.userId,
+                name: member.users.name,
+                email: member.users.email,
+                role: member.role,
+                paid, missed, pending,
+                complianceRate,
+                totalAmountPaid,
+                performanceLabel,
+                joinedAt: member.joinedAt
+            };
+        });
+
+        // Sort by compliance rate descending
+        memberPerformance.sort((a, b) => b.complianceRate - a.complianceRate);
+
+        res.json({
+            groupId: parseInt(groupId),
+            contributionAmount: group.contributionAmount,
+            members: memberPerformance,
+            summary: {
+                excellent: memberPerformance.filter(m => m.performanceLabel === 'Excellent').length,
+                average:   memberPerformance.filter(m => m.performanceLabel === 'Average').length,
+                poor:      memberPerformance.filter(m => m.performanceLabel === 'Poor').length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching member analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch member analytics', details: error.message });
+    }
+});
+
+// GET /api/groups/:groupId/analytics/payouts
+// Returns payout history per cycle
+app.get('/api/groups/:groupId/analytics/payouts', requireAuth, async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
+        });
+        if (!membership || membership.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admins can view analytics' });
+        }
+
+        const group = await prisma.groups.findUnique({
+            where: { groupId: parseInt(groupId) },
+            select: { name: true, contributionAmount: true, cycleType: true }
+        });
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+
+        const payouts = await prisma.payout.findMany({
+            where: { groupId: parseInt(groupId) },
+            orderBy: { cycleNumber: 'asc' },
+            include: {
+                recipient: { select: { name: true, email: true } }
+            }
+        });
+
+        const totalCompleted = payouts.filter(p => p.status === 'completed').length;
+        const totalPending   = payouts.filter(p => p.status === 'pending').length;
+        const totalAmount    = payouts
+            .filter(p => p.status === 'completed')
+            .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+        res.json({
+            groupId: parseInt(groupId),
+            groupName: group.name,
+            cycleType: group.cycleType,
+            payouts: payouts.map(p => ({
+                payoutId:      p.payoutId,
+                cycleNumber:   p.cycleNumber,
+                recipientName: p.recipientName || p.recipient?.name,
+                amount:        p.amount,
+                status:        p.status,
+                transactionRef: p.transactionRef,
+                initiatedAt:   p.initiatedAt,
+                processedAt:   p.processedAt
+            })),
+            summary: {
+                totalCompleted,
+                totalPending,
+                totalAmount
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching payout analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch payout analytics', details: error.message });
+    }
+});
+
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });
