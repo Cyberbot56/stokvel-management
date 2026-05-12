@@ -1263,7 +1263,7 @@ app.get('/api/groups/:groupId/health-scores', requireAuth, async (req, res) => {
             where: { FgroupId: parseInt(groupId), SuserId: req.user.userId }
         });
         if (!membership || !['admin', 'treasurer'].includes(membership.role)) {
-            return res.status(403).json({ error: 'Only privileged ones can view health scores' });
+            return res.status(403).json({ error: 'Only admins can view health scores' });
         }
 
         // Check model is ready
@@ -1399,7 +1399,7 @@ app.get('/api/groups/:groupId/health-scores/me', requireAuth, async (req, res) =
 
     } catch (error) {
         console.error('Error fetching personal health score:', error);
-        res.status(500).json({ error: 'Health score currently sick comeback later!', details: error.message });
+        res.status(500).json({ error: 'Failed to fetch health score', details: error.message });
     }
 });
 
