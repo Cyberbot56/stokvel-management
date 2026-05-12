@@ -1,12 +1,13 @@
 // backend/tests/server.test.js
 jest.mock('@tensorflow/tfjs-node', () => {
   const mockModel = {
+    add: jest.fn(),           // ← this was missing
+    compile: jest.fn(),
+    fit: jest.fn().mockResolvedValue({}),
     predict: jest.fn().mockReturnValue({
       data: jest.fn().mockResolvedValue([0.85]),
       dispose: jest.fn()
-    }),
-    fit: jest.fn().mockResolvedValue({}),
-    compile: jest.fn()
+    })
   };
 
   const mockTensor = {
@@ -21,8 +22,7 @@ jest.mock('@tensorflow/tfjs-node', () => {
     train: {
       adam: jest.fn()
     },
-    tensor2d: jest.fn().mockReturnValue(mockTensor),
-    fit: jest.fn().mockResolvedValue({})
+    tensor2d: jest.fn().mockReturnValue(mockTensor)
   };
 });
 
