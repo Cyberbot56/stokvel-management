@@ -1403,6 +1403,130 @@ app.get('/api/groups/:groupId/health-scores/me', requireAuth, async (req, res) =
     }
 });
 
+/*alerts from system state changes across all joined groups.*/
+app.get('/api/dashboard/notifications', requireAuth, async (req, res) => {
+    const userId = req.user.userId;
+
+    try {
+        //all groups the logged-in user belongs to
+        const memberships = await prisma.group_members.findMany({
+            where: { SuserId: userId },
+            select: { FgroupId: true, role: true }
+        });
+
+        const groupIds = memberships.map(m => m.FgroupId);
+
+        //empty i the user has no groups
+        if (groupIds.length === 0) {
+            return res.json([]);
+        }
+
+        const now = new Date();
+        
+        //time horizons for meetings/payouts that are soon
+        const threeDaysFromNow = new Date();
+        threeDaysFromNow.setDate(now.getDate() + 3);
+
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(now.getDate() - 3);
+
+        const [upcomingMeetings, activePayouts, recentUserContributions] = await Promise.all([
+            //Meetings happening within the next 3 days
+            prisma.meetings.findMany({
+                where: {
+                    FKKgroupId: { in: groupIds },
+                    Date: { gte: now, lte: threeDaysFromNow }
+                },
+                include: { groups: { select: { name: true } } }
+            }),
+
+            //pending payouts within their groups
+            prisma.payout.findMany({
+                where: {
+                    groupId: { in: groupIds },
+                    status: 'pending'
+                },
+                include: { groups: { select: { name: true } } }
+            }),
+
+            // Alert C: The user's contributions approved in the last 3 days
+            prisma.contributions.findMany({
+                where: {
+                    FKuserId: userId,
+                    FKgroupId: { in: groupIds },
+                    status: 'paid',
+                    paidAt: { gte: threeDaysAgo }
+                },
+                include: { groups: { select: { name: true } } },
+                orderBy: { paidAt: 'desc' }
+            })
+        ]);
+
+        const dynamicNotifications = [];
+
+        // Map live meeting records
+        upcomingMeetings.forEach(meeting => {
+            dynamicNotifications.push({
+                id: `meeting-${meeting.meetingsId}`,
+                eventType: 'MEETING_SOON',
+                groupId: meeting.FKKgroupId,
+                groupName: meeting.groups.name,
+                eventDate: meeting.Date,
+                meta: {
+                    title: meeting.title,
+                    time: meeting.Time,
+                    agenda: meeting.agenda
+                },
+                timestamp: meeting.postedAt
+            });
+        });
+
+        // Map live payout lifecycles
+        activePayouts.forEach(payout => {
+            const isRecipient = payout.recipientId === userId;
+            dynamicNotifications.push({
+                id: `payout-${payout.payoutId}`,
+                eventType: isRecipient ? 'YOUR_PAYOUT_PENDING' : 'GROUP_PAYOUT_PENDING',
+                groupId: payout.groupId,
+                groupName: payout.groups.name,
+                eventDate: null,
+                meta: {
+                    cycleNumber: payout.cycleNumber,
+                    amount: payout.amount,
+                    recipientName: payout.recipientName,
+                    isCurrentUserRecipient: isRecipient
+                },
+                timestamp: payout.initiatedAt
+            });
+        });
+
+        // Map personal payment confirmation events
+        recentUserContributions.forEach(contribution => {
+            dynamicNotifications.push({
+                id: `approved-payment-${contribution.contributionsId}`,
+                eventType: 'CONTRIBUTION_APPROVED',
+                groupId: contribution.FKgroupId,
+                groupName: contribution.groups.name,
+                eventDate: contribution.paidAt,
+                meta: {
+                    amount: contribution.amount,
+                    dueDate: contribution.dueDate
+                },
+                timestamp: contribution.paidAt
+            });
+        });
+
+        //Sort notifications(newest notification first)
+        dynamicNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        res.json(dynamicNotifications);
+
+    } catch (error) {
+        console.error('Failed to compile dynamic dashboard feed:', error);
+        res.status(500).json({ error: 'Failed to gather dashboard updates', details: error.message });
+    }
+});
+
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });
