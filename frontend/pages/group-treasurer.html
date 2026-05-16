@@ -567,6 +567,7 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="../scripts/auth_service.js"></script>
@@ -577,12 +578,17 @@
   <script>
     const TABS = ['overview','record','tracking','missed','payouts','meetings','mycontrib'];
 
-    function switchTab(name) {
-      TABS.forEach(t => {
-        document.getElementById('tab-' + t).classList.toggle('active', t === name);
-        document.getElementById('nav-' + t).classList.toggle('active', t === name);
-      });
-    }
+  function switchTab(name) {
+  TABS.forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+    document.getElementById('nav-' + t).classList.toggle('active', t === name);
+  });
+
+  // Load meetings list when switching to meetings tab
+  if (name === 'meetings' && currentGroup) {
+    loadAndShowMeetings(currentGroup.groupId);
+  }
+}
 
     // Mirror group name to sidebar when JS sets it
     const nameEl = document.getElementById('group-name');

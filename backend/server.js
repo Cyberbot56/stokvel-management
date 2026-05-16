@@ -1437,7 +1437,35 @@ app.post('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Failed to upload minutes', details: error.message });
     }
 });
+// PATCH /api/meetings/:meetingId/minutes/:minutesId — update existing minutes
+app.patch('/api/meetings/:meetingId/minutes/:minutesId', requireAuth, async (req, res) => {
+    const { meetingId, minutesId } = req.params;
+    const { content } = req.body;
+    const userId = req.user.userId;
 
+    if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Minutes content is required' });
+    }
+
+    try {
+        const minutes = await prisma.meeting_minutes.findUnique({
+            where: { minutesId: parseInt(minutesId) }
+        });
+        if (!minutes) return res.status(404).json({ error: 'Minutes not found' });
+        if (minutes.uploadedBy !== userId) {
+            return res.status(403).json({ error: 'You can only edit your own minutes' });
+        }
+
+        const updated = await prisma.meeting_minutes.update({
+            where: { minutesId: parseInt(minutesId) },
+            data: { content: content.trim() }
+        });
+        res.json({ message: 'Minutes updated successfully', minutes: updated });
+    } catch (error) {
+        console.error('Error updating minutes:', error);
+        res.status(500).json({ error: 'Failed to update minutes', details: error.message });
+    }
+});
 // GET /api/meetings/:meetingId/minutes — get minutes for a meeting
 app.get('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
     const { meetingId } = req.params;

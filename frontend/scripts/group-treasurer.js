@@ -539,6 +539,17 @@ async function fetchMeetings(groupId) {
     return await response.json();
 }
 
+// ─── Meetings Tab ─────────────────────────────────────────────────────────────
+
+async function fetchMeetings(groupId) {
+    const token = await auth0Client.getTokenSilently();
+    const response = await fetch(`${config.apiBase}/api/meetings/group/${groupId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch meetings');
+    return await response.json();
+}
+
 async function loadAndShowMeetings(groupId) {
     const container = document.getElementById('meetings-list-container');
     if (!container) return;
@@ -565,26 +576,45 @@ async function loadAndShowMeetings(groupId) {
                             <p class="meeting-card-meta">📅 ${dateStr} at ${sanitise(m.Time)}</p>
                             ${m.agenda ? `<p class="meeting-card-agenda">${sanitise(m.agenda)}</p>` : ''}
                         </section>
-                        <button class="btn-upload-minutes" onclick="toggleMinutesPanel(${m.meetingsId})">
+                        <button class="btn-upload-minutes" onclick="openMinutesStep(${m.meetingsId}, 'write')">
                             Upload minutes
                         </button>
                     </section>
 
-                    <section class="minutes-panel" id="minutes-panel-${m.meetingsId}" hidden>
+                    <!-- Step 1: Write -->
+                    <section class="minutes-panel" id="minutes-write-${m.meetingsId}" hidden>
+                        <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Step 1 — Write minutes</p>
                         <textarea
                             id="minutes-content-${m.meetingsId}"
                             rows="6"
                             placeholder="Paste or type the meeting minutes here..."
                             style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid rgba(14,148,144,0.25);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;"
                         ></textarea>
-                        <section style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-                            <button class="btn-record" onclick="submitMinutes(${m.meetingsId})">Save minutes</button>
-                            <button class="btn-cancel" onclick="toggleMinutesPanel(${m.meetingsId})">Cancel</button>
+                        <section style="display:flex;gap:8px;margin-top:8px;">
+                            <button class="btn-record" onclick="openMinutesStep(${m.meetingsId}, 'preview')">Preview →</button>
+                            <button class="btn-cancel" onclick="closeMinutesPanel(${m.meetingsId})">Cancel</button>
                         </section>
-                        <output class="form-feedback" id="minutes-feedback-${m.meetingsId}" hidden></output>
-
-                        <section id="existing-minutes-${m.meetingsId}" style="margin-top:1rem;"></section>
+                        <output class="form-feedback" id="minutes-write-feedback-${m.meetingsId}" hidden></output>
                     </section>
+
+                    <!-- Step 2: Preview -->
+                    <section class="minutes-panel" id="minutes-preview-${m.meetingsId}" hidden>
+                        <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Step 2 — Preview</p>
+                        <article style="background:#f0fafa;border-radius:8px;padding:14px 16px;border:1px solid #e0f7f6;margin-bottom:12px;">
+                            <p style="font-size:13px;font-weight:700;color:#034e52;margin:0 0 6px;">${sanitise(m.title)} — Minutes</p>
+                            <p style="font-size:12px;color:#64748b;margin:0 0 10px;">📅 ${dateStr}</p>
+                            <p id="minutes-preview-content-${m.meetingsId}" style="font-size:13px;color:#0f172a;margin:0;white-space:pre-wrap;line-height:1.6;"></p>
+                        </article>
+                        <section style="display:flex;gap:8px;margin-top:8px;">
+                            <button class="btn-record" onclick="submitMinutes(${m.meetingsId})">Update</button>
+                            <button class="btn-cancel" onclick="openMinutesStep(${m.meetingsId}, 'write')">← Edit</button>
+                            <button class="btn-cancel" onclick="closeMinutesPanel(${m.meetingsId})">Cancel</button>
+                        </section>
+                        <output class="form-feedback" id="minutes-preview-feedback-${m.meetingsId}" hidden></output>
+                    </section>
+
+                    <!-- Existing minutes -->
+                    <section id="existing-minutes-${m.meetingsId}" style="margin-top:1rem;"></section>
                 </article>
             `;
         }).join('');
@@ -598,52 +628,100 @@ async function loadAndShowMeetings(groupId) {
     }
 }
 
-function toggleMinutesPanel(meetingId) {
-    const panel = document.getElementById(`minutes-panel-${meetingId}`);
-    if (!panel) return;
-    panel.hidden = !panel.hidden;
+function openMinutesStep(meetingId, step) {
+    const writePanel   = document.getElementById(`minutes-write-${meetingId}`);
+    const previewPanel = document.getElementById(`minutes-preview-${meetingId}`);
+
+    if (step === 'write') {
+        if (writePanel)   writePanel.hidden   = false;
+        if (previewPanel) previewPanel.hidden = true;
+        return;
+    }
+
+    if (step === 'preview') {
+        const content = document.getElementById(`minutes-content-${meetingId}`).value.trim();
+        const feedbackEl = document.getElementById(`minutes-write-feedback-${meetingId}`);
+
+        if (!content) {
+            feedbackEl.textContent = 'Please enter the minutes before previewing.';
+            feedbackEl.className   = 'form-feedback error';
+            feedbackEl.hidden      = false;
+            return;
+        }
+
+        feedbackEl.hidden = true;
+        document.getElementById(`minutes-preview-content-${meetingId}`).textContent = content;
+        if (writePanel)   writePanel.hidden   = true;
+        if (previewPanel) previewPanel.hidden = false;
+    }
+}
+
+function closeMinutesPanel(meetingId) {
+    const writePanel   = document.getElementById(`minutes-write-${meetingId}`);
+    const previewPanel = document.getElementById(`minutes-preview-${meetingId}`);
+    if (writePanel)   writePanel.hidden   = true;
+    if (previewPanel) previewPanel.hidden = true;
+    document.getElementById(`minutes-content-${meetingId}`).value = '';
 }
 
 async function submitMinutes(meetingId) {
-    const content = document.getElementById(`minutes-content-${meetingId}`).value.trim();
-    const feedbackEl = document.getElementById(`minutes-feedback-${meetingId}`);
+    const content    = document.getElementById(`minutes-content-${meetingId}`).value.trim();
+    const feedbackEl = document.getElementById(`minutes-preview-feedback-${meetingId}`);
+    const editingId  = document.getElementById(`minutes-content-${meetingId}`).dataset.editingId;
 
     if (!content) {
-        feedbackEl.textContent = 'Please enter the minutes content.';
-        feedbackEl.className = 'form-feedback error';
-        feedbackEl.hidden = false;
+        feedbackEl.textContent = 'Minutes content is empty.';
+        feedbackEl.className   = 'form-feedback error';
+        feedbackEl.hidden      = false;
         return;
     }
 
     try {
         const token = await auth0Client.getTokenSilently();
-        const response = await fetch(`${config.apiBase}/api/meetings/${meetingId}/minutes`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ content })
-        });
+
+        let response;
+        if (editingId) {
+            // Update existing minutes
+            response = await fetch(`${config.apiBase}/api/meetings/${meetingId}/minutes/${editingId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ content })
+            });
+        } else {
+            // Create new minutes
+            response = await fetch(`${config.apiBase}/api/meetings/${meetingId}/minutes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ content })
+            });
+        }
 
         const data = await response.json();
 
         if (response.ok) {
-            feedbackEl.textContent = 'Minutes saved successfully!';
-            feedbackEl.className = 'form-feedback success';
-            feedbackEl.hidden = false;
-            document.getElementById(`minutes-content-${meetingId}`).value = '';
+            feedbackEl.textContent = editingId ? 'Minutes updated successfully!' : 'Minutes saved successfully!';
+            feedbackEl.className   = 'form-feedback success';
+            feedbackEl.hidden      = false;
+
+            // Clear editing state
+            delete document.getElementById(`minutes-content-${meetingId}`).dataset.editingId;
+
             await loadExistingMinutes(meetingId);
+
+            setTimeout(() => {
+                closeMinutesPanel(meetingId);
+                feedbackEl.hidden = true;
+            }, 1500);
         } else {
             feedbackEl.textContent = data.error || 'Failed to save minutes.';
-            feedbackEl.className = 'form-feedback error';
-            feedbackEl.hidden = false;
+            feedbackEl.className   = 'form-feedback error';
+            feedbackEl.hidden      = false;
         }
     } catch (err) {
         console.error('Submit minutes error:', err);
         feedbackEl.textContent = 'Network error. Please try again.';
-        feedbackEl.className = 'form-feedback error';
-        feedbackEl.hidden = false;
+        feedbackEl.className   = 'form-feedback error';
+        feedbackEl.hidden      = false;
     }
 }
 
@@ -652,7 +730,7 @@ async function loadExistingMinutes(meetingId) {
     if (!container) return;
 
     try {
-        const token = await auth0Client.getTokenSilently();
+        const token    = await auth0Client.getTokenSilently();
         const response = await fetch(`${config.apiBase}/api/meetings/${meetingId}/minutes`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -660,24 +738,54 @@ async function loadExistingMinutes(meetingId) {
 
         if (!data.minutes || data.minutes.length === 0) {
             container.innerHTML = '';
+            // Show upload button if no minutes yet
+            const uploadBtn = document.querySelector(`#meeting-card-${meetingId} .btn-upload-minutes`);
+            if (uploadBtn) uploadBtn.hidden = false;
             return;
         }
 
+        // Hide upload button once minutes exist
+        const uploadBtn = document.querySelector(`#meeting-card-${meetingId} .btn-upload-minutes`);
+        if (uploadBtn) uploadBtn.hidden = true;
+
         container.innerHTML = `
-            <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Previously uploaded minutes</p>
+            <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Uploaded minutes</p>
             ${data.minutes.map(m => `
-                <article style="background:#f0fafa;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #e0f7f6;">
-                    <p style="font-size:11px;color:#64748b;margin:0 0 6px;">
-                        Uploaded by <strong>${sanitise(m.users.name)}</strong> on 
-                        ${new Date(m.uploadedAt).toLocaleDateString('en-ZA', {day:'numeric',month:'short',year:'numeric'})}
-                    </p>
-                    <p style="font-size:13px;color:#0f172a;margin:0;white-space:pre-wrap;">${sanitise(m.content)}</p>
+                <article style="background:#f0fafa;border-radius:8px;padding:12px 14px;margin-bottom:8px;border:1px solid #e0f7f6;">
+                    <section style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+                        <p style="font-size:11px;color:#64748b;margin:0;">
+                            Uploaded by <strong>${sanitise(m.users.name)}</strong> on 
+                            ${new Date(m.uploadedAt).toLocaleDateString('en-ZA', {day:'numeric', month:'short', year:'numeric'})}
+                        </p>
+                        <section style="display:flex;gap:12px;">
+                            <button 
+                                onclick="editMinutes(${meetingId}, ${m.minutesId}, \`${m.content.replace(/`/g, '\\`')}\`)"
+                                style="font-size:11px;font-weight:700;color:#0e9490;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">
+                                Edit
+                            </button>
+                            <button 
+                                onclick="downloadMinutesPDF(${m.minutesId}, \`${m.content.replace(/`/g, '\\`')}\`, \`${sanitise(m.users.name)}\`, \`${new Date(m.uploadedAt).toLocaleDateString('en-ZA')}\`)"
+                                style="font-size:11px;font-weight:700;color:#7c3aed;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">
+                                Download PDF
+                            </button>
+                        </section>
+                    </section>
+                    <p style="font-size:13px;color:#0f172a;margin:0;white-space:pre-wrap;line-height:1.6;">${sanitise(m.content)}</p>
                 </article>
             `).join('')}
         `;
     } catch (err) {
         console.error('Error loading existing minutes:', err);
     }
+}
+
+function editMinutes(meetingId, minutesId, content) {
+    const textarea = document.getElementById(`minutes-content-${meetingId}`);
+    textarea.value = content;
+    textarea.dataset.editingId = minutesId;
+    openMinutesStep(meetingId, 'write');
+    // Scroll to the panel
+    document.getElementById(`minutes-write-${meetingId}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 // ─── Event listeners ──────────────────────────────────────────────────────────
 function setupEventListeners() {
@@ -764,4 +872,67 @@ async function checkNewNotifications(groupId, wrapper) {
 function onAuthReady() {
     setupEventListeners();
     loadGroupData();
+}
+// ─── Download minutes as PDF ──────────────────────────────────────────────────
+function downloadMinutesPDF(minutesId, content, uploadedBy, uploadedAt) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const groupName  = currentGroup?.name || 'Group';
+    const pageWidth  = doc.internal.pageSize.getWidth();
+    const margin     = 20;
+    const maxWidth   = pageWidth - margin * 2;
+
+    // Header bar
+    doc.setFillColor(14, 148, 144);
+    doc.rect(0, 0, pageWidth, 28, 'F');
+
+    // Title
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('STOKVEL — Meeting Minutes', margin, 18);
+
+    // Group name & metadata
+    doc.setFillColor(240, 250, 250);
+    doc.rect(0, 28, pageWidth, 22, 'F');
+
+    doc.setTextColor(3, 78, 82);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(groupName, margin, 38);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Uploaded by: ${uploadedBy}   |   Date: ${uploadedAt}`, margin, 46);
+
+    // Divider
+    doc.setDrawColor(224, 247, 246);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 54, pageWidth - margin, 54);
+
+    // Minutes content
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+
+    const lines = doc.splitTextToSize(content, maxWidth);
+    let y = 64;
+
+    lines.forEach(line => {
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.text(line, margin, y);
+        y += 7;
+    });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Generated on ${new Date().toLocaleDateString('en-ZA')} — Stokvel Management System`, margin, 287);
+
+    doc.save(`minutes-${groupName.replace(/\s+/g, '-')}-${uploadedAt}.pdf`);
 }
