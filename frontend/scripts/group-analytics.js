@@ -1,6 +1,4 @@
 // scripts/group-analytics.js
-// Sprint 4 Story 3 - Analytics Dashboard
-
 let complianceChart = null;
 let payoutsChart = null;
 let breakdownChart = null;
