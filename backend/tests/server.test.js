@@ -76,7 +76,14 @@ jest.mock('@prisma/client', () => {
     meetings: {
       create: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
       deleteMany: jest.fn()
+    },
+    meeting_minutes: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn()
     },
     $transaction: jest.fn(),
     $disconnect: jest.fn(),
@@ -142,7 +149,13 @@ beforeEach(() => {
   
   prisma.meetings.create.mockReset();
   prisma.meetings.findMany.mockReset();
-  prisma.meetings.deleteMany.mockReset();
+ prisma.meetings.deleteMany.mockReset();
+  prisma.meetings.findUnique.mockReset();
+  
+  prisma.meeting_minutes.create.mockReset();
+  prisma.meeting_minutes.findMany.mockReset();
+  prisma.meeting_minutes.findUnique.mockReset();
+  prisma.meeting_minutes.update.mockReset();
   
   prisma.$transaction.mockReset();
 });
@@ -1055,5 +1068,163 @@ describe('ML Health Scores - Personal Score (Member)', () => {
     const res = await request(app).get('/api/groups/1/health-scores/me');
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Failed to fetch health score');
+  });
+});
+describe('Meeting Minutes', () => {
+  test('POST /api/meetings/:meetingId/minutes returns 400 if content is missing', async () => {
+    const res = await request(app)
+      .post('/api/meetings/1/minutes')
+      .send({});
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('Minutes content is required');
+  });
+
+  test('POST /api/meetings/:meetingId/minutes returns 404 if meeting not found', async () => {
+    prisma.meetings.findUnique.mockResolvedValue(null);
+    const res = await request(app)
+      .post('/api/meetings/999/minutes')
+      .send({ content: 'Test minutes content' });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Meeting not found');
+  });
+
+  test('POST /api/meetings/:meetingId/minutes returns 403 if user is not treasurer or admin', async () => {
+    prisma.meetings.findUnique.mockResolvedValue({ meetingsId: 1, FKKgroupId: 1 });
+    prisma.group_members.findFirst.mockResolvedValue(null);
+    const res = await request(app)
+      .post('/api/meetings/1/minutes')
+      .send({ content: 'Test minutes content' });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('Only the treasurer or admin can upload minutes');
+  });
+
+  test('POST /api/meetings/:meetingId/minutes uploads minutes successfully', async () => {
+    prisma.meetings.findUnique.mockResolvedValue({ meetingsId: 1, FKKgroupId: 1 });
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'treasurer' });
+    prisma.meeting_minutes.create.mockResolvedValue({
+      minutesId: 1,
+      FKmeetingId: 1,
+      content: 'Test minutes content',
+      uploadedBy: 1,
+      uploadedAt: new Date()
+    });
+    const res = await request(app)
+      .post('/api/meetings/1/minutes')
+      .send({ content: 'Test minutes content' });
+    expect(res.statusCode).toBe(201);
+    expect(res.body.message).toBe('Minutes uploaded successfully');
+    expect(res.body.minutes).toBeDefined();
+  });
+
+  test('GET /api/meetings/:meetingId/minutes returns 404 if meeting not found', async () => {
+    prisma.meetings.findUnique.mockResolvedValue(null);
+    const res = await request(app).get('/api/meetings/999/minutes');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Meeting not found');
+  });
+
+  test('GET /api/meetings/:meetingId/minutes returns 403 if user is not a member', async () => {
+    prisma.meetings.findUnique.mockResolvedValue({ meetingsId: 1, FKKgroupId: 1 });
+    prisma.group_members.findFirst.mockResolvedValue(null);
+    const res = await request(app).get('/api/meetings/1/minutes');
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('You are not a member of this group');
+  });
+
+  test('GET /api/meetings/:meetingId/minutes returns minutes successfully', async () => {
+    prisma.meetings.findUnique.mockResolvedValue({ meetingsId: 1, FKKgroupId: 1 });
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'treasurer' });
+    prisma.meeting_minutes.findMany.mockResolvedValue([
+      {
+        minutesId: 1,
+        FKmeetingId: 1,
+        content: 'Test minutes content',
+        uploadedBy: 1,
+        uploadedAt: new Date(),
+        users: { name: 'Test User', email: 'test@example.com' }
+      }
+    ]);
+    const res = await request(app).get('/api/meetings/1/minutes');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('minutes');
+    expect(Array.isArray(res.body.minutes)).toBe(true);
+    expect(res.body.minutes).toHaveLength(1);
+  });
+
+  test('PATCH /api/meetings/:meetingId/minutes/:minutesId returns 400 if content is missing', async () => {
+    const res = await request(app)
+      .patch('/api/meetings/1/minutes/1')
+      .send({});
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('Minutes content is required');
+  });
+
+  test('PATCH /api/meetings/:meetingId/minutes/:minutesId returns 404 if minutes not found', async () => {
+    prisma.meeting_minutes.findUnique.mockResolvedValue(null);
+    const res = await request(app)
+      .patch('/api/meetings/1/minutes/999')
+      .send({ content: 'Updated content' });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Minutes not found');
+  });
+
+  test('PATCH /api/meetings/:meetingId/minutes/:minutesId returns 403 if not the uploader', async () => {
+    prisma.meeting_minutes.findUnique.mockResolvedValue({
+      minutesId: 1,
+      uploadedBy: 99
+    });
+    const res = await request(app)
+      .patch('/api/meetings/1/minutes/1')
+      .send({ content: 'Updated content' });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('You can only edit your own minutes');
+  });
+
+  test('PATCH /api/meetings/:meetingId/minutes/:minutesId updates minutes successfully', async () => {
+    prisma.meeting_minutes.findUnique.mockResolvedValue({
+      minutesId: 1,
+      uploadedBy: 1
+    });
+    prisma.meeting_minutes.update.mockResolvedValue({
+      minutesId: 1,
+      content: 'Updated content',
+      uploadedBy: 1,
+      uploadedAt: new Date()
+    });
+    const res = await request(app)
+      .patch('/api/meetings/1/minutes/1')
+      .send({ content: 'Updated content' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Minutes updated successfully');
+    expect(res.body.minutes).toBeDefined();
+  });
+  test('POST /api/meetings/:meetingId/minutes returns 500 on DB error', async () => {
+    prisma.meetings.findUnique.mockResolvedValue({ meetingsId: 1, FKKgroupId: 1 });
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'treasurer' });
+    prisma.meeting_minutes.create.mockRejectedValue(new Error('DB error'));
+    const res = await request(app)
+      .post('/api/meetings/1/minutes')
+      .send({ content: 'Test minutes content' });
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to upload minutes');
+  });
+
+  test('PATCH /api/meetings/:meetingId/minutes/:minutesId returns 500 on DB error', async () => {
+    prisma.meeting_minutes.findUnique.mockResolvedValue({ minutesId: 1, uploadedBy: 1 });
+    prisma.meeting_minutes.update.mockRejectedValue(new Error('DB error'));
+    const res = await request(app)
+      .patch('/api/meetings/1/minutes/1')
+      .send({ content: 'Updated content' });
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to update minutes');
+  });
+
+  test('GET /api/meetings/:meetingId/minutes returns 500 on DB error', async () => {
+    prisma.meetings.findUnique.mockResolvedValue({ meetingsId: 1, FKKgroupId: 1 });
+    prisma.group_members.findFirst.mockResolvedValue({ role: 'treasurer' });
+    prisma.meeting_minutes.findMany.mockRejectedValue(new Error('DB error'));
+    const res = await request(app).get('/api/meetings/1/minutes');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Failed to fetch minutes');
   });
 });
