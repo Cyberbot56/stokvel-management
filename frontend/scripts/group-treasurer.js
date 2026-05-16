@@ -528,7 +528,157 @@ async function handleScheduleMeeting(e) {
         submitBtn.textContent = originalBtnText;
     }
 }
+// ─── Meetings Tab ─────────────────────────────────────────────────────────────
 
+async function fetchMeetings(groupId) {
+    const token = await auth0Client.getTokenSilently();
+    const response = await fetch(`${config.apiBase}/api/meetings/group/${groupId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch meetings');
+    return await response.json();
+}
+
+async function loadAndShowMeetings(groupId) {
+    const container = document.getElementById('meetings-list-container');
+    if (!container) return;
+
+    container.innerHTML = '<p style="color:#64748b;font-size:13px;">Loading meetings...</p>';
+
+    try {
+        const meetings = await fetchMeetings(groupId);
+
+        if (!meetings || meetings.length === 0) {
+            container.innerHTML = '<p style="color:#64748b;font-size:13px;font-style:italic;">No meetings scheduled yet.</p>';
+            return;
+        }
+
+        container.innerHTML = meetings.map(m => {
+            const dateStr = new Date(m.Date).toLocaleDateString('en-ZA', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            return `
+                <article class="meeting-card" id="meeting-card-${m.meetingsId}">
+                    <section class="meeting-card-header">
+                        <section>
+                            <p class="meeting-card-title">${sanitise(m.title)}</p>
+                            <p class="meeting-card-meta">📅 ${dateStr} at ${sanitise(m.Time)}</p>
+                            ${m.agenda ? `<p class="meeting-card-agenda">${sanitise(m.agenda)}</p>` : ''}
+                        </section>
+                        <button class="btn-upload-minutes" onclick="toggleMinutesPanel(${m.meetingsId})">
+                            Upload minutes
+                        </button>
+                    </section>
+
+                    <section class="minutes-panel" id="minutes-panel-${m.meetingsId}" hidden>
+                        <textarea
+                            id="minutes-content-${m.meetingsId}"
+                            rows="6"
+                            placeholder="Paste or type the meeting minutes here..."
+                            style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid rgba(14,148,144,0.25);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;"
+                        ></textarea>
+                        <section style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+                            <button class="btn-record" onclick="submitMinutes(${m.meetingsId})">Save minutes</button>
+                            <button class="btn-cancel" onclick="toggleMinutesPanel(${m.meetingsId})">Cancel</button>
+                        </section>
+                        <output class="form-feedback" id="minutes-feedback-${m.meetingsId}" hidden></output>
+
+                        <section id="existing-minutes-${m.meetingsId}" style="margin-top:1rem;"></section>
+                    </section>
+                </article>
+            `;
+        }).join('');
+
+        // Load existing minutes for each meeting
+        meetings.forEach(m => loadExistingMinutes(m.meetingsId));
+
+    } catch (err) {
+        console.error('Error loading meetings:', err);
+        container.innerHTML = '<p style="color:#991b1b;font-size:13px;">Error loading meetings. Please try again.</p>';
+    }
+}
+
+function toggleMinutesPanel(meetingId) {
+    const panel = document.getElementById(`minutes-panel-${meetingId}`);
+    if (!panel) return;
+    panel.hidden = !panel.hidden;
+}
+
+async function submitMinutes(meetingId) {
+    const content = document.getElementById(`minutes-content-${meetingId}`).value.trim();
+    const feedbackEl = document.getElementById(`minutes-feedback-${meetingId}`);
+
+    if (!content) {
+        feedbackEl.textContent = 'Please enter the minutes content.';
+        feedbackEl.className = 'form-feedback error';
+        feedbackEl.hidden = false;
+        return;
+    }
+
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/meetings/${meetingId}/minutes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            feedbackEl.textContent = 'Minutes saved successfully!';
+            feedbackEl.className = 'form-feedback success';
+            feedbackEl.hidden = false;
+            document.getElementById(`minutes-content-${meetingId}`).value = '';
+            await loadExistingMinutes(meetingId);
+        } else {
+            feedbackEl.textContent = data.error || 'Failed to save minutes.';
+            feedbackEl.className = 'form-feedback error';
+            feedbackEl.hidden = false;
+        }
+    } catch (err) {
+        console.error('Submit minutes error:', err);
+        feedbackEl.textContent = 'Network error. Please try again.';
+        feedbackEl.className = 'form-feedback error';
+        feedbackEl.hidden = false;
+    }
+}
+
+async function loadExistingMinutes(meetingId) {
+    const container = document.getElementById(`existing-minutes-${meetingId}`);
+    if (!container) return;
+
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/meetings/${meetingId}/minutes`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (!data.minutes || data.minutes.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = `
+            <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Previously uploaded minutes</p>
+            ${data.minutes.map(m => `
+                <article style="background:#f0fafa;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #e0f7f6;">
+                    <p style="font-size:11px;color:#64748b;margin:0 0 6px;">
+                        Uploaded by <strong>${sanitise(m.users.name)}</strong> on 
+                        ${new Date(m.uploadedAt).toLocaleDateString('en-ZA', {day:'numeric',month:'short',year:'numeric'})}
+                    </p>
+                    <p style="font-size:13px;color:#0f172a;margin:0;white-space:pre-wrap;">${sanitise(m.content)}</p>
+                </article>
+            `).join('')}
+        `;
+    } catch (err) {
+        console.error('Error loading existing minutes:', err);
+    }
+}
 // ─── Event listeners ──────────────────────────────────────────────────────────
 function setupEventListeners() {
     const backBtn           = document.getElementById('back-btn');

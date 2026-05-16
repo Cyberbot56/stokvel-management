@@ -436,11 +436,12 @@
 
       <!-- ══ MEETINGS tab ══ -->
       <section id="tab-meetings" class="tab-panel">
-        <h2 class="section-page-title">Schedule Meetings</h2>
+        <h2 class="section-page-title">Meetings</h2>
 
+        <!-- Schedule a new meeting -->
         <article class="card">
           <header class="section-header">
-            <h2 class="card-title">Schedule meetings</h2>
+            <h2 class="card-title">Schedule a meeting</h2>
           </header>
 
           <form class="add-member-form" id="schedule-meeting">
@@ -469,6 +470,17 @@
 
           <output class="form-feedback" id="meeting-feedback" hidden></output>
         </article>
+
+        <!-- Scheduled meetings list -->
+        <article class="card" style="margin-top:1.25rem;">
+          <header class="section-header">
+            <h2 class="card-title">Scheduled meetings</h2>
+          </header>
+          <section id="meetings-list-container">
+            <p style="color:#64748b;font-size:13px;font-style:italic;">Loading meetings...</p>
+          </section>
+        </article>
+
       </section>
       <!-- end MEETINGS -->
 

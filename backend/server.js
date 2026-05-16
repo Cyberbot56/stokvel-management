@@ -1402,7 +1402,68 @@ app.get('/api/groups/:groupId/health-scores/me', requireAuth, async (req, res) =
         res.status(500).json({ error: 'Failed to fetch health score', details: error.message });
     }
 });
+// POST /api/meetings/:meetingId/minutes — upload minutes for a meeting
+app.post('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
+    const { meetingId } = req.params;
+    const { content } = req.body;
+    const uploadedBy = req.user.userId;
 
+    if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Minutes content is required' });
+    }
+
+    try {
+        const meeting = await prisma.meetings.findUnique({
+            where: { meetingsId: parseInt(meetingId) }
+        });
+        if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: meeting.FKKgroupId, SuserId: uploadedBy, role: { in: ['treasurer', 'admin'] } }
+        });
+        if (!membership) return res.status(403).json({ error: 'Only the treasurer or admin can upload minutes' });
+
+        const minutes = await prisma.meeting_minutes.create({
+            data: {
+                FKmeetingId: parseInt(meetingId),
+                content: content.trim(),
+                uploadedBy,
+                uploadedAt: new Date()
+            }
+        });
+        res.status(201).json({ message: 'Minutes uploaded successfully', minutes });
+    } catch (error) {
+        console.error('Error uploading minutes:', error);
+        res.status(500).json({ error: 'Failed to upload minutes', details: error.message });
+    }
+});
+
+// GET /api/meetings/:meetingId/minutes — get minutes for a meeting
+app.get('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
+    const { meetingId } = req.params;
+
+    try {
+        const meeting = await prisma.meetings.findUnique({
+            where: { meetingsId: parseInt(meetingId) }
+        });
+        if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: meeting.FKKgroupId, SuserId: req.user.userId }
+        });
+        if (!membership) return res.status(403).json({ error: 'You are not a member of this group' });
+
+        const minutes = await prisma.meeting_minutes.findMany({
+            where: { FKmeetingId: parseInt(meetingId) },
+            orderBy: { uploadedAt: 'desc' },
+            include: { users: { select: { name: true, email: true } } }
+        });
+        res.json({ meetingId: parseInt(meetingId), minutes });
+    } catch (error) {
+        console.error('Error fetching minutes:', error);
+        res.status(500).json({ error: 'Failed to fetch minutes', details: error.message });
+    }
+});
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });
