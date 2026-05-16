@@ -214,33 +214,43 @@
           </dl>
         </article>
 
-                  <!-- ML Financial Health Score Card -->
-      <article class="card" id="health-score-card" hidden>
-        <header class="section-header">
-          <h2 class="card-title">Financial Health Scores</h2>
-          <span id="group-health-badge" style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;"></span>
-        </header>
-        <p style="font-size:13px;color:#64748b;margin-bottom:1rem;">
-          ML-powered scores based on each member's contribution history.
-        </p>
-
-        <!-- Group average score -->
-        <section style="display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap;">
-            <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
-              <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Group Health Score</p>
-              <p id="group-avg-score" style="font-size:32px;font-weight:700;color:#034e52;margin:0;"></p>
-              <p id="group-avg-label" style="font-size:12px;color:#64748b;margin:4px 0 0;"></p>
-            </section>
-            <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
-              <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Risk Level</p>
-              <p id="group-risk-label" style="font-size:18px;font-weight:700;color:#034e52;margin:0;"></p>
-            </section>
-            <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
-              <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Model</p>
-              <p style="font-size:13px;font-weight:700;color:#034e52;margin:0;">Neural Network</p>
-              <p style="font-size:11px;color:#64748b;margin:2px 0 0;">TensorFlow.js</p>
-            </section>
+     <!-- Personal ML Financial Health Score -->
+<article class="card" id="personal-health-card" hidden>
+  <h2 class="card-title">My Financial Health Score</h2>
+  <p style="font-size:13px;color:#64748b;margin-bottom:1rem;">
+    ML-powered score based on your contribution history and engagement patterns.
+  </p>
+  <section style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+    <section style="text-align:center;min-width:100px;">
+      <p id="my-health-score" style="font-size:52px;font-weight:700;color:#034e52;margin:0;"></p>
+      <p style="font-size:12px;color:#64748b;margin:4px 0 0;">out of 100</p>
+    </section>
+    <section style="flex:1;">
+      <p id="my-health-label" style="font-size:20px;font-weight:700;margin:0 0 4px;"></p>
+      <p id="my-health-risk"  style="font-size:13px;color:#64748b;margin:0 0 12px;"></p>
+      <section style="background:#f0fafa;border-radius:8px;padding:10px 14px;">
+        <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px;">Breakdown</p>
+        <section style="display:flex;gap:16px;">
+          <section>
+            <p style="font-size:11px;color:#64748b;margin:0;">Paid</p>
+            <p id="my-paid-count" style="font-size:16px;font-weight:700;color:#034e52;margin:0;"></p>
           </section>
+          <section>
+            <p style="font-size:11px;color:#64748b;margin:0;">Missed</p>
+            <p id="my-missed-count" style="font-size:16px;font-weight:700;color:#991b1b;margin:0;"></p>
+          </section>
+          <section>
+            <p style="font-size:11px;color:#64748b;margin:0;">Pending</p>
+            <p id="my-pending-count" style="font-size:16px;font-weight:700;color:#b45309;margin:0;"></p>
+          </section>
+        </section>
+      </section>
+      <p style="font-size:11px;color:#64748b;margin:8px 0 0;">
+        Powered by a neural network trained on stokvel contribution patterns.
+      </p>
+    </section>
+  </section>
+</article>
 
           <!-- Per member scores -->
           <section id="health-scores-container"></section>
