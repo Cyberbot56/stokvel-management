@@ -373,85 +373,95 @@ async function fetchHealthScores(groupId) {
     if (!response.ok) throw new Error('Failed to fetch health scores');
     return await response.json();
 }
-
 async function loadAndRenderHealthScores(groupId) {
     const card = document.getElementById('health-score-card');
     if (!card) return;
 
-    try {
-        const data = await fetchHealthScores(groupId);
+    for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+            const token    = await auth0Client.getTokenSilently();
+            const response = await fetch(`${config.apiBase}/api/groups/${groupId}/health-scores`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-        // Group score
-        document.getElementById('group-avg-score').textContent = data.groupScore + '%';
-        document.getElementById('group-avg-label').textContent = data.groupLabel;
-        document.getElementById('group-risk-label').textContent = data.groupRisk;
+            if (response.status === 503) {
+                console.log(`Health model not ready, retrying in 2s (attempt ${attempt}/5)...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                continue;
+            }
 
-        // Group badge colour
-        const badge = document.getElementById('group-health-badge');
-        badge.textContent = data.groupLabel;
-        if (data.groupScore >= 80)      { badge.style.background = '#e0f7f6'; badge.style.color = '#034e52'; }
-        else if (data.groupScore >= 60) { badge.style.background = '#fef3c7'; badge.style.color = '#b45309'; }
-        else if (data.groupScore >= 40) { badge.style.background = '#ffedd5'; badge.style.color = '#c2410c'; }
-        else                            { badge.style.background = '#fef2f2'; badge.style.color = '#991b1b'; }
+            if (!response.ok) throw new Error('Failed to fetch health scores');
+            const data = await response.json();
 
-        // Per member table
-        const container = document.getElementById('health-scores-container');
-        if (!data.members || data.members.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">No member data available.</p>';
+            document.getElementById('group-avg-score').textContent  = data.groupScore + '%';
+            document.getElementById('group-avg-label').textContent  = data.groupLabel;
+            document.getElementById('group-risk-label').textContent = data.groupRisk;
+
+            const badge = document.getElementById('group-health-badge');
+            badge.textContent = data.groupLabel;
+            if (data.groupScore >= 80)      { badge.style.background = '#e0f7f6'; badge.style.color = '#034e52'; }
+            else if (data.groupScore >= 60) { badge.style.background = '#fef3c7'; badge.style.color = '#b45309'; }
+            else if (data.groupScore >= 40) { badge.style.background = '#ffedd5'; badge.style.color = '#c2410c'; }
+            else                            { badge.style.background = '#fef2f2'; badge.style.color = '#991b1b'; }
+
+            const container = document.getElementById('health-scores-container');
+            if (!data.members || data.members.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;padding:1rem;">No member data available.</p>';
+                card.hidden = false;
+                return;
+            }
+
+            let html = `
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                        <tr style="border-bottom:1.5px solid #e0f7f6;">
+                            <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Member</th>
+                            <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Score</th>
+                            <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Paid</th>
+                            <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Missed</th>
+                            <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Status</th>
+                            <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.members.forEach(member => {
+                let scoreBg = '#e0f7f6', scoreColor = '#034e52';
+                if (member.score < 80 && member.score >= 60) { scoreBg = '#fef3c7'; scoreColor = '#b45309'; }
+                if (member.score < 60 && member.score >= 40) { scoreBg = '#ffedd5'; scoreColor = '#c2410c'; }
+                if (member.score < 40)                       { scoreBg = '#fef2f2'; scoreColor = '#991b1b'; }
+
+                html += `
+                    <tr style="border-bottom:1px solid #f0fafa;">
+                        <td style="padding:11px 12px;">
+                            <p style="font-weight:600;color:#034e52;margin:0;">${sanitise(member.name)}</p>
+                            <p style="font-size:12px;color:#64748b;margin:0;">${sanitise(member.email)}</p>
+                        </td>
+                        <td style="padding:11px 12px;text-align:center;">
+                            <span style="background:${scoreBg};color:${scoreColor};padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px;">${member.score}%</span>
+                        </td>
+                        <td style="padding:11px 12px;text-align:center;color:#034e52;font-weight:700;">${member.breakdown.paid}</td>
+                        <td style="padding:11px 12px;text-align:center;color:#991b1b;font-weight:700;">${member.breakdown.missed}</td>
+                        <td style="padding:11px 12px;text-align:center;">
+                            <span style="background:${scoreBg};color:${scoreColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${member.label}</span>
+                        </td>
+                        <td style="padding:11px 12px;text-align:center;font-size:12px;color:#64748b;">${member.risk}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
             card.hidden = false;
             return;
+
+        } catch (error) {
+            console.error('Health scores error:', error);
+            if (attempt === 5 && card) card.hidden = true;
         }
-
-        let html = `
-            <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                <thead>
-                    <tr style="border-bottom:1.5px solid #e0f7f6;">
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Member</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Score</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Paid</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Missed</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Status</th>
-                        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Risk</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        data.members.forEach(member => {
-            let scoreBg = '#e0f7f6', scoreColor = '#034e52';
-            if (member.score < 80 && member.score >= 60) { scoreBg = '#fef3c7'; scoreColor = '#b45309'; }
-            if (member.score < 60 && member.score >= 40) { scoreBg = '#ffedd5'; scoreColor = '#c2410c'; }
-            if (member.score < 40)                       { scoreBg = '#fef2f2'; scoreColor = '#991b1b'; }
-
-            html += `
-                <tr style="border-bottom:1px solid #f0fafa;">
-                    <td style="padding:11px 12px;">
-                        <p style="font-weight:600;color:#034e52;margin:0;">${sanitise(member.name)}</p>
-                        <p style="font-size:12px;color:#64748b;margin:0;">${sanitise(member.email)}</p>
-                    </td>
-                    <td style="padding:11px 12px;text-align:center;">
-                        <span style="background:${scoreBg};color:${scoreColor};padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px;">${member.score}%</span>
-                    </td>
-                    <td style="padding:11px 12px;text-align:center;color:#034e52;font-weight:700;">${member.breakdown.paid}</td>
-                    <td style="padding:11px 12px;text-align:center;color:#991b1b;font-weight:700;">${member.breakdown.missed}</td>
-                    <td style="padding:11px 12px;text-align:center;">
-                        <span style="background:${scoreBg};color:${scoreColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${member.label}</span>
-                    </td>
-                    <td style="padding:11px 12px;text-align:center;font-size:12px;color:#64748b;">${member.risk}</td>
-                </tr>
-            `;
-        });
-
-        html += '</tbody></table>';
-        container.innerHTML = html;
-        card.hidden = false;
-
-    } catch (error) {
-        console.error('Health scores error:', error);
-        if (card) card.hidden = true;
     }
 }
-
 
 // ─── Load group data ──────────────────────────────────────────────────────────
 
