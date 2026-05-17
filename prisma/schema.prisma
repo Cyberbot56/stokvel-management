@@ -91,6 +91,7 @@ model users {
   announcements announcements[]
   payoutsInitiated Payout[]          @relation("initiatorPayouts")
   payoutsReceived  Payout[]          @relation("recipientPayouts")
+  meeting_minutes  meeting_minutes[]
 }
 
 model Payout {
@@ -114,14 +115,25 @@ model Payout {
 }
 
 model meetings {
-  meetingsId Int      @id(map: "PK_meetings") @default(autoincrement())
-  FKKgroupId Int
-  title      String   @db.VarChar(100)
-  agenda     String?  @db.Text
-  Date       DateTime @db.Date
-  Time       String   @db.VarChar(15)
-  postedAt   DateTime @db.DateTime
-  groups     groups   @relation(fields: [FKKgroupId], references: [groupId], onUpdate: NoAction, map: "FKKgroupId")
+  meetingsId      Int               @id(map: "PK_meetings") @default(autoincrement())
+  FKKgroupId      Int
+  title           String            @db.VarChar(100)
+  agenda          String?           @db.Text
+  Date            DateTime          @db.Date
+  Time            String            @db.VarChar(15)
+  postedAt        DateTime          @db.DateTime
+  groups          groups            @relation(fields: [FKKgroupId], references: [groupId], onUpdate: NoAction, map: "FKKgroupId")
+  meeting_minutes meeting_minutes[]
+}
+
+model meeting_minutes {
+  minutesId   Int      @id(map: "PK_meeting_minutes") @default(autoincrement())
+  FKmeetingId Int
+  content     String   @db.Text
+  uploadedBy  Int
+  uploadedAt  DateTime @default(now()) @db.DateTime
+  meetings    meetings @relation(fields: [FKmeetingId], references: [meetingsId], onUpdate: NoAction, map: "FKmeetingId")
+  users       users    @relation(fields: [uploadedBy], references: [userId], onUpdate: NoAction, map: "FKuploadedBy")
 }
 
 model announcements {

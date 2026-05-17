@@ -475,36 +475,52 @@ async function loadPersonalHealthScore(userId, groupId) {
     const card = document.getElementById('personal-health-card');
     if (!card) return;
 
-    try {
-        const token    = await auth0Client.getTokenSilently();
-        const response = await fetch(`${config.apiBase}/api/groups/${groupId}/health-scores/me`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Failed to fetch health score');
-        const data = await response.json();
+    for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+            const token    = await auth0Client.getTokenSilently();
+            const response = await fetch(`${config.apiBase}/api/groups/${groupId}/health-scores/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-        const scoreEl = document.getElementById('my-health-score');
-        const labelEl = document.getElementById('my-health-label');
-        const riskEl  = document.getElementById('my-health-risk');
+            if (response.status === 503) {
+                console.log(`Health model not ready, retrying in 2s (attempt ${attempt}/5)...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                continue;
+            }
 
-        if (scoreEl) scoreEl.textContent = data.score + '%';
-        if (labelEl) {
-            labelEl.textContent = data.label;
-            if (data.score >= 80)      labelEl.style.color = '#034e52';
-            else if (data.score >= 60) labelEl.style.color = '#b45309';
-            else if (data.score >= 40) labelEl.style.color = '#c2410c';
-            else                       labelEl.style.color = '#991b1b';
+            if (!response.ok) throw new Error('Failed to fetch health score');
+            const data = await response.json();
+
+            const scoreEl   = document.getElementById('my-health-score');
+            const labelEl   = document.getElementById('my-health-label');
+            const riskEl    = document.getElementById('my-health-risk');
+            const paidEl    = document.getElementById('my-paid-count');
+            const missedEl  = document.getElementById('my-missed-count');
+            const pendingEl = document.getElementById('my-pending-count');
+
+            if (scoreEl)   scoreEl.textContent   = data.score + '%';
+            if (paidEl)    paidEl.textContent    = data.breakdown.paid;
+            if (missedEl)  missedEl.textContent  = data.breakdown.missed;
+            if (pendingEl) pendingEl.textContent = data.breakdown.pending;
+
+            if (labelEl) {
+                labelEl.textContent = data.label;
+                if (data.score >= 80)      labelEl.style.color = '#034e52';
+                else if (data.score >= 60) labelEl.style.color = '#b45309';
+                else if (data.score >= 40) labelEl.style.color = '#c2410c';
+                else                       labelEl.style.color = '#991b1b';
+            }
+            if (riskEl) riskEl.textContent = data.risk;
+
+            card.hidden = false;
+            return;
+
+        } catch (error) {
+            console.error('Personal health score error:', error);
+            if (attempt === 5 && card) card.hidden = true;
         }
-        if (riskEl) riskEl.textContent = data.risk;
-
-        card.hidden = false;
-
-    } catch (error) {
-        console.error('Personal health score error:', error);
-        if (card) card.hidden = true;
     }
 }
-
 
 // ─── Group loading ────────────────────────────────────────────────────────────
 
