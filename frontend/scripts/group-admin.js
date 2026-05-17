@@ -872,7 +872,7 @@ async function handleMakeAnnouncement(e) {
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok || response.status === 201) {
             showFeedback('announcement-feedback', 
                 `Announcement "${titleInput.value}" posted successfully!`, 
                 'success'

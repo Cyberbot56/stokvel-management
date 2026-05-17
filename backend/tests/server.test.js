@@ -1228,3 +1228,368 @@ describe('Meeting Minutes', () => {
     expect(res.body.error).toBe('Failed to fetch minutes');
   });
 });
+describe('Announcements', () => {
+  describe('POST /api/announcements', () => {
+    const validAnnouncementData = {
+      groupId: 1,
+      title: 'Test Announcement',
+      content: 'This is a test announcement content'
+    };
+
+    test('POST /api/announcements returns 400 if groupId is missing', async () => {
+      const res = await request(app)
+        .post('/api/announcements')
+        .send({ title: 'Test', content: 'Content' });
+      
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toBe('Missing required fields: groupId or title.');
+    });
+
+    test('POST /api/announcements returns 400 if title is missing', async () => {
+      const res = await request(app)
+        .post('/api/announcements')
+        .send({ groupId: 1, content: 'Content' });
+      
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toBe('Missing required fields: groupId or title.');
+    });
+
+    test('POST /api/announcements returns 403 if user is not admin or treasurer', async () => {
+      prisma.group_members.findFirst.mockResolvedValue(null);
+      
+      const res = await request(app)
+        .post('/api/announcements')
+        .send(validAnnouncementData);
+      
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toBe('Only group admins and treasurers can make announcements.');
+    });
+
+    test('POST /api/announcements returns 403 if user is a regular member', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+      
+      const res = await request(app)
+        .post('/api/announcements')
+        .send(validAnnouncementData);
+      
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toBe('Only group admins and treasurers can make announcements.');
+    });
+
+    test('POST /api/announcements creates announcement successfully for admin', async () => {
+      const mockAnnouncement = {
+        announcementId: 1,
+        agroupId: 1,
+        authorId: 1,
+        title: 'Test Announcement',
+        content: 'This is a test announcement content',
+        postedAt: new Date().toISOString()
+      };
+      
+      const mockAuthor = {
+        userId: 1,
+        name: 'Test User',
+        email: 'test@example.com'
+      };
+
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+      prisma.announcements.create.mockResolvedValue(mockAnnouncement);
+      prisma.users.findUnique.mockResolvedValue(mockAuthor);
+      
+      const res = await request(app)
+        .post('/api/announcements')
+        .send(validAnnouncementData);
+      
+      expect(res.statusCode).toBe(201);
+      expect(res.body.message).toBe('Announcement posted successfully!');
+      expect(res.body.announcement).toBeDefined();
+      expect(res.body.announcement.title).toBe('Test Announcement');
+      expect(res.body.announcement.author).toBeDefined();
+      expect(res.body.announcement.author.name).toBe('Test User');
+      
+      // Verify correct data was passed to create
+      expect(prisma.announcements.create).toHaveBeenCalledWith({
+        data: {
+          agroupId: 1,
+          authorId: 1,
+          title: 'Test Announcement',
+          content: 'This is a test announcement content',
+          postedAt: expect.any(String)
+        }
+      });
+    });
+
+    test('POST /api/announcements creates announcement successfully for treasurer', async () => {
+      const mockAnnouncement = {
+        announcementId: 2,
+        agroupId: 1,
+        authorId: 1,
+        title: 'Treasurer Announcement',
+        content: 'Payment reminder',
+        postedAt: new Date().toISOString()
+      };
+      
+      const mockAuthor = {
+        userId: 1,
+        name: 'Treasurer User',
+        email: 'treasurer@example.com'
+      };
+
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'treasurer' });
+      prisma.announcements.create.mockResolvedValue(mockAnnouncement);
+      prisma.users.findUnique.mockResolvedValue(mockAuthor);
+      
+      const res = await request(app)
+        .post('/api/announcements')
+        .send({
+          groupId: 1,
+          title: 'Treasurer Announcement',
+          content: 'Payment reminder'
+        });
+      
+      expect(res.statusCode).toBe(201);
+      expect(res.body.message).toBe('Announcement posted successfully!');
+    });
+
+    test('POST /api/announcements handles null content correctly', async () => {
+      const mockAnnouncement = {
+        announcementId: 3,
+        agroupId: 1,
+        authorId: 1,
+        title: 'Announcement without content',
+        content: null,
+        postedAt: new Date().toISOString()
+      };
+      
+      const mockAuthor = {
+        userId: 1,
+        name: 'Test User',
+        email: 'test@example.com'
+      };
+
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+      prisma.announcements.create.mockResolvedValue(mockAnnouncement);
+      prisma.users.findUnique.mockResolvedValue(mockAuthor);
+      
+      const res = await request(app)
+        .post('/api/announcements')
+        .send({ groupId: 1, title: 'Announcement without content' });
+      
+      expect(res.statusCode).toBe(201);
+      expect(prisma.announcements.create).toHaveBeenCalledWith({
+        data: {
+          agroupId: 1,
+          authorId: 1,
+          title: 'Announcement without content',
+          content: null,
+          postedAt: expect.any(String)
+        }
+      });
+    });
+
+    test('POST /api/announcements returns 500 on database error', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+      prisma.announcements.create.mockRejectedValue(new Error('Database connection failed'));
+      
+      const res = await request(app)
+        .post('/api/announcements')
+        .send(validAnnouncementData);
+      
+      expect(res.statusCode).toBe(500);
+      expect(res.body.error).toBe('Internal server error while saving announcement.');
+      expect(res.body.details).toBe('Database connection failed');
+    });
+  });
+
+  describe('GET /api/groups/:groupId/announcements', () => {
+    test('GET /api/groups/:groupId/announcements returns 403 if user is not a member', async () => {
+      prisma.group_members.findFirst.mockResolvedValue(null);
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toBe('You must be a member of this group to view announcements.');
+    });
+
+    test('GET /api/groups/:groupId/announcements returns empty array when no announcements exist', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+      prisma.announcements.findMany.mockResolvedValue([]);
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body).toHaveLength(0);
+    });
+
+    test('GET /api/groups/:groupId/announcements returns announcements with author details', async () => {
+      const mockAnnouncements = [
+        {
+          announcementId: 1,
+          agroupId: 1,
+          authorId: 1,
+          title: 'First Announcement',
+          content: 'Content 1',
+          postedAt: new Date('2026-01-15T10:00:00Z')
+        },
+        {
+          announcementId: 2,
+          agroupId: 1,
+          authorId: 2,
+          title: 'Second Announcement',
+          content: 'Content 2',
+          postedAt: new Date('2026-01-14T15:30:00Z')
+        }
+      ];
+      
+      const mockAuthors = {
+        1: { userId: 1, name: 'Admin User', email: 'admin@example.com' },
+        2: { userId: 2, name: 'Treasurer User', email: 'treasurer@example.com' }
+      };
+
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+      prisma.announcements.findMany.mockResolvedValue(mockAnnouncements);
+      
+      // Mock the author lookups for each announcement
+      prisma.users.findUnique
+        .mockResolvedValueOnce(mockAuthors[1])
+        .mockResolvedValueOnce(mockAuthors[2]);
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body).toHaveLength(2);
+      expect(res.body[0]).toHaveProperty('author');
+      expect(res.body[0].author.name).toBe('Admin User');
+      expect(res.body[1].author.name).toBe('Treasurer User');
+      expect(res.body[0].title).toBe('First Announcement');
+      expect(res.body[1].title).toBe('Second Announcement');
+    });
+
+    test('GET /api/groups/:groupId/announcements orders by postedAt descending', async () => {
+      const mockAnnouncements = [
+        {
+          announcementId: 3,
+          agroupId: 1,
+          authorId: 1,
+          title: 'Newest',
+          content: 'Most recent',
+          postedAt: new Date('2026-01-16T09:00:00Z')
+        },
+        {
+          announcementId: 2,
+          agroupId: 1,
+          authorId: 1,
+          title: 'Middle',
+          content: 'Middle content',
+          postedAt: new Date('2026-01-15T09:00:00Z')
+        },
+        {
+          announcementId: 1,
+          agroupId: 1,
+          authorId: 1,
+          title: 'Oldest',
+          content: 'Least recent',
+          postedAt: new Date('2026-01-14T09:00:00Z')
+        }
+      ];
+
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+      prisma.announcements.findMany.mockResolvedValue(mockAnnouncements);
+      
+      // Mock author lookup
+      prisma.users.findUnique.mockResolvedValue({ userId: 1, name: 'User', email: 'user@example.com' });
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      expect(res.statusCode).toBe(200);
+      expect(res.body[0].title).toBe('Newest');
+      expect(res.body[1].title).toBe('Middle');
+      expect(res.body[2].title).toBe('Oldest');
+      
+      // Verify the orderBy parameter was passed correctly
+      expect(prisma.announcements.findMany).toHaveBeenCalledWith({
+        where: { agroupId: 1 },
+        orderBy: { postedAt: 'desc' }
+      });
+    });
+
+    test('GET /api/groups/:groupId/announcements handles announcements with null content', async () => {
+      const mockAnnouncements = [
+        {
+          announcementId: 1,
+          agroupId: 1,
+          authorId: 1,
+          title: 'Title Only',
+          content: null,
+          postedAt: new Date()
+        }
+      ];
+
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+      prisma.announcements.findMany.mockResolvedValue(mockAnnouncements);
+      prisma.users.findUnique.mockResolvedValue({ userId: 1, name: 'User', email: 'user@example.com' });
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      expect(res.statusCode).toBe(200);
+      expect(res.body[0].content).toBeNull();
+      expect(res.body[0].title).toBe('Title Only');
+    });
+
+    test('GET /api/groups/:groupId/announcements handles different group IDs correctly', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+      prisma.announcements.findMany.mockResolvedValue([]);
+      
+      await request(app).get('/api/groups/42/announcements');
+      
+      expect(prisma.announcements.findMany).toHaveBeenCalledWith({
+        where: { agroupId: 42 },
+        orderBy: { postedAt: 'desc' }
+      });
+    });
+
+    test('GET /api/groups/:groupId/announcements returns 500 on database error when fetching members', async () => {
+      prisma.group_members.findFirst.mockRejectedValue(new Error('Database connection failed'));
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      expect(res.statusCode).toBe(500);
+      expect(res.body.error).toBe('Internal server error fetching announcements.');
+    });
+
+    test('GET /api/groups/:groupId/announcements returns 500 on database error when fetching announcements', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+      prisma.announcements.findMany.mockRejectedValue(new Error('Database error'));
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      expect(res.statusCode).toBe(500);
+      expect(res.body.error).toBe('Internal server error fetching announcements.');
+    });
+
+    test('GET /api/groups/:groupId/announcements handles error when fetching author details', async () => {
+      const mockAnnouncements = [
+        {
+          announcementId: 1,
+          agroupId: 1,
+          authorId: 1,
+          title: 'Test',
+          content: 'Content',
+          postedAt: new Date()
+        }
+      ];
+
+      prisma.group_members.findFirst.mockResolvedValue({ SuserId: 1 });
+      prisma.announcements.findMany.mockResolvedValue(mockAnnouncements);
+      prisma.users.findUnique.mockRejectedValue(new Error('Failed to fetch author'));
+      
+      const res = await request(app).get('/api/groups/1/announcements');
+      
+      // Should still return 500 because author fetch fails
+      expect(res.statusCode).toBe(500);
+      expect(res.body.error).toBe('Internal server error fetching announcements.');
+    });
+  });
+});
