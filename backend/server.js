@@ -1494,7 +1494,6 @@ app.get('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
 });
 // POST: Create a new announcement 
 // POST: Create a new announcement 
-// POST: Create a new announcement 
 app.post('/api/announcements', requireAuth, async (req, res) => {
   const { groupId, title, content } = req.body;
   const authorId = req.user.userId;
@@ -1504,7 +1503,10 @@ app.post('/api/announcements', requireAuth, async (req, res) => {
   }
 
   try {
-    // Verify the user is an admin or treasurer of this group
+    // Log for debugging
+    console.log('Creating announcement:', { groupId, title, authorId });
+
+    // Verify the user is an admin or treasurer
     const membership = await prisma.group_members.findFirst({
       where: { 
         FgroupId: parseInt(groupId), 
@@ -1516,18 +1518,17 @@ app.post('/api/announcements', requireAuth, async (req, res) => {
       return res.status(403).json({ error: "Only group admins and treasurers can make announcements." });
     }
 
-    // Use regular create with 'agroupId' field name
+    // Use UTC date to avoid timezone issues
     const newAnnouncement = await prisma.announcements.create({
       data: {
-        agroupId: parseInt(groupId),  // Note: 'agroupId' not 'groupId'
+        agroupId: parseInt(groupId),
         authorId: authorId,
         title: title,
         content: content || null,
-        postedAt: new Date()
+        postedAt: new Date().toISOString() // Use ISO string format
       }
     });
 
-    // Fetch the author separately
     const author = await prisma.users.findUnique({
       where: { userId: authorId },
       select: { name: true, email: true }
@@ -1543,7 +1544,11 @@ app.post('/api/announcements', requireAuth, async (req, res) => {
 
   } catch (error) {
     console.error("Error creating announcement:", error);
-    return res.status(500).json({ error: "Internal server error while saving announcement." });
+    // Return more specific error message
+    return res.status(500).json({ 
+      error: "Internal server error while saving announcement.",
+      details: error.message 
+    });
   }
 });
 // GET: Fetch all announcements for a specific group 

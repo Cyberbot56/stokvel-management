@@ -138,11 +138,11 @@ model meeting_minutes {
 
 model announcements {
   announcementId Int      @id(map: "PK_announcements") @default(autoincrement())
-  agroupId       Int
   authorId       Int
   title          String   @db.VarChar(100)
   content        String?  @db.Text
   postedAt       DateTime @default(now()) @db.DateTime
+  agroupId       Int
   groups         groups   @relation(fields: [agroupId], references: [groupId], onUpdate: NoAction, map: "agroupId")
   users          users    @relation(fields: [authorId], references: [userId], onUpdate: NoAction, map: "authorId")
 }

@@ -887,7 +887,7 @@ async function handleMakeAnnouncement(e) {
         }
     } catch (err) {
         console.error('Make announcement error:', err);
-        showFeedback('announcement-feedback', 'posted successfully!', 'error');
+        showFeedback('announcement-feedback', 'Failed to post announcement. Check console for details.', 'error');
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = originalBtnText;
