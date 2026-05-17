@@ -1155,84 +1155,84 @@ app.get('/api/groups/:groupId/analytics/payouts', requireAuth, async (req, res) 
 // ─── ML Financial Health Scoring ─────────────────────────────────────────────
 const tf = require('@tensorflow/tfjs-node');
 
-let healthModel = null;
+ let healthModel = null;
 
-// Synthetic training data based on realistic stokvel contribution patterns
-// Features: [paymentRate, missedRatio, pendingRatio, consistency]
-// Labels:   [healthScore between 0 and 1]
-async function trainHealthModel() {
-    const trainingData = [
-        // Perfect payers
-        { input: [1.00, 0.00, 0.00, 1], output: [0.98] },
-        { input: [1.00, 0.00, 0.00, 1], output: [0.96] },
-        { input: [0.95, 0.00, 0.05, 1], output: [0.90] },
+ // Synthetic training data based on realistic stokvel contribution patterns
+ // Features: [paymentRate, missedRatio, pendingRatio, consistency]
+ // Labels:   [healthScore between 0 and 1]
+ async function trainHealthModel() {
+     const trainingData = [
+         // Perfect payers
+         { input: [1.00, 0.00, 0.00, 1], output: [0.98] },
+         { input: [1.00, 0.00, 0.00, 1], output: [0.96] },
+         { input: [0.95, 0.00, 0.05, 1], output: [0.90] },
 
-        // Good payers — occasional pending
-        { input: [0.90, 0.00, 0.10, 0], output: [0.82] },
-        { input: [0.85, 0.05, 0.10, 0], output: [0.78] },
-        { input: [0.80, 0.10, 0.10, 0], output: [0.72] },
-        { input: [0.80, 0.05, 0.15, 0], output: [0.70] },
+         // Good payers — occasional pending
+         { input: [0.90, 0.00, 0.10, 0], output: [0.82] },
+         { input: [0.85, 0.05, 0.10, 0], output: [0.78] },
+         { input: [0.80, 0.10, 0.10, 0], output: [0.72] },
+         { input: [0.80, 0.05, 0.15, 0], output: [0.70] },
 
-        // Average payers — some misses
-        { input: [0.70, 0.20, 0.10, 0], output: [0.58] },
-        { input: [0.65, 0.25, 0.10, 0], output: [0.52] },
-        { input: [0.60, 0.30, 0.10, 0], output: [0.48] },
-        { input: [0.60, 0.20, 0.20, 0], output: [0.45] },
+         // Average payers — some misses
+         { input: [0.70, 0.20, 0.10, 0], output: [0.58] },
+         { input: [0.65, 0.25, 0.10, 0], output: [0.52] },
+         { input: [0.60, 0.30, 0.10, 0], output: [0.48] },
+         { input: [0.60, 0.20, 0.20, 0], output: [0.45] },
 
-        // Struggling — missing frequently
-        { input: [0.50, 0.40, 0.10, 0], output: [0.35] },
-        { input: [0.45, 0.45, 0.10, 0], output: [0.30] },
-        { input: [0.40, 0.50, 0.10, 0], output: [0.25] },
-        { input: [0.35, 0.55, 0.10, 0], output: [0.22] },
+         // Struggling — missing frequently
+         { input: [0.50, 0.40, 0.10, 0], output: [0.35] },
+         { input: [0.45, 0.45, 0.10, 0], output: [0.30] },
+         { input: [0.40, 0.50, 0.10, 0], output: [0.25] },
+         { input: [0.35, 0.55, 0.10, 0], output: [0.22] },
 
-        // Critical — barely paying
-        { input: [0.20, 0.70, 0.10, 0], output: [0.12] },
-        { input: [0.10, 0.80, 0.10, 0], output: [0.08] },
-        { input: [0.00, 1.00, 0.00, 0], output: [0.02] },
-        { input: [0.00, 0.90, 0.10, 0], output: [0.03] },
+         // Critical — barely paying
+         { input: [0.20, 0.70, 0.10, 0], output: [0.12] },
+         { input: [0.10, 0.80, 0.10, 0], output: [0.08] },
+         { input: [0.00, 1.00, 0.00, 0], output: [0.02] },
+         { input: [0.00, 0.90, 0.10, 0], output: [0.03] },
 
-        // Mixed patterns
-        { input: [0.75, 0.15, 0.10, 0], output: [0.65] },
-        { input: [0.55, 0.35, 0.10, 0], output: [0.40] },
-        { input: [0.88, 0.02, 0.10, 1], output: [0.85] },
-        { input: [0.30, 0.60, 0.10, 0], output: [0.18] },
-        { input: [0.66, 0.24, 0.10, 0], output: [0.55] },
-    ];
+         // Mixed patterns
+         { input: [0.75, 0.15, 0.10, 0], output: [0.65] },
+         { input: [0.55, 0.35, 0.10, 0], output: [0.40] },
+         { input: [0.88, 0.02, 0.10, 1], output: [0.85] },
+         { input: [0.30, 0.60, 0.10, 0], output: [0.18] },
+         { input: [0.66, 0.24, 0.10, 0], output: [0.55] },
+     ];
 
-    const xs = tf.tensor2d(trainingData.map(d => d.input));
-    const ys = tf.tensor2d(trainingData.map(d => d.output));
+     const xs = tf.tensor2d(trainingData.map(d => d.input));
+     const ys = tf.tensor2d(trainingData.map(d => d.output));
 
-    // Neural network — 3 layers
-    const model = tf.sequential();
-    model.add(tf.layers.dense({ inputShape: [4], units: 16, activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 8,  activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 1,  activation: 'sigmoid' }));
+     // Neural network — 3 layers
+     const model = tf.sequential();
+     model.add(tf.layers.dense({ inputShape: [4], units: 16, activation: 'relu' }));
+     model.add(tf.layers.dense({ units: 8,  activation: 'relu' }));
+     model.add(tf.layers.dense({ units: 1,  activation: 'sigmoid' }));
 
-    model.compile({
-        optimizer: tf.train.adam(0.01),
-        loss: 'meanSquaredError',
-        metrics: ['mae']
-    });
+     model.compile({
+         optimizer: tf.train.adam(0.01),
+         loss: 'meanSquaredError',
+         metrics: ['mae']
+     });
 
-    await model.fit(xs, ys, {
-        epochs: 300,
-        shuffle: true,
-        verbose: 0  // silent training — no console spam
-    });
+     await model.fit(xs, ys, {
+         epochs: 300,
+         shuffle: true,
+         verbose: 0  // silent training — no console spam
+     });
 
-    xs.dispose();
-    ys.dispose();
+     xs.dispose();
+     ys.dispose();
 
-    console.log('✅ Financial health model trained successfully');
-    return model;
-}
+     console.log('✅ Financial health model trained successfully');
+     return model;
+ }
 
-// Train the model once when the server starts
-trainHealthModel().then(model => {
-    healthModel = model;
-}).catch(err => {
-    console.error('❌ Failed to train health model:', err);
-});
+ // Train the model once when the server starts
+ trainHealthModel().then(model => {
+     healthModel = model;
+ }).catch(err => {
+     console.error('❌ Failed to train health model:', err);
+ });
 
 // Helper — extract features from member contribution data
 function extractFeatures(paid, missed, pending) {
@@ -1491,6 +1491,111 @@ app.get('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
         console.error('Error fetching minutes:', error);
         res.status(500).json({ error: 'Failed to fetch minutes', details: error.message });
     }
+});
+// POST: Create a new announcement 
+// POST: Create a new announcement 
+// POST: Create a new announcement 
+app.post('/api/announcements', requireAuth, async (req, res) => {
+  const { groupId, title, content } = req.body;
+  const authorId = req.user.userId;
+
+  if (!groupId || !title) {
+    return res.status(400).json({ error: "Missing required fields: groupId or title." });
+  }
+
+  try {
+    // Verify the user is an admin or treasurer of this group
+    const membership = await prisma.group_members.findFirst({
+      where: { 
+        FgroupId: parseInt(groupId), 
+        SuserId: authorId 
+      }
+    });
+
+    if (!membership || !['admin', 'treasurer'].includes(membership.role)) {
+      return res.status(403).json({ error: "Only group admins and treasurers can make announcements." });
+    }
+
+    // Use regular create with 'agroupId' field name
+    const newAnnouncement = await prisma.announcements.create({
+      data: {
+        agroupId: parseInt(groupId),  // Note: 'agroupId' not 'groupId'
+        authorId: authorId,
+        title: title,
+        content: content || null,
+        postedAt: new Date()
+      }
+    });
+
+    // Fetch the author separately
+    const author = await prisma.users.findUnique({
+      where: { userId: authorId },
+      select: { name: true, email: true }
+    });
+
+    return res.status(201).json({
+      message: "Announcement posted successfully!",
+      announcement: {
+        ...newAnnouncement,
+        author: author
+      }
+    });
+
+  } catch (error) {
+    console.error("Error creating announcement:", error);
+    return res.status(500).json({ error: "Internal server error while saving announcement." });
+  }
+});
+// GET: Fetch all announcements for a specific group 
+// GET: Fetch all announcements for a specific group 
+// GET: Fetch all announcements for a specific group 
+app.get('/api/groups/:groupId/announcements', requireAuth, async (req, res) => {
+  const { groupId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    // Check if the user belongs to the group
+    const isMember = await prisma.group_members.findFirst({
+      where: { 
+        FgroupId: parseInt(groupId), 
+        SuserId: userId 
+      }
+    });
+
+    if (!isMember) {
+      return res.status(403).json({ error: "You must be a member of this group to view announcements." });
+    }
+
+    // Use 'agroupId' - note the 'a' prefix
+    const groupAnnouncements = await prisma.announcements.findMany({
+      where: { 
+        agroupId: parseInt(groupId)  // Changed from 'groupId' to 'agroupId'
+      },
+      orderBy: { 
+        postedAt: 'desc' 
+      }
+    });
+
+    // Manually fetch author names for each announcement
+    const announcementsWithAuthors = await Promise.all(
+      groupAnnouncements.map(async (announcement) => {
+        const author = await prisma.users.findUnique({
+          where: { userId: announcement.authorId },
+          select: { name: true, email: true }
+        });
+        return {
+          ...announcement,
+          author: author
+        };
+      })
+    );
+
+    return res.status(200).json(announcementsWithAuthors);
+
+  } catch (error) {
+    console.error("Error fetching announcements:", error);
+    return res.status(500).json({ error: "Internal server error fetching announcements." });
+  }
 });
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));

@@ -20,6 +20,114 @@
   gap: 6px;
   flex-shrink: 0;
 }
+    /* Announcements Bell & Modal */
+    .announcements-bell {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      position: relative;
+      margin-left: auto;
+      margin-right: 16px;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .announcements-bell:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .announcements-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    .announcements-modal .modal {
+      max-width: 550px;
+      width: 90%;
+    }
+
+    .announcements-content {
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .announcement-item {
+      padding: 16px;
+      border-bottom: 1px solid #e0f7f6;
+    }
+
+    .announcement-item:last-child {
+      border-bottom: none;
+    }
+
+    .announcement-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #034e52;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .announcement-title::before {
+      content: "📢";
+      font-size: 14px;
+    }
+
+    .announcement-content {
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .announcement-meta {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f0fafa;
+    }
+
+    .announcement-author {
+      font-weight: 600;
+      color: #0e9490;
+    }
+
+    .announcement-date {
+      font-style: italic;
+    }
+
+    .empty-announcements {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      font-style: italic;
+    }
 
 
 /* ── Section header ── */

@@ -132,8 +132,21 @@
     <nav class="header-right">
       <address class="avatar" id="avatar" onclick="showProfileModal()" style="cursor:pointer;" title="My profile"></address>
     </nav>
+     <button id="announcements-bell" class="announcements-bell" title="View announcements">🔔
+      <span id="announcements-badge" class="announcements-badge" hidden>0</span>
   </header>
-
+  <!-- Announcements Modal -->
+  <aside id="announcements-modal" class="modal-overlay" hidden>
+    <article class="modal announcements-modal">
+      <header class="modal-header">
+        <h2 class="modal-title">📢 Announcements</h2>
+        <button id="close-announcements-modal" class="modal-close" aria-label="Close announcements">✕</button>
+      </header>
+      <div id="announcements-content" class="modal-section announcements-content">
+        <p style="text-align:center;padding:2rem;color:#64748b;">Loading announcements...</p>
+      </div>
+    </article>
+  </aside>
   <div class="page-shell">
 
     <nav class="sidebar" aria-label="Group sections">
@@ -152,6 +165,14 @@
       </button>
       <button class="nav-item" id="nav-payouts" onclick="switchTab('payouts')">
         <span class="nav-icon">💸</span><span class="nav-label">Payouts</span>
+      </button>
+      <button class="nav-item" id="nav-meetings" onclick="switchTab('meetings')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Meetings</span>
+      </button>
+      <button class="nav-item" id="nav-announcements" onclick="switchTab('announcements')">
+        <span class="nav-icon">🔔</span>
+        <span class="nav-label">Announcements</span>
       </button>
       <!-- Analytics — Sprint 4 Story 3 -->
       <button class="nav-item" id="nav-analytics" onclick="switchTab('analytics')">
@@ -344,6 +365,76 @@
         </div>
       </section>
 
+      <!-- MEETINGS -->
+      <section id="tab-meetings" class="tab-panel">
+        <h2 class="section-page-title">Meetings</h2>
+
+        <!-- Schedule a new meeting -->
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Schedule a meeting</h2>
+          </header>
+
+          <form class="add-member-form" id="schedule-meeting">
+            <section class="form-group">
+              <label for="meeting-title">Title</label>
+              <input type="text" id="meeting-title" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-agenda">Agenda</label>
+              <input type="text" id="meeting-agenda" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-date">Date of meeting</label>
+              <input type="date" id="meeting-date" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-time">Time of meeting</label>
+              <input type="time" id="meeting-time" required step="60" />
+            </section>
+
+            <button type="submit" class="btn-record" id="sch-meeting">Schedule Meeting</button>
+          </form>
+
+          <output class="form-feedback" id="meeting-feedback" hidden></output>
+        </article>
+
+      </section>
+      <!-- end MEETINGS -->
+
+      <!-- ANNOUNCEMENTS -->
+      <section id="tab-announcements" class="tab-panel">
+        <h2 class="section-page-title">Announcements</h2>
+
+        <!-- Make a new announcement -->
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Make an announcement</h2>
+          </header>
+
+          <form class="add-member-form" id="make-announcement">
+            <section class="form-group">
+              <label for="announcement-title">Title</label>
+              <input type="text" id="announcement-title" required />
+            </section>
+
+            <section class="form-group">
+              <label for="announcement-content">Content</label>
+              <textarea id="announcement-content" rows="4" required></textarea>
+            </section>
+
+            <button type="submit" class="btn-record" id="make-announcement-btn">Make Announcement</button>
+          </form>
+
+          <output class="form-feedback" id="announcement-feedback" hidden></output>
+        </article>
+
+      </section>
+      <!-- end ANNOUNCEMENTS -->
+
       <!-- ANALYTICS — Sprint 4 Story 3 -->
       <!-- Data is loaded by group-analytics.js when this tab is first opened -->
       <section id="tab-analytics" class="tab-panel">
@@ -505,7 +596,7 @@
     // Analytics loads only once — avoids repeat API calls on every tab switch
     let analyticsLoaded = false;
 
-    const TABS = ['overview','members','contributions','payouts','analytics','settings'];
+    const TABS = ['overview','members','contributions','payouts','meetings', 'announcements','analytics','settings'];
 
     function switchTab(name) {
       TABS.forEach(t => {

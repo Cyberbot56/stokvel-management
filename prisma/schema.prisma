@@ -67,6 +67,7 @@ model groups {
   status             String            @db.VarChar(15)
   createdBy          Int
   FiuserId           Int
+  announcements      announcements[]
   contributions      contributions[]
   group_audit_log    group_audit_log[]
   group_invites      group_invites[]
@@ -82,14 +83,15 @@ model users {
   email            String            @unique(map: "User_email_key")
   name             String
   createdAt        DateTime          @default(now(), map: "User_createdAt_df") @db.Date
+  announcements    announcements[]
   contributions    contributions[]
   group_audit_log  group_audit_log[]
   group_invites    group_invites[]
   group_members    group_members[]
   groups           groups[]
+  meeting_minutes  meeting_minutes[]
   payoutsInitiated Payout[]          @relation("initiatorPayouts")
   payoutsReceived  Payout[]          @relation("recipientPayouts")
-  meeting_minutes  meeting_minutes[]
 }
 
 model Payout {
@@ -120,15 +122,27 @@ model meetings {
   Date            DateTime          @db.Date
   Time            String            @db.VarChar(15)
   postedAt        DateTime          @db.DateTime
-  groups          groups            @relation(fields: [FKKgroupId], references: [groupId], onUpdate: NoAction, map: "FKKgroupId")
   meeting_minutes meeting_minutes[]
+  groups          groups            @relation(fields: [FKKgroupId], references: [groupId], onUpdate: NoAction, map: "FKKgroupId")
 }
+
 model meeting_minutes {
   minutesId   Int      @id(map: "PK_meeting_minutes") @default(autoincrement())
   FKmeetingId Int
   content     String   @db.Text
   uploadedBy  Int
-  uploadedAt  DateTime @default(now()) @db.DateTime
+  uploadedAt  DateTime @default(now(), map: "DF__meeting_m__uploa__756D6ECB") @db.DateTime
   meetings    meetings @relation(fields: [FKmeetingId], references: [meetingsId], onUpdate: NoAction, map: "FKmeetingId")
   users       users    @relation(fields: [uploadedBy], references: [userId], onUpdate: NoAction, map: "FKuploadedBy")
+}
+
+model announcements {
+  announcementId Int      @id(map: "PK_announcements") @default(autoincrement())
+  agroupId       Int
+  authorId       Int
+  title          String   @db.VarChar(100)
+  content        String?  @db.Text
+  postedAt       DateTime @default(now()) @db.DateTime
+  groups         groups   @relation(fields: [agroupId], references: [groupId], onUpdate: NoAction, map: "agroupId")
+  users          users    @relation(fields: [authorId], references: [userId], onUpdate: NoAction, map: "authorId")
 }

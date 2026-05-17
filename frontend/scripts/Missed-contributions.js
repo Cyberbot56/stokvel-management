@@ -957,6 +957,150 @@ function setupFilterButtons() {
         });
     }
 }
+//This is for viewing announcements.
+// ─── Announcements Functions ─────────────────────────────────
+
+async function fetchAnnouncements(groupId) {
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${config.apiBase}/api/groups/${groupId}/announcements`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch announcements');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    return [];
+  }
+}
+
+function displayAnnouncementsModal(announcements) {
+  const modal = document.getElementById('announcements-modal');
+  const content = document.getElementById('announcements-content');
+  const badge = document.getElementById('announcements-badge');
+  
+  if (!modal || !content) return;
+  
+  // Clear badge (user has viewed announcements)
+  if (badge) badge.hidden = true;
+  
+  if (!announcements || announcements.length === 0) {
+    content.innerHTML = '<p class="empty-announcements">No announcements yet. Check back later!</p>';
+  } else {
+    let html = '';
+    
+    announcements.forEach(announcement => {
+      const postedDate = new Date(announcement.postedAt).toLocaleDateString('en-ZA', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      
+      const postedTime = new Date(announcement.postedAt).toLocaleTimeString('en-ZA', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const authorName = announcement.author?.name || announcement.author?.email || 'Group Admin';
+      
+      html += `
+        <div class="announcement-item">
+          <h3 class="announcement-title">${escapeHtml(announcement.title)}</h3>
+          <div class="announcement-content">${escapeHtml(announcement.content)}</div>
+          <div class="announcement-meta">
+            <span class="announcement-author">👤 ${escapeHtml(authorName)}</span>
+            <span class="announcement-date">📅 ${postedDate} at ${postedTime}</span>
+          </div>
+        </div>
+      `;
+    });
+    
+    content.innerHTML = html;
+  }
+  
+  modal.hidden = false;
+}
+
+async function loadAndShowAnnouncements() {
+  if (!currentGroupId) {
+    console.error('No group ID found');
+    return;
+  }
+  
+  try {
+    const announcements = await fetchAnnouncements(currentGroupId);
+    displayAnnouncementsModal(announcements);
+    markAnnouncementsAsRead(currentGroupId);
+  } catch (error) {
+    console.error('Error loading announcements:', error);
+    const content = document.getElementById('announcements-content');
+    if (content) {
+      content.innerHTML = '<p class="empty-announcements" style="color:#991b1b;">Failed to load announcements. Please try again.</p>';
+    }
+  }
+}
+
+async function checkNewAnnouncements(groupId) {
+  try {
+    const announcements = await fetchAnnouncements(groupId);
+    const badge = document.getElementById('announcements-badge');
+    
+    if (badge && announcements && announcements.length > 0) {
+      // Check localStorage for last viewed timestamp
+      const lastViewed = localStorage.getItem(`announcements_last_viewed_${groupId}`);
+      const hasNew = !lastViewed || new Date(announcements[0].postedAt) > new Date(lastViewed);
+      
+      if (hasNew) {
+        badge.textContent = announcements.length;
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
+    }
+  } catch (error) {
+    console.error('Error checking new announcements:', error);
+  }
+}
+
+function markAnnouncementsAsRead(groupId) {
+  localStorage.setItem(`announcements_last_viewed_${groupId}`, new Date().toISOString());
+}
+
+function setupAnnouncementsModal() {
+  const bellButton = document.getElementById('announcements-bell');
+  const closeBtn = document.getElementById('close-announcements-modal');
+  const modal = document.getElementById('announcements-modal');
+  
+  if (bellButton) {
+    bellButton.addEventListener('click', async () => {
+      await loadAndShowAnnouncements();
+    });
+  }
+  
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      if (modal) modal.hidden = true;
+    });
+  }
+  
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.hidden = true;
+      }
+    });
+  }
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && !modal.hidden) {
+      modal.hidden = true;
+    }
+  });
+}
 
 function updateActiveFilter(activeStatus) {
     const filters = ['all', 'pending', 'paid', 'missed'];
@@ -1009,6 +1153,7 @@ async function init() {
   setupPaymentModal();
   setupFilterButtons();
   setupFlagModalButtons();
+  setupAnnouncementsModal();
 
   document.getElementById("record-payment-form")
     ?.addEventListener("submit", recordPayment);
@@ -1017,6 +1162,7 @@ async function init() {
   await loadMembers();
   await loadPaymentTracking();
   await loadContributions();
+  await checkNewAnnouncements(currentGroupId); 
 
   // Fetch and render the treasurer's own payment status for this group
   const userId = localStorage.getItem('userId');

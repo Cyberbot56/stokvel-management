@@ -53,7 +53,6 @@ function renderGroupHeader(group) {
     document.getElementById('stat-start').textContent   = formatDate(group.startDate);
 }
 
-
 // ─── Render members table ─────────────────────────────────────────────────────
 
 function renderMembers(members) {
@@ -501,6 +500,7 @@ async function loadGroupData() {
             return;
         }
 
+        await checkNewAnnouncements(groupId);
         currentGroup = group;
         renderGroupHeader(group);
         renderMembers(group.members);
@@ -516,6 +516,7 @@ async function loadGroupData() {
         // Load projected savings growth chart for the admin
         await loadSavingsProjection(parseInt(userId), parseInt(groupId));
         await loadAndRenderHealthScores(parseInt(groupId));
+         await checkNewAnnouncements(groupId);
 
     } catch (err) {
         console.error('Load error:', err);
@@ -721,6 +722,321 @@ async function loadAndShowComplianceReport() {
     }
 }
 
+//This is a function to handle scheduling meetings
+async function handleScheduleMeeting(e) {
+    e.preventDefault();
+
+    const titleInput   = document.getElementById('meeting-title');
+    const agendaInput  = document.getElementById('meeting-agenda');
+    const dateInput    = document.getElementById('meeting-date');
+    const timeInput    = document.getElementById('meeting-time');
+    const submitBtn    = document.getElementById('sch-meeting');
+
+    // Validate
+    if (!titleInput.value.trim()) {
+        showFeedback('meeting-feedback', 'Please enter a meeting title.', 'error');
+        return;
+    }
+    if (!dateInput.value) {
+        showFeedback('meeting-feedback', 'Please select a meeting date.', 'error');
+        return;
+    }
+    if (!timeInput.value) {
+        showFeedback('meeting-feedback', 'Please select a meeting time.', 'error');
+        return;
+    }
+    if (!currentGroup || !currentGroup.groupId) {
+        showFeedback('meeting-feedback', 'Group information not loaded. Please refresh.', 'error');
+        return;
+    }
+    // Check if the selected date and time is in the past.
+    if (new Date(`${dateInput.value}T${timeInput.value}`) < new Date()) {
+        showFeedback('meeting-feedback', 'Meeting date and time must be in the future.', 'error');
+        return;
+    }
+
+    // Check title length
+    if (titleInput.value.trim().length > 100) {
+        showFeedback('meeting-feedback', 'Meeting title cannot exceed 100 characters.', 'error');
+        return;
+    }
+    // Check agenda length
+    if (agendaInput.value.trim().length > 500) {
+        showFeedback('meeting-feedback', 'Meeting agenda cannot exceed 500 characters.', 'error');
+        return;
+    }
+    
+    const meetingData = {
+        groupId: currentGroup.groupId,
+        title: titleInput.value.trim(),
+        agenda: agendaInput.value.trim() || null,   // allow empty agenda
+        date: dateInput.value,                      // "2026-04-27"
+        time: timeInput.value                       // "14:30"
+    };
+
+    // Disable button & show loading state
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Scheduling...';
+
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/meetings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(meetingData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showFeedback('meeting-feedback', 
+                `Meeting "${titleInput.value}" scheduled successfully for ${dateInput.value} at ${timeInput.value}.`, 
+                'success'
+            );
+            // Optional: clear the form
+            titleInput.value = '';
+            agendaInput.value = '';
+            dateInput.value = '';
+            timeInput.value = '';
+        } else {
+            showFeedback('meeting-feedback', data.error || 'Failed to schedule meeting.', 'error');
+        }
+    } catch (err) {
+        console.error('Schedule meeting error:', err);
+        showFeedback('meeting-feedback', 'Network error. Please try again.', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+    }
+}
+
+//This is for making announcemets
+async function handleMakeAnnouncement(e) {
+    e.preventDefault();
+
+    const titleInput    = document.getElementById('announcement-title');
+    const contentInput  = document.getElementById('announcement-content');
+    const submitBtn     = document.getElementById('make-announcement-btn');
+
+    // Validate
+    if (!titleInput.value.trim()) {
+        showFeedback('announcement-feedback', 'Please enter an announcement title.', 'error');
+        return;
+    }
+    if (!contentInput.value.trim()) {
+        showFeedback('announcement-feedback', 'Please enter announcement content.', 'error');
+        return;
+    }
+    if (!currentGroup || !currentGroup.groupId) {
+        showFeedback('announcement-feedback', 'Group information not loaded. Please refresh.', 'error');
+        return;
+    }
+
+    // Check title length (max 100)
+    if (titleInput.value.trim().length > 100) {
+        showFeedback('announcement-feedback', 'Announcement title cannot exceed 100 characters.', 'error');
+        return;
+    }
+    // Check content length (max 2000)
+    if (contentInput.value.trim().length > 2000) {
+        showFeedback('announcement-feedback', 'Announcement content cannot exceed 2000 characters.', 'error');
+        return;
+    }
+
+    // Prepare data
+    const announcementData = {
+        groupId: currentGroup.groupId,
+        title: titleInput.value.trim(),
+        content: contentInput.value.trim()
+    };
+
+    // Disable button & show loading state
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Posting...';
+
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/announcements`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(announcementData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showFeedback('announcement-feedback', 
+                `Announcement "${titleInput.value}" posted successfully!`, 
+                'success'
+            );
+            // Clear the form
+            titleInput.value = '';
+            contentInput.value = '';
+            // Refresh announcements list
+            await loadAndShowAnnouncements(currentGroup.groupId);
+        } else {
+            showFeedback('announcement-feedback', data.error || 'Failed to post announcement.', 'error');
+        }
+    } catch (err) {
+        console.error('Make announcement error:', err);
+        showFeedback('announcement-feedback', 'posted successfully!', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+    }
+}
+
+// ─── Announcements Display Functions (Bell Modal) ─────────────────────────────────
+
+async function fetchAnnouncements(groupId) {
+  try {
+    const token = await auth0Client.getTokenSilently();
+    const response = await fetch(`${config.apiBase}/api/groups/${groupId}/announcements`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch announcements');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    return [];
+  }
+}
+
+function displayAnnouncementsModal(announcements) {
+  const modal = document.getElementById('announcements-modal');
+  const content = document.getElementById('announcements-content');
+  const badge = document.getElementById('announcements-badge');
+  
+  if (!modal || !content) return;
+  
+  // Clear badge (user has viewed announcements)
+  if (badge) badge.hidden = true;
+  
+  if (!announcements || announcements.length === 0) {
+    content.innerHTML = '<p class="empty-announcements">No announcements yet. Check back later!</p>';
+  } else {
+    let html = '';
+    
+    announcements.forEach(announcement => {
+      const postedDate = new Date(announcement.postedAt).toLocaleDateString('en-ZA', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      
+      const postedTime = new Date(announcement.postedAt).toLocaleTimeString('en-ZA', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const authorName = announcement.author?.name || announcement.author?.email || 'Group Admin';
+      
+      html += `
+        <div class="announcement-item">
+          <h3 class="announcement-title">${sanitise(announcement.title)}</h3>
+          <div class="announcement-content">${sanitise(announcement.content)}</div>
+          <div class="announcement-meta">
+            <span class="announcement-author">👤 ${sanitise(authorName)}</span>
+            <span class="announcement-date">📅 ${postedDate} at ${postedTime}</span>
+          </div>
+        </div>
+      `;
+    });
+    
+    content.innerHTML = html;
+  }
+  
+  modal.hidden = false;
+}
+
+async function loadAndShowAnnouncementsModal() {
+  if (!currentGroup || !currentGroup.groupId) {
+    console.error('No group ID found');
+    return;
+  }
+  
+  try {
+    const announcements = await fetchAnnouncements(currentGroup.groupId);
+    displayAnnouncementsModal(announcements);
+    markAnnouncementsAsRead(currentGroup.groupId);
+  } catch (error) {
+    console.error('Error loading announcements:', error);
+    const content = document.getElementById('announcements-content');
+    if (content) {
+      content.innerHTML = '<p class="empty-announcements" style="color:#991b1b;">Failed to load announcements. Please try again.</p>';
+    }
+  }
+}
+
+async function checkNewAnnouncements(groupId) {
+  try {
+    const announcements = await fetchAnnouncements(groupId);
+    const badge = document.getElementById('announcements-badge');
+    
+    if (badge && announcements && announcements.length > 0) {
+      // Check localStorage for last viewed timestamp
+      const lastViewed = localStorage.getItem(`announcements_last_viewed_${groupId}`);
+      const hasNew = !lastViewed || new Date(announcements[0].postedAt) > new Date(lastViewed);
+      
+      if (hasNew) {
+        badge.textContent = announcements.length;
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
+    }
+  } catch (error) {
+    console.error('Error checking new announcements:', error);
+  }
+}
+
+function markAnnouncementsAsRead(groupId) {
+  localStorage.setItem(`announcements_last_viewed_${groupId}`, new Date().toISOString());
+}
+
+function setupAnnouncementsModal() {
+  const bellButton = document.getElementById('announcements-bell');
+  const closeBtn = document.getElementById('close-announcements-modal');
+  const modal = document.getElementById('announcements-modal');
+  
+  if (bellButton) {
+    bellButton.addEventListener('click', async () => {
+      await loadAndShowAnnouncementsModal();
+    });
+  }
+  
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      if (modal) modal.hidden = true;
+    });
+  }
+  
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.hidden = true;
+      }
+    });
+  }
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && !modal.hidden) {
+      modal.hidden = true;
+    }
+  });
+}
 
 // ─── Contribution history ─────────────────────────────────────────────────────
 
@@ -1291,6 +1607,17 @@ function setupEventListeners() {
         const btn = document.getElementById(id);
         if (btn) btn.addEventListener('click', handler);
     });
+    // Schedule meeting form listener
+    const scheduleMeetingForm = document.getElementById('schedule-meeting');
+    if (scheduleMeetingForm) {
+        scheduleMeetingForm.addEventListener('submit', handleScheduleMeeting);
+    }
+
+    // Make announcement form listener
+    const makeAnnouncementForm = document.getElementById('make-announcement');
+    if (makeAnnouncementForm) {
+        makeAnnouncementForm.addEventListener('submit', handleMakeAnnouncement);
+    }
 }
 
 function renderFooterButtons(group) {
@@ -1354,6 +1681,7 @@ async function checkNewNotifications(groupId, wrapper) {
 function onAuthReady() {
     setAvatar();
     setupEventListeners();
+    setupAnnouncementsModal();
     loadGroupData();
 }
 
