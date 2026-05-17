@@ -1343,7 +1343,7 @@ describe('Announcements Feature', () => {
       const res = await request(app).get('/api/groups/1/announcements');
 
       expect(res.statusCode).toBe(500);
-      expect(res.body.error).toBe('Internal server error while retrieving announcements.');
+      expect(res.body.error).toBe('Internal server error fetching announcements.');
     });
   });
 });
