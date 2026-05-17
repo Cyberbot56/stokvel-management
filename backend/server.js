@@ -1408,132 +1408,6 @@ app.post('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
     const { content } = req.body;
     const uploadedBy = req.user.userId;
 
-<<<<<<< HEAD
-/*alerts from system state changes across all joined groups.*/
-app.get('/api/dashboard/notifications', requireAuth, async (req, res) => {
-    const userId = req.user.userId;
-
-    try {
-        //all groups the logged-in user belongs to
-        const memberships = await prisma.group_members.findMany({
-            where: { SuserId: userId },
-            select: { FgroupId: true, role: true }
-        });
-
-        const groupIds = memberships.map(m => m.FgroupId);
-
-        //empty i the user has no groups
-        if (groupIds.length === 0) {
-            return res.json([]);
-        }
-
-        const now = new Date();
-        
-        //time horizons for meetings/payouts that are soon
-        const threeDaysFromNow = new Date();
-        threeDaysFromNow.setDate(now.getDate() + 3);
-
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(now.getDate() - 3);
-
-        const [upcomingMeetings, activePayouts, recentUserContributions] = await Promise.all([
-            //Meetings happening within the next 3 days
-            prisma.meetings.findMany({
-                where: {
-                    FKKgroupId: { in: groupIds },
-                    Date: { gte: now, lte: threeDaysFromNow }
-                },
-                include: { groups: { select: { name: true } } }
-            }),
-
-            //pending payouts within their groups
-            prisma.payout.findMany({
-                where: {
-                    groupId: { in: groupIds },
-                    status: 'pending'
-                },
-                include: { groups: { select: { name: true } } }
-            }),
-
-            // Alert C: The user's contributions approved in the last 3 days
-            prisma.contributions.findMany({
-                where: {
-                    FKuserId: userId,
-                    FKgroupId: { in: groupIds },
-                    status: 'paid',
-                    paidAt: { gte: threeDaysAgo }
-                },
-                include: { groups: { select: { name: true } } },
-                orderBy: { paidAt: 'desc' }
-            })
-        ]);
-
-        const dynamicNotifications = [];
-
-        // Map live meeting records
-        upcomingMeetings.forEach(meeting => {
-            dynamicNotifications.push({
-                id: `meeting-${meeting.meetingsId}`,
-                eventType: 'MEETING_SOON',
-                groupId: meeting.FKKgroupId,
-                groupName: meeting.groups.name,
-                eventDate: meeting.Date,
-                meta: {
-                    title: meeting.title,
-                    time: meeting.Time,
-                    agenda: meeting.agenda
-                },
-                timestamp: meeting.postedAt
-            });
-        });
-
-        // Map live payout lifecycles
-        activePayouts.forEach(payout => {
-            const isRecipient = payout.recipientId === userId;
-            dynamicNotifications.push({
-                id: `payout-${payout.payoutId}`,
-                eventType: isRecipient ? 'YOUR_PAYOUT_PENDING' : 'GROUP_PAYOUT_PENDING',
-                groupId: payout.groupId,
-                groupName: payout.groups.name,
-                eventDate: null,
-                meta: {
-                    cycleNumber: payout.cycleNumber,
-                    amount: payout.amount,
-                    recipientName: payout.recipientName,
-                    isCurrentUserRecipient: isRecipient
-                },
-                timestamp: payout.initiatedAt
-            });
-        });
-
-        // Map personal payment confirmation events
-        recentUserContributions.forEach(contribution => {
-            dynamicNotifications.push({
-                id: `approved-payment-${contribution.contributionsId}`,
-                eventType: 'CONTRIBUTION_APPROVED',
-                groupId: contribution.FKgroupId,
-                groupName: contribution.groups.name,
-                eventDate: contribution.paidAt,
-                meta: {
-                    amount: contribution.amount,
-                    dueDate: contribution.dueDate
-                },
-                timestamp: contribution.paidAt
-            });
-        });
-
-        //Sort notifications(newest notification first)
-        dynamicNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-        res.json(dynamicNotifications);
-
-    } catch (error) {
-        console.error('Failed to compile dynamic dashboard feed:', error);
-        res.status(500).json({ error: 'Failed to gather dashboard updates', details: error.message });
-    }
-});
-
-=======
     if (!content || !content.trim()) {
         return res.status(400).json({ error: 'Minutes content is required' });
     }
@@ -1618,7 +1492,85 @@ app.get('/api/meetings/:meetingId/minutes', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch minutes', details: error.message });
     }
 });
->>>>>>> origin/main
+
+// POST: Create a new announcement 
+app.post('/api/announcements', requireAuth, async (req, res) => {
+  const { groupId, title, content } = req.body;
+  const authorId = req.user.userId;
+
+  if (!groupId || !title) {
+    return res.status(400).json({ error: "Missing required fields: groupId or title." });
+  }
+
+  try {
+    //Verify the user is an admin or treasurer of this group before continuing
+    const membership = await prisma.group_members.findFirst({
+      where: { FgroupId: parseInt(groupId), SuserId: authorId }
+    });
+
+    if (!membership || !['admin', 'treasurer'].includes(membership.role)) {
+      return res.status(403).json({ error: "Only group admins and treasurers can make announcements." });
+    }
+
+    const newAnnouncement = await prisma.announcements.create({
+      data: {
+        groupId: parseInt(groupId),
+        authorId: authorId,
+        title: title,
+        content: content || null, 
+        postedAt: new Date()
+      },
+      include: {
+        author: {
+          select: { name: true, email: true } 
+        }
+      }
+    });
+
+    return res.status(201).json({
+      message: "Announcement posted successfully!",
+      announcement: newAnnouncement
+    });
+
+  } catch (error) {
+    console.error("Error creating announcement:", error);
+    return res.status(500).json({ error: "Internal server error while saving announcement." });
+  }
+});
+
+// GET: Fetch all announcements for a specific group 
+app.get('/api/groups/:groupId/announcements', requireAuth, async (req, res) => {
+  const { groupId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    //Checking the user belongs to the group they are viewing
+    const isMember = await prisma.group_members.findFirst({
+      where: { FgroupId: parseInt(groupId), SuserId: userId }
+    });
+
+    if (!isMember) {
+      return res.status(403).json({ error: "You must be a member of this group to view announcements." });
+    }
+
+    const groupAnnouncements = await prisma.announcements.findMany({
+      where: { groupId: parseInt(groupId) },
+      orderBy: { postedAt: 'desc' },
+      include: {
+        author: {
+          select: { name: true, email: true }
+        }
+      }
+    });
+
+    return res.status(200).json(groupAnnouncements);
+
+  } catch (error) {
+    console.error("Error fetching announcements:", error);
+    return res.status(500).json({ error: "Internal server error fetching announcements." });
+  }
+});
+
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'));
 });

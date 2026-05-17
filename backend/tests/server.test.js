@@ -87,6 +87,11 @@ jest.mock('@prisma/client', () => {
     },
     $transaction: jest.fn(),
     $disconnect: jest.fn(),
+
+    announcements: {
+      create: jest.fn(),
+      findMany: jest.fn()
+    },
   };
   return { PrismaClient: jest.fn(() => mockPrisma) };
 });
@@ -156,6 +161,9 @@ beforeEach(() => {
   prisma.meeting_minutes.findMany.mockReset();
   prisma.meeting_minutes.findUnique.mockReset();
   prisma.meeting_minutes.update.mockReset();
+
+  prisma.announcements.create.mockReset();
+  prisma.announcements.findMany.mockReset();
   
   prisma.$transaction.mockReset();
 });
@@ -917,104 +925,6 @@ describe('Analytics - Payout History', () => {
   });
 });
 
-describe('Dashboard Notifications Feed', () => {
-  test('GET /api/dashboard/notifications returns empty array if user belongs to no groups', async () => {
-    // Mock that user has no group memberships
-    prisma.group_members.findMany.mockResolvedValue([]);
-
-    const res = await request(app).get('/api/dashboard/notifications');
-
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(0);
-  });
-
-  test('GET /api/dashboard/notifications successfully aggregates and sorts system events chronologically', async () => {
-    // Mock group memberships
-    prisma.group_members.findMany.mockResolvedValue([
-      { FgroupId: 10, role: 'member' }
-    ]);
-
-    //Mock individual entity rows from the source tables with specific timestamps
-    const mockMeetings = [
-      {
-        meetingsId: 1,
-        FKKgroupId: 10,
-        title: 'Audit Sync',
-        agenda: 'Review ledger balances',
-        Date: new Date('2026-05-20T00:00:00.000Z'),
-        Time: '14:00',
-        postedAt: new Date('2026-05-15T10:00:00.000Z'), // Older event
-        groups: { name: 'Soweto Tech Pool' }
-      }
-    ];
-
-    const mockPayouts = [
-      {
-        payoutId: 5,
-        groupId: 10,
-        recipientId: 1, // Matches mocked auth token userId
-        recipientName: 'Test User',
-        amount: 2500.00,
-        cycleNumber: 3,
-        initiatedBy: 2,
-        initiatedAt: new Date('2026-05-16T12:00:00.000Z'), // Newest event
-        status: 'pending',
-        groups: { name: 'Soweto Tech Pool' }
-      }
-    ];
-
-    const mockContributions = [
-      {
-        contributionsId: 22,
-        FKgroupId: 10,
-        FKuserId: 1,
-        amount: 500.00,
-        dueDate: new Date('2026-05-15T00:00:00.000Z'),
-        paidAt: new Date('2026-05-15T16:00:00.000Z'), // Mid-point event
-        status: 'paid',
-        groups: { name: 'Soweto Tech Pool' }
-      }
-    ];
-
-    prisma.meetings.findMany.mockResolvedValue(mockMeetings);
-    prisma.payout.findMany.mockResolvedValue(mockPayouts);
-    prisma.contributions.findMany.mockResolvedValue(mockContributions);
-
-    const res = await request(app).get('/api/dashboard/notifications');
-
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(3);
-
-    const payoutAlert = res.body.find(item => item.eventType === 'YOUR_PAYOUT_PENDING');
-    expect(payoutAlert).toBeDefined();
-    expect(payoutAlert.groupName).toBe('Soweto Tech Pool');
-    expect(payoutAlert.meta.amount).toBe(2500.00);
-    expect(payoutAlert.meta.isCurrentUserRecipient).toBe(true);
-
-    const meetingAlert = res.body.find(item => item.eventType === 'MEETING_SOON');
-    expect(meetingAlert).toBeDefined();
-    expect(meetingAlert.meta.title).toBe('Audit Sync');
-
-    //newest timestamp first
-    const timestamps = res.body.map(item => new Date(item.timestamp).getTime());
-    const sortedTimestamps = [...timestamps].sort((a, b) => b - a);
-    expect(timestamps).toEqual(sortedTimestamps);
-  });
-
-  test('GET /api/dashboard/notifications returns 500 on database operational failure', async () => {
-    // lookup to reject
-    prisma.group_members.findMany.mockRejectedValue(new Error('Database Connection Disrupted'));
-
-    const res = await request(app).get('/api/dashboard/notifications');
-
-    expect(res.statusCode).toBe(500);
-    expect(res.body.error).toBe('Failed to gather dashboard updates');
-    expect(res.body.details).toBe('Database Connection Disrupted');
-  });
-});
-
 
 describe('ML Health Scores - All Members (Admin/Treasurer)', () => {
   test('GET /api/groups/:groupId/health-scores returns 403 if user is not admin or treasurer', async () => {
@@ -1324,5 +1234,116 @@ describe('Meeting Minutes', () => {
     const res = await request(app).get('/api/meetings/1/minutes');
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('Failed to fetch minutes');
+  });
+});
+
+describe('Announcements Feature', () => {
+  
+  describe('POST /api/announcements', () => {
+    const validAnnouncement = {
+      groupId: 1,
+      title: 'Monthly Contribution Update',
+      content: 'Please remember payments are due by Saturday.'
+    };
+
+    test('POST /api/announcements returns 400 if required fields are missing', async () => {
+      const res = await request(app)
+        .post('/api/announcements')
+        .send({ content: 'Missing group and title' });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toBe('Missing required fields: groupId or title.');
+    });
+
+    test('POST /api/announcements returns 403 if user is not an admin or treasurer', async () => {
+      // Mock user as a member
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+
+      const res = await request(app)
+        .post('/api/announcements')
+        .send(validAnnouncement);
+
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toBe('Only group admins and treasurers can make announcements.');
+    });
+
+    test('POST /api/announcements creates announcement successfully when authorized', async () => {
+      // Mock user as admin
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'admin' });
+      
+      prisma.announcements.create.mockResolvedValue({
+        announcementId: 10,
+        groupId: 1,
+        authorId: 1,
+        title: 'Monthly Contribution Update',
+        content: 'Please remember payments are due by Saturday.',
+        postedAt: new Date(),
+        author: { name: 'Test User', email: 'test@example.com' }
+      });
+
+      const res = await request(app)
+        .post('/api/announcements')
+        .send(validAnnouncement);
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body.message).toBe('Announcement posted successfully!');
+      expect(res.body.announcement.title).toBe('Monthly Contribution Update');
+      expect(res.body.announcement.author.name).toBe('Test User');
+    });
+
+    test('POST /api/announcements returns 500 on database error', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'treasurer' });
+      prisma.announcements.create.mockRejectedValue(new Error('Database crash'));
+
+      const res = await request(app)
+        .post('/api/announcements')
+        .send(validAnnouncement);
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.error).toBe('Internal server error while saving announcement.');
+    });
+  });
+
+  describe('GET /api/groups/:groupId/announcements', () => {
+    
+    test('GET /api/groups/:groupId/announcements returns 403 if user is not part of the group', async () => {
+      // Mocking no membership records found
+      prisma.group_members.findFirst.mockResolvedValue(null);
+
+      const res = await request(app).get('/api/groups/1/announcements');
+
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toBe('You must be a member of this group to view announcements.');
+    });
+
+    test('GET /api/groups/:groupId/announcements returns list of posts if user is a group member', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+      prisma.announcements.findMany.mockResolvedValue([
+        {
+          announcementId: 10,
+          title: 'Emergency Meeting Notice',
+          content: 'Meeting scheduled for Sunday at 2 PM',
+          postedAt: '2026-05-17T12:00:00.000Z',
+          author: { name: 'Admin User', email: 'admin@stokvel.com' }
+        }
+      ]);
+
+      const res = await request(app).get('/api/groups/1/announcements');
+
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body[0].title).toBe('Emergency Meeting Notice');
+      expect(res.body[0].author.name).toBe('Admin User');
+    });
+
+    test('GET /api/groups/:groupId/announcements returns 500 on DB error', async () => {
+      prisma.group_members.findFirst.mockResolvedValue({ role: 'member' });
+      prisma.announcements.findMany.mockRejectedValue(new Error('Fetch failed'));
+
+      const res = await request(app).get('/api/groups/1/announcements');
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.error).toBe('Internal server error while retrieving announcements.');
+    });
   });
 });
