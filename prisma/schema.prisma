@@ -74,6 +74,7 @@ model groups {
   users              users             @relation(fields: [FiuserId], references: [userId], onUpdate: NoAction, map: "FiuserId")
   meetings           meetings[]
   payouts            Payout[]
+  announcements announcements[]
 }
 
 model users {
@@ -87,6 +88,7 @@ model users {
   group_invites    group_invites[]
   group_members    group_members[]
   groups           groups[]
+  announcements announcements[]
   payoutsInitiated Payout[]          @relation("initiatorPayouts")
   payoutsReceived  Payout[]          @relation("recipientPayouts")
 }
@@ -120,4 +122,16 @@ model meetings {
   Time       String   @db.VarChar(15)
   postedAt   DateTime @db.DateTime
   groups     groups   @relation(fields: [FKKgroupId], references: [groupId], onUpdate: NoAction, map: "FKKgroupId")
+}
+
+model announcements {
+  announcementId Int      @id(map: "PK_announcements") @default(autoincrement())
+  groupId        Int
+  authorId       Int     
+  title          String   @db.VarChar(100)
+  content        String?  @db.Text
+  postedAt       DateTime @default(now()) @db.DateTime // Added default(now()) 
+
+  groups         groups   @relation(fields: [groupId], references: [groupId], onUpdate: NoAction, map: "FK_announcements_groups")
+  author         users    @relation(fields: [authorId], references: [userId], onUpdate: NoAction, map: "FK_announcements_users")
 }
