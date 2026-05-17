@@ -880,8 +880,6 @@ async function handleMakeAnnouncement(e) {
             // Clear the form
             titleInput.value = '';
             contentInput.value = '';
-            // Refresh announcements list
-            await loadAndShowAnnouncements(currentGroup.groupId);
         } else {
             showFeedback('announcement-feedback', data.error || 'Failed to post announcement.', 'error');
         }
