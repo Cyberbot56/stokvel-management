@@ -6,6 +6,120 @@
   <title>Group Admin – Stokvel App</title>
   <link rel="stylesheet" href="../css/group-overview.css" />
   <link rel="stylesheet" href="../css/group-admin.css" />
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .page-shell { display: flex; flex: 1; min-height: 0; }
+
+    .sidebar {
+      width: 56px; flex-shrink: 0;
+      background: linear-gradient(180deg, #0e9490 0%, #1bb3ae 100%);
+      display: flex; flex-direction: column;
+      padding: 16px 0; gap: 2px;
+      transition: width 0.22s ease;
+      overflow: hidden; position: relative; z-index: 10;
+      box-shadow: 2px 0 12px rgba(14, 148, 144, 0.18);
+    }
+    .sidebar:hover { width: 200px; }
+
+    .sidebar-group-info {
+      padding: 0 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 8px; white-space: nowrap; overflow: hidden;
+      opacity: 0; transition: opacity 0.15s ease;
+      min-height: 44px; display: flex; flex-direction: column; justify-content: center;
+    }
+    .sidebar:hover .sidebar-group-info { opacity: 1; }
+    .sidebar-group-name { font-size: 13px; font-weight: 700; color: #fff; line-height: 1.3; }
+    .sidebar-group-meta { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0 10px 16px; font-size: 13px; font-weight: 600;
+      color: rgba(255,255,255,0.75); cursor: pointer; border: none; background: none;
+      width: 100%; text-align: left; white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-item.active { background: rgba(255,255,255,0.22); color: #fff; border-left-color: #fff; font-weight: 700; }
+    .nav-icon { font-size: 20px; flex-shrink: 0; width: 24px; text-align: center; }
+    .nav-label { opacity: 0; transition: opacity 0.15s ease; overflow: hidden; }
+    .sidebar:hover .nav-label { opacity: 1; }
+
+    .page-content { flex: 1; overflow-y: auto; padding: 1.5rem 2rem 2rem; min-width: 0; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .section-page-title { font-size: 18px; font-weight: 700; color: #034e52; margin-bottom: 1.25rem; }
+
+    .settings-fieldset { border: none; padding: 0; margin: 0 0 24px; }
+    .settings-legend {
+      font-size: 11px; font-weight: 700; color: #0e9490;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 1px solid #e0f7f6; width: 100%; display: block;
+    }
+    .settings-field { margin-bottom: 18px; }
+    .settings-field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #374151; }
+    .settings-field input, .settings-field select {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid rgba(14, 148, 144, 0.15); border-radius: 10px;
+      font-size: 14px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      outline: none; background: white; color: #0f172a;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .settings-field input:focus, .settings-field select:focus {
+      border-color: #0e9490; box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+    }
+    .readonly-field {
+      display: block; padding: 10px 14px; background: #f0fafa;
+      border: 1.5px solid rgba(14, 148, 144, 0.15); border-radius: 10px;
+      font-size: 14px; color: #64748b;
+    }
+    .field-note { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+    .danger-zone { border: 1px solid #fecaca; border-radius: 10px; padding: 18px; background: #fff9f9; margin-top: 28px; }
+    .danger-zone h3 { font-size: 13px; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    .danger-zone p { font-size: 13px; color: #64748b; margin-bottom: 14px; }
+    .btn-danger { padding: 10px 24px; background: white; color: #ef4444; border: 1.5px solid #fecaca; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background 0.2s ease; }
+    .btn-danger:hover { background: #fee2e2; }
+
+    .save-bar { background: #034e52; color: white; border-radius: 10px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; font-size: 14px; }
+    .save-bar-actions { display: flex; gap: 8px; }
+    .btn-outline-sm { padding: 6px 14px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85); border: 1.5px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .btn-cyan-sm { padding: 6px 14px; background: #2dd4bf; color: #034e52; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    .tab-footer { display: flex; gap: 10px; margin-top: 1.5rem; }
+    .tab-footer button { padding: 9px 20px; border: 1.5px solid rgba(14, 148, 144, 0.35); border-radius: 8px; background: white; color: #0e9490; cursor: pointer; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px; font-weight: 600; transition: background 0.2s ease; }
+    .tab-footer button:hover { background: #e0f7f6; }
+
+    .report-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; flex-wrap: wrap; }
+    .report-info { flex: 1; min-width: 180px; }
+    .report-title { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 4px; }
+    .report-desc { font-size: 12px; color: #64748b; margin: 0; line-height: 1.5; }
+    .report-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+    .btn-report-view { padding: 8px 18px; background: #0e9490; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background 0.2s ease, transform 0.15s ease; }
+    .btn-report-view:hover { background: #0a7a77; transform: translateY(-1px); }
+    .btn-export-csv { padding: 8px 14px; background: #e0f7f6; color: #034e52; border: 1.5px solid rgba(14, 148, 144, 0.3); border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background 0.2s ease; }
+    .btn-export-csv:hover { background: #b2efec; }
+    .btn-export-pdf { padding: 8px 14px; background: white; color: #ef4444; border: 1.5px solid #fecaca; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background 0.2s ease; }
+    .btn-export-pdf:hover { background: #fef2f2; }
+    .report-divider { border: none; border-top: 1px solid #e0f7f6; margin: 0; }
+
+    .avatar[onclick], .header-avatar[onclick] { cursor: pointer; transition: box-shadow 0.2s ease, transform 0.15s ease; }
+    .avatar[onclick]:hover, .header-avatar[onclick]:hover { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5); transform: scale(1.07); }
+
+    /* ── Analytics tab — Sprint 4 Story 3 ── */
+    .analytics-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+    .analytics-card { background: white; border: 1px solid rgba(14,148,144,0.12); border-radius: 12px; padding: 1.1rem; box-shadow: 0 2px 8px rgba(14,148,144,0.06); position: relative; overflow: hidden; }
+    .analytics-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #2dd4bf, #0e9490); }
+    .analytics-card-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .analytics-card-value { font-size: 24px; font-weight: 700; color: #034e52; line-height: 1; }
+    .chart-card { margin-bottom: 1.5rem; }
+    .chart-desc { font-size: 13px; color: #64748b; margin-bottom: 1rem; }
+    .chart-wrap { position: relative; height: 280px; width: 100%; }
+    .chart-wrap.doughnut { height: 240px; max-width: 340px; margin: 0 auto; }
+    .chart-loading { display: flex; align-items: center; justify-content: center; height: 200px; font-size: 13px; color: #64748b; }
+  </style>
 </head>
 <body>
 
@@ -16,144 +130,425 @@
     </figure>
     <p class="header-title">Group Admin</p>
     <nav class="header-right">
-      <address class="header-avatar" id="avatar"></address>
-      <button class="logout-btn" id="logoutBtn">Log out</button>
+      <address class="avatar" id="avatar" onclick="showProfileModal()" style="cursor:pointer;" title="My profile"></address>
     </nav>
   </header>
+  <div class="page-shell">
 
-  <main class="page">
+    <nav class="sidebar" aria-label="Group sections">
+      <div class="sidebar-group-info">
+        <div class="sidebar-group-name" id="sidebar-group-name">Loading…</div>
+        <div class="sidebar-group-meta" id="sidebar-group-meta"></div>
+      </div>
+      <button class="nav-item active" id="nav-overview" onclick="switchTab('overview')">
+        <span class="nav-icon">⊞</span><span class="nav-label">Overview</span>
+      </button>
+      <button class="nav-item" id="nav-members" onclick="switchTab('members')">
+        <span class="nav-icon">👥</span><span class="nav-label">Members</span>
+      </button>
+      <button class="nav-item" id="nav-contributions" onclick="switchTab('contributions')">
+        <span class="nav-icon">💳</span><span class="nav-label">Contributions</span>
+      </button>
+      <button class="nav-item" id="nav-payouts" onclick="switchTab('payouts')">
+        <span class="nav-icon">💸</span><span class="nav-label">Payouts</span>
+      </button>
+      <button class="nav-item" id="nav-meetings" onclick="switchTab('meetings')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Meetings</span>
+      </button>
+      <button class="nav-item" id="nav-announcements" onclick="switchTab('announcements')">
+        <span class="nav-icon">🔔</span>
+        <span class="nav-label">Announcements</span>
+      </button>
+      <!-- Analytics — Sprint 4 Story 3 -->
+      <button class="nav-item" id="nav-analytics" onclick="switchTab('analytics')">
+        <span class="nav-icon">📊</span><span class="nav-label">Analytics</span>
+      </button>
+      <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+        <span class="nav-icon">⚙</span><span class="nav-label">Settings</span>
+      </button>
+    </nav>
 
-    <button class="back-link" id="back-btn">← Back to my groups</button>
+    <main class="page-content">
 
-    <p id="status-banner" class="status-banner" hidden></p>
+      <button class="back-link" id="back-btn">← Back to my groups</button>
+      <p id="status-banner" class="status-banner" hidden></p>
 
-    <article class="card" id="group-header-card">
-      <header class="group-title-row">
-        <section>
-          <h2 id="group-name"></h2>
-          <p id="group-desc" class="group-desc"></p>
-        </section>
-        <section class="badge-group">
-          <b id="status-badge" class="badge"></b>
-          <b class="admin-badge">Admin</b>
-        </section>
-      </header>
+      <!-- OVERVIEW -->
+      <section id="tab-overview" class="tab-panel active">
+        <article class="card" id="group-header-card">
+          <header class="group-title-row">
+            <section>
+              <h2 id="group-name"></h2>
+              <p id="group-desc" class="group-desc"></p>
+            </section>
+            <section class="badge-group">
+              <b id="status-badge" class="badge"></b>
+              <b class="admin-badge">Admin</b>
+            </section>
+          </header>
+          <dl class="group-stats-strip">
+            <section class="stat-group"><dt>Members</dt><dd id="stat-members"></dd></section>
+            <hr class="strip-divider">
+            <section class="stat-group"><dt>Contribution</dt><dd id="stat-amount"></dd></section>
+            <hr class="strip-divider">
+            <section class="stat-group"><dt>Cycle</dt><dd id="stat-cycle"></dd></section>
+            <hr class="strip-divider">
+            <section class="stat-group"><dt>Start date</dt><dd id="stat-start"></dd></section>
+          </dl>
+        </article>
 
-      <dl class="group-stats-strip">
-        <section class="stat-group">
-          <dt>Members</dt>
-          <dd id="stat-members"></dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Contribution</dt>
-          <dd id="stat-amount"></dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Cycle</dt>
-          <dd id="stat-cycle"></dd>
-        </section>
-        <hr class="strip-divider">
-        <section class="stat-group">
-          <dt>Start date</dt>
-          <dd id="stat-start"></dd>
-        </section>
-      </dl>
-    </article>
+        <article class="card" id="payment-status-card">
+          <h2 class="card-title">My contribution this cycle</h2>
+          <section class="payment-status-row">
+            <mark id="payment-status-icon" class="payment-status-icon"></mark>
+            <section class="payment-status-body">
+              <p id="payment-status-label" class="payment-status-label"></p>
+              <p id="payment-status-sub"   class="payment-status-sub"></p>
+              <small id="payment-ref"      class="payment-ref" hidden></small>
+            </section>
+            <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+          </section>
+        </article>
 
+               <!-- ML Financial Health Scores Card -->
+        <article class="card" id="health-score-card" hidden>
+          <header class="section-header">
+            <h2 class="card-title">Financial Health Scores</h2>
+            <span id="group-health-badge" style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;"></span>
+          </header>
+          <p style="font-size:13px;color:#64748b;margin-bottom:1rem;">
+            ML-powered scores based on each member's contribution history and engagement patterns.
+          </p>
+          <section style="display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap;">
+            <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
+              <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Group Health Score</p>
+              <p id="group-avg-score" style="font-size:32px;font-weight:700;color:#034e52;margin:0;"></p>
+              <p id="group-avg-label" style="font-size:12px;color:#64748b;margin:4px 0 0;"></p>
+            </section>
+            <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
+              <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Risk Level</p>
+              <p id="group-risk-label" style="font-size:18px;font-weight:700;color:#034e52;margin:0;"></p>
+            </section>
+            <section style="flex:1;min-width:120px;background:#f0fafa;border-radius:10px;padding:14px 18px;text-align:center;">
+              <p style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Powered by</p>
+              <p style="font-size:13px;font-weight:700;color:#034e52;margin:0;">Neural Network</p>
+              <p style="font-size:11px;color:#64748b;margin:2px 0 0;">TensorFlow.js</p>
+            </section>
+          </section>
+          <section id="health-scores-container"></section>
+        </article>
 
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Onboard a new member</h2>
-      </header>
-      <p>Enter the email address of a registered user to add them to this group.</p>
-      <section class="add-member-form">
-        <input type="email" id="member-email" placeholder="member@example.com" autocomplete="off" />
-        <button class="btn-add" id="btn-add-member">Add member</button>
-        <p class="form-feedback" id="add-feedback" hidden></p>
+        <article class="card" id="savings-projection-card" hidden>
+          <h2 class="card-title">Projected Savings Growth</h2>
+          <section class="projection-summary">
+            <section class="projection-stat">
+              <p class="projection-stat-label">Total you'll contribute</p>
+              <p id="proj-total-contrib" class="projection-stat-value"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
+              <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
+            </section>
+            <section class="projection-stat">
+              <p class="projection-stat-label">Contributions made</p>
+              <p id="proj-progress" class="projection-stat-value"></p>
+            </section>
+          </section>
+          <section class="projection-chart-wrap">
+            <canvas id="savings-chart"></canvas>
+          </section>
+          <p class="projection-note" id="proj-note"></p>
+        </article>
+
+        <footer class="action-footer">
+          <button id="view-contributions-btn">View contributions</button>
+          <button id="view-payouts-btn">View payouts</button>
+          <button id="view-notifications-btn">Notifications</button>
+        </footer>
       </section>
-    </article>
 
-
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Assign a Treasurer</h2>
-      </header>
-      <p>Enter the email address of a registered user to assign them as treasurer for this group.</p>
-      <section class="add-member-form">
-        <input type="email" id="treasurer-email" placeholder="treasurer@example.com" autocomplete="off" />
-        <button class="btn-add" id="btn-assign-treasurer">Assign Treasurer</button>
-        <p class="form-feedback" id="assign-feedback" hidden></p>
+      <!-- MEMBERS -->
+      <section id="tab-members" class="tab-panel">
+        <h2 class="section-page-title">Members</h2>
+        <article class="card">
+          <header class="section-header"><h2 class="card-title">Onboard a new member</h2></header>
+          <p>Enter the email address of a registered user to add them to this group.</p>
+          <section class="add-member-form">
+            <input type="email" id="member-email" placeholder="member@example.com" autocomplete="off" />
+            <button class="btn-add" id="btn-add-member">Add member</button>
+            <p class="form-feedback" id="add-feedback" hidden></p>
+          </section>
+        </article>
+        <article class="card">
+          <header class="section-header"><h2 class="card-title">Assign a Treasurer</h2></header>
+          <p>Enter the email address of a registered user to assign them as treasurer for this group.</p>
+          <section class="add-member-form">
+            <input type="email" id="treasurer-email" placeholder="treasurer@example.com" autocomplete="off" />
+            <button class="btn-add" id="btn-assign-treasurer">Assign Treasurer</button>
+            <p class="form-feedback" id="assign-feedback" hidden></p>
+          </section>
+        </article>
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Members</h2>
+            <output id="member-count"></output>
+          </header>
+          <section id="members-container"><p class="empty-members">Loading members...</p></section>
+        </article>
+        <article class="card" id="reports-card">
+          <header class="section-header"><h2 class="card-title">Reports</h2></header>
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Contribution Compliance</p>
+              <p class="report-desc">Shows each member's payment history — who has paid, who is pending, and who has missed contributions.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-report-view" id="btn-compliance-report">View</button>
+              <button class="btn-export-csv"  id="export-compliance-csv">⬇ CSV</button>
+              <button class="btn-export-pdf"  id="export-compliance-pdf">⬇ PDF</button>
+            </section>
+          </section>
+          <hr class="report-divider" />
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Payout History</p>
+              <p class="report-desc">Shows all payouts for the group — who has received the pot, when, the amount, and the current status.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-report-view" id="btn-payouts-report">View</button>
+              <button class="btn-export-csv"  id="export-payouts-csv">⬇ CSV</button>
+              <button class="btn-export-pdf"  id="export-payouts-pdf">⬇ PDF</button>
+            </section>
+          </section>
+          <hr class="report-divider" />
+          <section class="report-row">
+            <section class="report-info">
+              <p class="report-title">Group Summary</p>
+              <p class="report-desc">A full overview of the group — all members, their roles, contribution amount, cycle type, and start date.</p>
+            </section>
+            <section class="report-actions">
+              <button class="btn-export-csv" id="export-summary-csv">⬇ CSV</button>
+              <button class="btn-export-pdf" id="export-summary-pdf">⬇ PDF</button>
+            </section>
+          </section>
+        </article>
       </section>
-    </article>
 
-
-    <article class="card">
-      <header class="section-header">
-        <h2 class="card-title">Members</h2>
-        <output id="member-count"></output>
-      </header>
-      <section id="members-container">
-        <p class="empty-members">Loading members...</p>
+      <!-- CONTRIBUTIONS -->
+      <section id="tab-contributions" class="tab-panel">
+        <h2 class="section-page-title">Contributions</h2>
+        <div class="tab-footer">
+          <button id="tab-view-contributions-btn">View contributions</button>
+        </div>
       </section>
-    </article>
 
-      <!-- Compliance Report card -->
-  <article class="card">
-    <header class="section-header">
-      <h2 class="card-title">Contribution Compliance</h2>
-      <button class="btn-add" id="btn-compliance-report">View Report</button>
-    </header>
-    <p>Monitor member payment health for this group.</p>
-  </article>
+      <!-- PAYOUTS -->
+      <section id="tab-payouts" class="tab-panel">
+        <h2 class="section-page-title">Payouts</h2>
+        <div class="tab-footer">
+          <button id="tab-view-payouts-btn">View payouts</button>
+        </div>
+      </section>
 
-    <!-- Payment status card: shows Unpaid / Pending / Paid based on contribution status -->
-    <article class="card" id="payment-status-card">
-      <h2 class="card-title">My contribution this cycle</h2>
-      <section class="payment-status-row">
-        <mark id="payment-status-icon" class="payment-status-icon"></mark>
-        <section class="payment-status-body">
-          <p id="payment-status-label" class="payment-status-label"></p>
-          <p id="payment-status-sub"   class="payment-status-sub"></p>
-          <small id="payment-ref"      class="payment-ref" hidden></small>
+      <!-- MEETINGS -->
+      <section id="tab-meetings" class="tab-panel">
+        <h2 class="section-page-title">Meetings</h2>
+
+        <!-- Schedule a new meeting -->
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Schedule a meeting</h2>
+          </header>
+
+          <form class="add-member-form" id="schedule-meeting">
+            <section class="form-group">
+              <label for="meeting-title">Title</label>
+              <input type="text" id="meeting-title" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-agenda">Agenda</label>
+              <input type="text" id="meeting-agenda" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-date">Date of meeting</label>
+              <input type="date" id="meeting-date" required />
+            </section>
+
+            <section class="form-group">
+              <label for="meeting-time">Time of meeting</label>
+              <input type="time" id="meeting-time" required step="60" />
+            </section>
+
+            <button type="submit" class="btn-record" id="sch-meeting">Schedule Meeting</button>
+          </form>
+
+          <output class="form-feedback" id="meeting-feedback" hidden></output>
+        </article>
+
+        <!-- Scheduled meetings with minutes -->
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Scheduled meetings &amp; minutes</h2>
+          </header>
+          <section id="admin-meetings-list">
+            <p style="color:#64748b;font-size:13px;font-style:italic;">Meetings will load when you open this tab.</p>
+          </section>
+        </article>
+
+      </section>
+      <!-- end MEETINGS -->
+
+      <!-- ANNOUNCEMENTS -->
+      <section id="tab-announcements" class="tab-panel">
+        <h2 class="section-page-title">Announcements</h2>
+
+        <!-- Make a new announcement -->
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Make an announcement</h2>
+          </header>
+
+          <form class="add-member-form" id="make-announcement">
+            <section class="form-group">
+              <label for="announcement-title">Title</label>
+              <input type="text" id="announcement-title" required />
+            </section>
+
+            <section class="form-group">
+              <label for="announcement-content">Content</label>
+              <textarea id="announcement-content" rows="4" required></textarea>
+            </section>
+
+            <button type="submit" class="btn-record" id="make-announcement-btn">Make Announcement</button>
+          </form>
+
+          <output class="form-feedback" id="announcement-feedback" hidden></output>
+        </article>
+
+        <!-- Existing announcements -->
+        <article class="card">
+          <header class="section-header">
+            <h2 class="card-title">Previous announcements</h2>
+          </header>
+          <section id="admin-announcements-list">
+            <p style="color:#64748b;font-size:13px;font-style:italic;">Loading announcements...</p>
+          </section>
+        </article>
+
+      </section>
+      <!-- end ANNOUNCEMENTS -->
+
+      <!-- ANALYTICS — Sprint 4 Story 3 -->
+      <!-- Data is loaded by group-analytics.js when this tab is first opened -->
+      <section id="tab-analytics" class="tab-panel">
+        <h2 class="section-page-title">Analytics Dashboard</h2>
+
+        <!-- Four summary metric cards -->
+        <section class="analytics-summary">
+          <article class="analytics-card">
+            <p class="analytics-card-label">Total Members</p>
+            <p class="analytics-card-value" id="an-members">—</p>
+          </article>
+          <article class="analytics-card">
+            <p class="analytics-card-label">Compliance Rate</p>
+            <p class="analytics-card-value" id="an-compliance">—</p>
+          </article>
+          <article class="analytics-card">
+            <p class="analytics-card-label">Total Paid Out</p>
+            <p class="analytics-card-value" id="an-paidout">—</p>
+          </article>
+          <article class="analytics-card">
+            <p class="analytics-card-label">Total Collected</p>
+            <p class="analytics-card-value" id="an-collected">—</p>
+          </article>
         </section>
-        <button id="pay-now-btn" class="pay-now-btn" hidden>Pay now</button>
+
+        <!-- Chart 1: Compliance per member — bar chart -->
+        <article class="card chart-card">
+          <h2 class="card-title">Contribution Compliance Per Member</h2>
+          <p class="chart-desc">Shows how many contributions each member has paid, missed, or has pending.</p>
+          <section class="chart-wrap" id="compliance-chart-wrap">
+            <p class="chart-loading">Loading chart...</p>
+          </section>
+        </article>
+
+        <!-- Chart 2: Payout history — bar chart -->
+        <article class="card chart-card">
+          <h2 class="card-title">Payout History</h2>
+          <p class="chart-desc">Shows all payouts processed for the group ordered by cycle number.</p>
+          <section class="chart-wrap" id="payouts-chart-wrap">
+            <p class="chart-loading">Loading chart...</p>
+          </section>
+        </article>
+
+        <!-- Chart 3: Custom view — contribution breakdown doughnut -->
+        <article class="card chart-card">
+          <h2 class="card-title">Custom View — Group Contribution Breakdown</h2>
+          <p class="chart-desc">Shows the overall split of contribution statuses across all members.</p>
+          <section class="chart-wrap doughnut" id="breakdown-chart-wrap">
+            <p class="chart-loading">Loading chart...</p>
+          </section>
+        </article>
       </section>
-    </article>
 
-
-    <!-- Savings Projection Card -->
-    <article class="card" id="savings-projection-card" hidden>
-      <h2 class="card-title">Projected Savings Growth</h2>
-      <section class="projection-summary">
-        <section class="projection-stat">
-          <p class="projection-stat-label">Total you'll contribute</p>
-          <p id="proj-total-contrib" class="projection-stat-value"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Your payout (Cycle <span id="proj-payout-cycle"></span>)</p>
-          <p id="proj-payout-amount" class="projection-stat-value highlight"></p>
-        </section>
-        <section class="projection-stat">
-          <p class="projection-stat-label">Contributions made</p>
-          <p id="proj-progress" class="projection-stat-value"></p>
-        </section>
+      <!-- SETTINGS -->
+      <section id="tab-settings" class="tab-panel">
+        <h2 class="section-page-title">Group Settings</h2>
+        <aside class="save-bar" id="save-bar" hidden>
+          <p>You have unsaved changes</p>
+          <div class="save-bar-actions">
+            <button class="btn-outline-sm" onclick="discardChanges()">Discard</button>
+            <button class="btn-cyan-sm" onclick="saveChanges()">Save changes</button>
+          </div>
+        </aside>
+        <article class="card">
+          <fieldset class="settings-fieldset">
+            <span class="settings-legend">Editable settings</span>
+            <div class="settings-field">
+              <label for="s-name">Group name</label>
+              <input type="text" id="s-name" name="s-name" oninput="markDirty()">
+            </div>
+            <div class="settings-field">
+              <label for="s-desc">Description</label>
+              <input type="text" id="s-desc" name="s-desc" oninput="markDirty()">
+            </div>
+            <div class="settings-field">
+              <label for="s-amount">Contribution amount (ZAR)</label>
+              <input type="number" id="s-amount" name="s-amount" min="1" oninput="markDirty()">
+            </div>
+            <div class="settings-field">
+              <label for="s-cycle">Cycle type</label>
+              <select id="s-cycle" name="s-cycle" onchange="markDirty()">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+          </fieldset>
+          <fieldset class="settings-fieldset">
+            <span class="settings-legend">Locked settings</span>
+            <p class="field-note">These cannot be changed once the group is active.</p>
+            <div class="settings-field">
+              <label>Start date</label>
+              <output class="readonly-field" id="s-start-date"></output>
+            </div>
+            <div class="settings-field">
+              <label>Payout order</label>
+              <output class="readonly-field">Rotation (ordered)</output>
+            </div>
+          </fieldset>
+          <div class="danger-zone">
+            <h3>Danger zone</h3>
+            <p>Closing the group is permanent and cannot be undone.</p>
+            <button class="btn-danger" onclick="openCloseModal()">Close group</button>
+          </div>
+        </article>
       </section>
-      <section class="projection-chart-wrap">
-        <canvas id="savings-chart"></canvas>
-      </section>
-      <p class="projection-note" id="proj-note"></p>
-    </article>
 
-    <footer class="action-footer">
-      <button id="view-contributions-btn">View contributions</button>
-      <button id="view-payouts-btn">View payouts</button>
-      <button id="view-notifications-btn">Notifications</button>
-    </footer>
-
-  </main>
-
+    </main>
+  </div>
 
   <!-- Payment confirmation modal -->
   <aside id="payment-confirm-modal" class="modal-overlay" hidden>
@@ -164,10 +559,7 @@
       </header>
       <section class="payment-confirm-body">
         <p id="confirm-amount-display" class="payment-amount-display"></p>
-        <p class="payment-confirm-desc">
-          This is a simulated payment. Your contribution will be recorded
-          as pending until the treasurer confirms it.
-        </p>
+        <p class="payment-confirm-desc">This is a simulated payment. Your contribution will be recorded as pending until the treasurer confirms it.</p>
       </section>
       <footer class="modal-footer payment-modal-footer">
         <button id="cancel-payment-btn"  class="print-btn">Cancel</button>
@@ -176,13 +568,75 @@
     </article>
   </aside>
 
+  <!-- Close group dialog -->
+  <dialog id="close-modal">
+    <h2>Close this group?</h2>
+    <p>This cannot be undone. Type the group name below to confirm.</p>
+    <form method="dialog" novalidate>
+      <div class="settings-field">
+        <label for="confirm-name">Type group name to confirm</label>
+        <input type="text" id="confirm-name" name="confirm-name" placeholder="Group name">
+        <span class="error-msg" id="err-confirm">Name does not match — please try again</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button type="button" style="padding:10px 20px;border:1.5px solid rgba(14,148,144,0.25);border-radius:10px;background:white;color:#64748b;font-weight:700;cursor:pointer;font-family:inherit" onclick="document.getElementById('close-modal').close()">Cancel</button>
+        <button type="button" class="btn-danger" onclick="confirmClose()">Close group</button>
+      </div>
+    </form>
+  </dialog>
 
+  <!-- Chart.js for analytics and savings projection -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script src="../scripts/auth_service.js"></script>
   <script src="../scripts/savings-projection.js"></script>
   <script src="../scripts/group-admin.js"></script>
+  <!-- group-analytics.js — Sprint 4 Story 3, must load after group-admin.js -->
+  <script src="../scripts/group-analytics.js"></script>
   <script src="../scripts/notifications.js"></script>
+  <script src="../scripts/profile-modal.js"></script>
+  <script>
+    // Analytics loads only once — avoids repeat API calls on every tab switch
+    let analyticsLoaded = false;
+
+    const TABS = ['overview','members','contributions','payouts','meetings', 'announcements','analytics','settings'];
+
+    function switchTab(name) {
+      TABS.forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('active', t === name);
+        document.getElementById('nav-' + t).classList.toggle('active', t === name);
+      });
+      // Load analytics data only the first time this tab is opened
+      if (name === 'analytics' && !analyticsLoaded) {
+        analyticsLoaded = true;
+        const groupId = new URLSearchParams(window.location.search).get('groupId');
+        if (typeof loadAnalytics === 'function') loadAnalytics(groupId);
+      }
+      // Load meetings + minutes when switching to meetings tab
+      if (name === 'meetings' && typeof window.loadAdminMeetingsWithMinutes === 'function') {
+        const groupId = new URLSearchParams(window.location.search).get('groupId');
+        if (groupId) window.loadAdminMeetingsWithMinutes(groupId);
+      }
+      // Load existing announcements when switching to announcements tab
+      if (name === 'announcements' && typeof window.loadAdminAnnouncementsList === 'function') {
+        const groupId = new URLSearchParams(window.location.search).get('groupId');
+        if (groupId) window.loadAdminAnnouncementsList(groupId);
+      }
+    }
+
+    function openCloseModal() { document.getElementById('close-modal').showModal(); }
+
+    function confirmClose() {
+      const input = document.getElementById('confirm-name').value.trim();
+      const name  = (document.getElementById('group-name') || {}).textContent || '';
+      if (input !== name) { document.getElementById('err-confirm').style.display = 'block'; return; }
+      if (typeof window.closeGroup === 'function') window.closeGroup();
+    }
+
+    window.switchTab = switchTab;
+  </script>
 </body>
 </html>

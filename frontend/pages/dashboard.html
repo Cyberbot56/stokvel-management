@@ -5,6 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        /* Profile Modal Styles */
+        .profile-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .profile-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .profile-modal {
+            background: white;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+        }
+        .profile-modal-overlay.active .profile-modal {
+            transform: scale(1);
+        }
+        .profile-card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+        .profile-band {
+            height: 90px;
+            background: linear-gradient(120deg, #a8ede8 0%, #3cc8c0 35%, #0e9490 70%, #034e52 100%);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            border: none;
+            border-radius: 30px;
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            font-weight: 700;
+        }
+        .modal-close:hover { background: rgba(255, 255, 255, 0.4); }
+        .avatar-wrap {
+            position: absolute;
+            bottom: -44px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .profile-avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: #034e52;
+            border: 4px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: 700;
+            color: #2dd4bf;
+            box-shadow: 0 4px 16px rgba(14, 148, 144, 0.25);
+        }
+        .profile-body {
+            padding: 60px 32px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .profile-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #034e52;
+            text-align: center;
+            margin: 0;
+        }
+        .profile-email {
+            font-size: 14px;
+            color: #64748b;
+            text-align: center;
+            margin: 4px 0 0;
+        }
+        .profile-since {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+        .profile-details {
+            width: 100%;
+            margin-top: 24px;
+            border: 1px solid rgba(14, 148, 144, 0.12);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .detail-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(14, 148, 144, 0.08);
+            font-size: 13px;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label {
+            color: #64748b;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .detail-value {
+            color: #0f172a;
+            font-weight: 600;
+            text-align: right;
+        }
+        .logout-full {
+            margin-top: 28px;
+            width: 100%;
+            padding: 13px;
+            background: white;
+            color: #ef4444;
+            border: 1.5px solid #fecaca;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+        .logout-full:hover {
+            background: #fef2f2;
+            transform: translateY(-1px);
+        }
+        .avatar[onclick], .header-avatar[onclick] {
+            cursor: pointer;
+            transition: box-shadow 0.2s ease, transform 0.15s ease;
+        }
+        .avatar[onclick]:hover, .header-avatar[onclick]:hover {
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
+            transform: scale(1.07);
+        }
+    </style>
 </head>
 
 <body>
@@ -16,8 +181,7 @@
         </figure>
         <p class="header-title">Dashboard</p>
         <nav class="header-right">
-            <address class="avatar" id="avatar"></address>
-            <button class="logout-btn" id="logoutBtn">Log out</button>
+            <address class="avatar" id="avatar" onclick="showProfileModal()" style="cursor:pointer;" title="My profile"></address>
         </nav>
     </header>
 
@@ -41,10 +205,13 @@
         <section class="groups-grid" hidden></section>
     </main>
 
+
     <script src="../scripts/config.js"></script>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
     <script src="../scripts/auth_service.js"></script>
     <script src="../scripts/allGroups.js"></script>
     <script src="../scripts/rates.js"></script>
+    <script src="../scripts/profile-modal.js"></script>
+
 </body>
 </html>

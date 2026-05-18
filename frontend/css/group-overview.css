@@ -10,6 +10,114 @@ body {
   color: #0f172a;
   min-height: 100vh;
 }
+/* Announcements Bell & Modal */
+.announcements-bell {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  position: relative;
+  margin-left: auto;
+  margin-right: 16px;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.announcements-bell:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.announcements-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.announcements-modal .modal {
+  max-width: 550px;
+  width: 90%;
+}
+
+.announcements-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.announcement-item {
+  padding: 16px;
+  border-bottom: 1px solid #e0f7f6;
+}
+
+.announcement-item:last-child {
+  border-bottom: none;
+}
+
+.announcement-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #034e52;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.announcement-title::before {
+  content: "📢";
+  font-size: 14px;
+}
+
+.announcement-content {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.announcement-meta {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0fafa;
+}
+
+.announcement-author {
+  font-weight: 600;
+  color: #0e9490;
+}
+
+.announcement-date {
+  font-style: italic;
+}
+
+.empty-announcements {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-style: italic;
+}
 
 /* ── Header ── */
 header.site-header {
@@ -1366,3 +1474,19 @@ dialog::backdrop {
     height: 200px;
   }
 }
+/* ─── Meeting minutes (member + admin view) ─────────────────── */
+.minutes-meeting-card { margin-bottom: 1rem; }
+.minutes-meeting-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.minutes-meeting-info { flex: 1; min-width: 0; }
+.minutes-meeting-title { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 4px; }
+.minutes-meeting-meta { font-size: 12px; color: #64748b; margin: 0 0 4px; }
+.minutes-meeting-agenda { font-size: 13px; color: #475569; margin: 4px 0 0; line-height: 1.5; }
+.minutes-badge { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+.minutes-badge.has-minutes { background: #e0f7f6; color: #034e52; }
+.minutes-badge.no-minutes { background: #fef3c7; color: #92400e; }
+.minutes-content-card { margin-top: 12px; padding: 14px 16px; background: #f8fffe; border: 1px solid #e0f7f6; border-radius: 10px; }
+.minutes-content-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+.minutes-author { font-size: 12px; font-weight: 700; color: #0e9490; }
+.minutes-date { font-size: 11px; color: #94a3b8; }
+.minutes-content-text { font-size: 13px; color: #0f172a; line-height: 1.7; white-space: pre-wrap; margin: 0; }
+.minutes-empty-note { margin-top: 10px; font-size: 12px; color: #94a3b8; font-style: italic; padding: 10px 0; }
