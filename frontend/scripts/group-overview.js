@@ -845,18 +845,6 @@ async function loadSavingsProjection(userId, groupId) {
   }
 }
 
-// FIX 2: loadSavingsProjection is called in loadGroup() but the full
-// implementation above is commented out. Without this stub the call throws
-// a ReferenceError which is caught by loadGroup()'s catch block, aborting
-// execution before loadPersonalHealthScore() is reached — so the ML
-// financial health card never loads. Re-enable the full function above
-// (and remove this stub) once the savings-projection feature is ready.
-async function loadSavingsProjection(userId, groupId) {
-  const card = document.getElementById('savings-projection-card');
-  if (card) card.hidden = true;
-}
-
-
 // ─── View payouts modal ───────────────────────────────────────────────────────
 
 async function fetchPayouts(groupId) {
