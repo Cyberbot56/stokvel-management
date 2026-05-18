@@ -255,10 +255,10 @@
 
       <!-- Filter pills -->
       <div class="filter-bar">
-        <button class="filter-pill active" id="filter-all"     onclick="filterTable('all')">All</button>
-        <button class="filter-pill"        id="filter-pending" onclick="filterTable('pending')">Pending</button>
-        <button class="filter-pill"        id="filter-missed"  onclick="filterTable('missed')">Missed</button>
-        <button class="filter-pill"        id="filter-paid"    onclick="filterTable('paid')">Paid</button>
+        <button class="filter-pill active" id="filter-all">All</button>
+        <button class="filter-pill"        id="filter-pending">Pending</button>
+        <button class="filter-pill"        id="filter-missed">Missed</button>
+        <button class="filter-pill"        id="filter-paid">Paid</button>
       </div>
 
       <p class="loading-msg" id="loadingMsg">Loading contributions...</p>
@@ -303,8 +303,8 @@
       autocomplete="off"
     />
     <div class="dialog-actions">
-      <button class="btn-cancel" onclick="closeFlagModal()">Cancel</button>
-      <button class="btn-confirm-flag" onclick="confirmFlag()">Flag as missed</button>
+      <button class="btn-cancel"       id="cancelFlagBtn">Cancel</button>
+      <button class="btn-confirm-flag" id="confirmFlagBtn">Flag as missed</button>
     </div>
   </dialog>
 

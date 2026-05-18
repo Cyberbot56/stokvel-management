@@ -1149,6 +1149,9 @@ async function init() {
   }
 
   setupBackLink();
+  // setupViewContributionsButton() is deferred — footer buttons are injected by
+  // renderFooterButtons() in group-treasurer.js AFTER init() completes.
+  // On the standalone Missed-contributions page those buttons exist immediately.
   setupViewContributionsButton();
   setupPaymentModal();
   setupFilterButtons();
@@ -1176,6 +1179,11 @@ async function init() {
   }
 }
 
+// onAuthReady is called by auth_service.js when Auth0 is ready.
+// On the standalone Missed-contributions page this is the only definition.
+// On the group-treasurer page, group-treasurer.js (loaded after this file)
+// will overwrite this with its own version that calls init() internally,
+// so this definition acts as the correct fallback for the standalone page only.
 function onAuthReady() {
   setAvatar();
   init();

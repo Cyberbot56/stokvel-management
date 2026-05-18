@@ -291,7 +291,8 @@ async function fetchHealthScores(groupId) {
 }
 
 async function loadAndRenderHealthScores(groupId) {
-    const card = document.getElementById('health-score-card');
+    // HTML uses id="personal-health-card" (not "health-score-card")
+    const card = document.getElementById('personal-health-card');
     if (!card) return;
 
     for (let attempt = 1; attempt <= 5; attempt++) {
@@ -310,16 +311,45 @@ async function loadAndRenderHealthScores(groupId) {
             if (!response.ok) throw new Error('Failed to fetch health scores');
             const data = await response.json();
 
-            document.getElementById('group-avg-score').textContent  = data.groupScore + '%';
-            document.getElementById('group-avg-label').textContent  = data.groupLabel;
-            document.getElementById('group-risk-label').textContent = data.groupRisk;
+            // Populate personal/group summary fields (ids from group-treasurer.html)
+            const myScoreEl  = document.getElementById('my-health-score');
+            const myLabelEl  = document.getElementById('my-health-label');
+            const myRiskEl   = document.getElementById('my-health-risk');
 
+            if (myScoreEl)  myScoreEl.textContent  = (data.groupScore ?? '—') + (data.groupScore != null ? '%' : '');
+            if (myLabelEl)  myLabelEl.textContent  = data.groupLabel  ?? '—';
+            if (myRiskEl)   myRiskEl.textContent   = data.groupRisk   ?? '—';
+
+            // Breakdown counts (use group aggregates as fallback)
+            const paidEl    = document.getElementById('my-paid-count');
+            const missedEl  = document.getElementById('my-missed-count');
+            const pendingEl = document.getElementById('my-pending-count');
+            if (data.myBreakdown) {
+                if (paidEl)    paidEl.textContent    = data.myBreakdown.paid    ?? '—';
+                if (missedEl)  missedEl.textContent  = data.myBreakdown.missed  ?? '—';
+                if (pendingEl) pendingEl.textContent = data.myBreakdown.pending ?? '—';
+            } else if (data.members) {
+                // Aggregate across all members as a fallback
+                const totals = data.members.reduce((acc, m) => {
+                    acc.paid    += (m.breakdown?.paid    || 0);
+                    acc.missed  += (m.breakdown?.missed  || 0);
+                    acc.pending += (m.breakdown?.pending || 0);
+                    return acc;
+                }, { paid: 0, missed: 0, pending: 0 });
+                if (paidEl)    paidEl.textContent    = totals.paid;
+                if (missedEl)  missedEl.textContent  = totals.missed;
+                if (pendingEl) pendingEl.textContent = totals.pending;
+            }
+
+            // Optional group-level badge (may not exist on this page)
             const badge = document.getElementById('group-health-badge');
-            badge.textContent = data.groupLabel;
-            if (data.groupScore >= 80)      { badge.style.background = '#e0f7f6'; badge.style.color = '#034e52'; }
-            else if (data.groupScore >= 60) { badge.style.background = '#fef3c7'; badge.style.color = '#b45309'; }
-            else if (data.groupScore >= 40) { badge.style.background = '#ffedd5'; badge.style.color = '#c2410c'; }
-            else                            { badge.style.background = '#fef2f2'; badge.style.color = '#991b1b'; }
+            if (badge && data.groupLabel) {
+                badge.textContent = data.groupLabel;
+                if (data.groupScore >= 80)      { badge.style.background = '#e0f7f6'; badge.style.color = '#034e52'; }
+                else if (data.groupScore >= 60) { badge.style.background = '#fef3c7'; badge.style.color = '#b45309'; }
+                else if (data.groupScore >= 40) { badge.style.background = '#ffedd5'; badge.style.color = '#c2410c'; }
+                else                            { badge.style.background = '#fef2f2'; badge.style.color = '#991b1b'; }
+            }
 
             const container = document.getElementById('health-scores-container');
             if (!data.members || data.members.length === 0) {
@@ -379,76 +409,8 @@ async function loadAndRenderHealthScores(groupId) {
         }
     }
 }
-async function loadGroupData() {
-    const userId    = localStorage.getItem('userId');
-    const urlParams = new URLSearchParams(window.location.search);
-    const groupId   = urlParams.get('groupId');
-
-    console.log('userId:', userId);
-    console.log('groupId:', groupId);
-
-    const banner = document.getElementById('status-banner');
-
-    if (!userId || !groupId) {
-        banner.textContent = 'Missing session data. Please log in again.';
-        banner.className   = 'status-banner closed';
-        banner.hidden      = false;
-        return;
-    }
-
-    try {
-        const token    = await auth0Client.getTokenSilently();
-        const response = await fetch(`${config.apiBase}/api/groups_members/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
-        const groups = await response.json();
-        console.log('all groups returned:', groups);
-
-        const group  = groups.find(g => String(g.groupId) === String(groupId));
-        console.log('matched group:', group);
-        console.log('userRole:', group?.userRole);
-        console.log('members:', group?.members);
-
-        if (!group) {
-            banner.textContent = 'Group not found or you are not a member.';
-            banner.className   = 'status-banner closed';
-            banner.hidden      = false;
-            return;
-        }
-
-        if (group.userRole !== 'treasurer') {
-            console.log('Not a treasurer, redirecting...');
-            window.location.href = `group-overview.html?groupId=${groupId}`;
-            return;
-        }
-
-        currentGroup = group;
-        console.log('currentGroup set:', currentGroup);
-        console.log('members to populate:', group.members);
-
-        renderFooterButtons(group);
-
-        populateRecipientDropdown(group.members);
-        updatePayoutPreview();
-        await loadPayouts();
-
-        // Load projected savings growth chart for the treasurer
-        const projUserId = localStorage.getItem('userId');
-        if (projUserId) {
-            await loadSavingsProjection(parseInt(projUserId), parseInt(groupId));
-            await loadAndRenderHealthScores(parseInt(groupId));  // was: loadPersonalHealthScores (does not exist)
-        }
-
-    } catch (err) {
-        console.error('Load error:', err);
-        banner.textContent = 'Error loading group data. Please try again.';
-        banner.className   = 'status-banner closed';
-        banner.hidden      = false;
-    }
-}
+// loadGroupData is defined in Missed-contributions.js (loads group + populates UI).
+// group-treasurer.js intentionally does NOT redefine it to avoid shadowing.
 
 //This is a function to handle scheduling a meeting.
 //It validates the input fields, prepare the data then send them to the post api on server.js
@@ -862,16 +824,7 @@ async function handleMakeAnnouncement(e) {
     }
 }
 
-// ─── Notifications bell — opens unified Meetings + Announcements modal ────────
-
-function setupNotificationsBell() {
-  const bell = document.getElementById('announcements-bell');
-  if (bell) {
-    bell.addEventListener('click', () => {
-      if (currentGroup) loadAndShowNotifications(currentGroup.groupId);
-    });
-  }
-}
+// Bell event listener is wired in the inline <script> block in group-treasurer.html.
 
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
@@ -949,21 +902,37 @@ function renderFooterButtons(group) {
   checkNewNotifications(group.groupId, badgeWrapper);
 }
 
-// Helper to check for the red dot
-async function checkNewNotifications(groupId, wrapper) {
-  try {
-    const meetings = await fetchMeetings(groupId);
-    if (meetings && meetings.length > 0) {
-      wrapper.classList.add("has-notification");
-    }
-  } catch (e) {
-    console.error("Badge check failed", e);
-  }
-}
+// checkNewNotifications is defined in notifications.js — do not redefine here.
 // ─── Entry point ──────────────────────────────────────────────────────────────
-function onAuthReady() {
+// NOTE: Missed-contributions.js also defines onAuthReady (calls init → loadGroupData,
+// loadMembers, loadPaymentTracking, loadContributions, renderPaymentCard).
+// We must call ALL of that AND our own setup. We do so by calling init() ourselves
+// and then running the treasurer-specific extras after currentGroup is set.
+async function onAuthReady() {
+    // setAvatar is defined in Missed-contributions.js (sets header initials)
+    if (typeof setAvatar === 'function') setAvatar();
+
     setupEventListeners();
-    loadGroupData();
+
+    // Run the shared init from Missed-contributions.js (loads group, members,
+    // payment tracking, contributions table, and payment status card).
+    if (typeof init === 'function') {
+        await init();
+    }
+
+    // After init has set currentGroup, run treasurer-specific extras.
+    if (currentGroup) {
+        renderFooterButtons(currentGroup);
+        populateRecipientDropdown(currentGroup.members || []);
+        updatePayoutPreview();
+        await loadPayouts();
+
+        const projUserId = localStorage.getItem('userId');
+        if (projUserId) {
+            await loadSavingsProjection(parseInt(projUserId), parseInt(currentGroup.groupId));
+            await loadAndRenderHealthScores(parseInt(currentGroup.groupId));
+        }
+    }
 }
 // ─── Download minutes as PDF ──────────────────────────────────────────────────
 function downloadMinutesPDF(minutesId, content, uploadedBy, uploadedAt) {
