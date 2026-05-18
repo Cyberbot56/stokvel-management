@@ -1,6 +1,6 @@
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-let currentGroup = null;   // ← declared here so all functions can access it
+// NOTE: currentGroup is declared in Missed-contributions.js (var currentGroup)
+// which loads before this file. Do NOT redeclare it here.
 
 const sanitise = (str) => {
     const div = document.createElement('div');

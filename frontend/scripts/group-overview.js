@@ -483,6 +483,73 @@ function getGroupById(groupId) {
   return userGroups.find(g => String(g.groupId) === String(groupId));
 }
 
+// ─── Compute cycle & payout info from group data ──────────────────────────────
+
+function buildCycleData(group) {
+  const start        = group.startDate ? new Date(group.startDate) : new Date();
+  const totalMembers = group.totalMembers || (group.members ? group.members.length : 1);
+  const now          = new Date();
+
+  // Duration of one cycle period in ms
+  const msPerDay  = 86400000;
+  let periodMs;
+  switch ((group.cycleType || '').toLowerCase()) {
+    case 'weekly':    periodMs = 7  * msPerDay; break;
+    case 'bi-weekly': periodMs = 14 * msPerDay; break;
+    case 'yearly':    periodMs = 365 * msPerDay; break;
+    default:          periodMs = 30 * msPerDay; break; // monthly
+  }
+
+  const totalPeriods  = totalMembers; // one payout per member
+  const totalDuration = periodMs * totalPeriods;
+  const elapsed       = now - start;
+
+  const currentPeriod = Math.min(Math.floor(elapsed / periodMs) + 1, totalPeriods);
+  const periodStart   = new Date(start.getTime() + (currentPeriod - 1) * periodMs);
+  const periodEnd     = new Date(periodStart.getTime() + periodMs);
+  const daysRemaining = Math.max(0, Math.ceil((periodEnd - now) / msPerDay));
+  const progressPercent = Math.min(100, Math.round(((periodMs - daysRemaining * msPerDay) / periodMs) * 100));
+
+  return {
+    number:          currentPeriod,
+    total:           totalPeriods,
+    endDate:         periodEnd.toISOString(),
+    daysRemaining,
+    progressPercent
+  };
+}
+
+function buildNextPayout(group) {
+  const members = group.members || [];
+  if (members.length === 0) {
+    return { recipientName: '—', payoutDate: null, daysRemaining: null };
+  }
+
+  const start    = group.startDate ? new Date(group.startDate) : new Date();
+  const now      = new Date();
+  const msPerDay = 86400000;
+  let periodMs;
+  switch ((group.cycleType || '').toLowerCase()) {
+    case 'weekly':    periodMs = 7  * msPerDay; break;
+    case 'bi-weekly': periodMs = 14 * msPerDay; break;
+    case 'yearly':    periodMs = 365 * msPerDay; break;
+    default:          periodMs = 30 * msPerDay; break;
+  }
+
+  const elapsed       = now - start;
+  const currentPeriod = Math.min(Math.floor(elapsed / periodMs), members.length - 1);
+  const nextIndex     = currentPeriod < members.length ? currentPeriod : members.length - 1;
+  const nextMember    = members[nextIndex];
+  const payoutDate    = new Date(start.getTime() + (nextIndex + 1) * periodMs);
+  const daysRemaining = Math.max(0, Math.ceil((payoutDate - now) / msPerDay));
+
+  return {
+    recipientName: nextMember.name || '—',
+    payoutDate:    payoutDate.toISOString(),
+    daysRemaining
+  };
+}
+
 async function loadGroup(groupId) {
   try {
     const group = getGroupById(groupId);
@@ -490,7 +557,9 @@ async function loadGroup(groupId) {
 
     currentGroupForPayment = group;
 
-    const { cycle, nextPayout } = getMockCycleAndPayout();
+    // Build real cycle data from the group object returned by the API
+    const cycle = buildCycleData(group);
+    const nextPayout = buildNextPayout(group);
 
     renderBanner(group.status);
     renderGroupHeader(group, cycle);

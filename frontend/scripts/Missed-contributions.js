@@ -1176,9 +1176,7 @@ async function init() {
   }
 }
 
-init();
-
 function onAuthReady() {
   setAvatar();
-  loadGroupData();  
+  init();
 }
