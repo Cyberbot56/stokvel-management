@@ -468,12 +468,22 @@ app.patch('/api/missed-contributions/:contributionId/flag', async (req, res) => 
     const contributionId = parseInt(req.params.contributionId);
     const { note } = req.body;
     try {
-        const contribution = await prisma.contributions.findUnique({ where: { contributionsId: contributionId } });
-        if (!contribution) return res.status(404).json({ error: 'Contribution not found' });
-        if (contribution.status === 'paid') return res.status(400).json({ error: 'Cannot flag a paid contribution as missed' });
+        const contribution = await prisma.contributions.findUnique({
+            where: { contributionsId: contributionId }
+        });
+        // null check MUST come before status check to avoid null-dereference 500
+        if (!contribution) {
+            return res.status(404).json({ error: 'Contribution not found' });
+        }
+        if (contribution.status === 'paid') {
+            return res.status(400).json({ error: 'Cannot flag a paid contribution as missed' });
+        }
         const updated = await prisma.contributions.update({
             where: { contributionsId: contributionId },
-            data: { status: 'missed', note: note || `Flagged as missed on ${new Date().toISOString()}` }
+            data: {
+                status: 'missed',
+                note: note || `Flagged as missed on ${new Date().toISOString()}`
+            }
         });
         res.json(updated);
     } catch (error) {
@@ -481,6 +491,8 @@ app.patch('/api/missed-contributions/:contributionId/flag', async (req, res) => 
         res.status(500).json({ error: 'Could not flag contribution' });
     }
 });
+ 
+
 
 app.post('/api/groups/assign-treasurer', async (req, res) => {
     const { email, groupId } = req.body;
