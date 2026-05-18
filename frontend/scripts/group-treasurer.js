@@ -541,26 +541,6 @@ async function handleScheduleMeeting(e) {
 }
 // ─── Meetings Tab ─────────────────────────────────────────────────────────────
 
-async function fetchMeetings(groupId) {
-    const token = await auth0Client.getTokenSilently();
-    const response = await fetch(`${config.apiBase}/api/meetings/group/${groupId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch meetings');
-    return await response.json();
-}
-
-// ─── Meetings Tab ─────────────────────────────────────────────────────────────
-
-async function fetchMeetings(groupId) {
-    const token = await auth0Client.getTokenSilently();
-    const response = await fetch(`${config.apiBase}/api/meetings/group/${groupId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch meetings');
-    return await response.json();
-}
-
 async function loadAndShowMeetings(groupId) {
     const container = document.getElementById('meetings-list-container');
     if (!container) return;
@@ -798,6 +778,97 @@ function editMinutes(meetingId, minutesId, content) {
     // Scroll to the panel
     document.getElementById(`minutes-write-${meetingId}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
+//This is for making announcemets
+async function handleMakeAnnouncement(e) {
+    e.preventDefault();
+
+    const titleInput    = document.getElementById('announcement-title');
+    const contentInput  = document.getElementById('announcement-content');
+    const submitBtn     = document.getElementById('make-announcement-btn');
+
+    // Validate
+    if (!titleInput.value.trim()) {
+        showFeedback('announcement-feedback', 'Please enter an announcement title.', 'error');
+        return;
+    }
+    if (!contentInput.value.trim()) {
+        showFeedback('announcement-feedback', 'Please enter announcement content.', 'error');
+        return;
+    }
+    if (!currentGroup || !currentGroup.groupId) {
+        showFeedback('announcement-feedback', 'Group information not loaded. Please refresh.', 'error');
+        return;
+    }
+
+    // Check title length (max 100)
+    if (titleInput.value.trim().length > 100) {
+        showFeedback('announcement-feedback', 'Announcement title cannot exceed 100 characters.', 'error');
+        return;
+    }
+    // Check content length (max 2000)
+    if (contentInput.value.trim().length > 2000) {
+        showFeedback('announcement-feedback', 'Announcement content cannot exceed 2000 characters.', 'error');
+        return;
+    }
+
+    // Prepare data
+    const announcementData = {
+        groupId: currentGroup.groupId,
+        title: titleInput.value.trim(),
+        content: contentInput.value.trim()
+    };
+
+    // Disable button & show loading state
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Posting...';
+
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/announcements`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(announcementData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok || response.status === 201) {
+            showFeedback('announcement-feedback', 
+                `Announcement "${titleInput.value}" posted successfully!`, 
+                'success'
+            );
+            // Clear the form
+            titleInput.value = '';
+            contentInput.value = '';
+        } else {
+            showFeedback('announcement-feedback', data.error || 'Failed to post announcement.', 'error');
+        }
+    } catch (err) {
+        console.error('Make announcement error:', err);
+        showFeedback('announcement-feedback', 'Failed to post announcement. Check console for details.', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+    }
+}
+
+// ─── Notifications bell — opens unified Meetings + Announcements modal ────────
+
+function setupNotificationsBell() {
+  const bell = document.getElementById('announcements-bell');
+  if (bell) {
+    bell.addEventListener('click', () => {
+      if (currentGroup) loadAndShowNotifications(currentGroup.groupId);
+    });
+  }
+}
+
+
 // ─── Event listeners ──────────────────────────────────────────────────────────
 function setupEventListeners() {
     const backBtn           = document.getElementById('back-btn');

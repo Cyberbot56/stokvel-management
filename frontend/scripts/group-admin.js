@@ -75,6 +75,11 @@ function renderMembers(members) {
         const roleClass = member.role === 'admin' ? 'admin' : member.role === 'treasurer' ? 'treasurer' : 'member';
         const roleLabel = member.role.charAt(0).toUpperCase() + member.role.slice(1);
 
+        const canKick = member.role !== 'admin';
+        const kickBtn = canKick
+            ? `<button class="kick-btn" data-userid="${sanitise(String(member.userId))}" data-name="${sanitise(member.name)}" title="Remove ${sanitise(member.name)} from group">Remove</button>`
+            : `<span style="font-size:12px;color:#94a3b8;">—</span>`;
+
         return `
             <tr>
                 <td>
@@ -88,6 +93,7 @@ function renderMembers(members) {
                 </td>
                 <td><b class="role-badge ${roleClass}">${roleLabel}</b></td>
                 <td class="joined-date">${joined}</td>
+                <td>${kickBtn}</td>
             </tr>
         `;
     }).join('');
@@ -99,11 +105,17 @@ function renderMembers(members) {
                     <th>Member</th>
                     <th>Role</th>
                     <th>Joined</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>${rows}</tbody>
         </table>
     `;
+
+    // Wire up all Remove buttons
+    container.querySelectorAll('.kick-btn').forEach(btn => {
+        btn.addEventListener('click', () => openKickModal(btn.dataset.userid, btn.dataset.name));
+    });
 }
 
 
@@ -296,6 +308,63 @@ async function addMember() {
     } finally {
         btn.disabled    = false;
         btn.textContent = 'Add member';
+    }
+}
+
+
+// ─── Remove (kick) member ─────────────────────────────────────────────────────
+
+function openKickModal(userId, name) {
+    const dialog  = document.getElementById('kick-modal');
+    const desc    = document.getElementById('kick-modal-desc');
+    const confirm = document.getElementById('kick-confirm-btn');
+    const cancel  = document.getElementById('kick-cancel-btn');
+
+    desc.textContent = `${name} will be removed from the group. This cannot be undone.`;
+
+    // Clone buttons to drop any old listeners
+    const newConfirm = confirm.cloneNode(true);
+    const newCancel  = cancel.cloneNode(true);
+    confirm.replaceWith(newConfirm);
+    cancel.replaceWith(newCancel);
+
+    newCancel.addEventListener('click',  () => dialog.close());
+    newConfirm.addEventListener('click', async () => {
+        newConfirm.disabled    = true;
+        newConfirm.textContent = 'Removing...';
+        await removeMember(userId, name);
+        dialog.close();
+        newConfirm.disabled    = false;
+        newConfirm.textContent = 'Remove';
+    });
+
+    dialog.showModal();
+}
+
+async function removeMember(userId, name) {
+    if (!currentGroup) {
+        showFeedback('add-feedback', 'No group loaded. Please refresh.', 'error');
+        return;
+    }
+
+    try {
+        const token    = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/groups/remove-member`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ userId: parseInt(userId), groupId: currentGroup.groupId })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showFeedback('add-feedback', `${name} has been removed from the group.`, 'success');
+            await loadGroupData();
+        } else {
+            showFeedback('add-feedback', data.error || 'Failed to remove member.', 'error');
+        }
+    } catch (err) {
+        showFeedback('add-feedback', 'Something went wrong. Please try again.', 'error');
     }
 }
 
@@ -500,7 +569,6 @@ async function loadGroupData() {
             return;
         }
 
-        await checkNewAnnouncements(groupId);
         currentGroup = group;
         renderGroupHeader(group);
         renderMembers(group.members);
@@ -516,7 +584,7 @@ async function loadGroupData() {
         // Load projected savings growth chart for the admin
         await loadSavingsProjection(parseInt(userId), parseInt(groupId));
         await loadAndRenderHealthScores(parseInt(groupId));
-         await checkNewAnnouncements(groupId);
+         await checkNewNotifications(groupId, document.querySelector('.badge-container') || document.createElement('div'));
 
     } catch (err) {
         console.error('Load error:', err);
@@ -892,148 +960,15 @@ async function handleMakeAnnouncement(e) {
     }
 }
 
-// ─── Announcements Display Functions (Bell Modal) ─────────────────────────────────
+// ─── Notifications bell — opens unified Meetings + Announcements modal ────────
 
-async function fetchAnnouncements(groupId) {
-  try {
-    const token = await auth0Client.getTokenSilently();
-    const response = await fetch(`${config.apiBase}/api/groups/${groupId}/announcements`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch announcements');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching announcements:', error);
-    return [];
-  }
-}
-
-function displayAnnouncementsModal(announcements) {
-  const modal = document.getElementById('announcements-modal');
-  const content = document.getElementById('announcements-content');
-  const badge = document.getElementById('announcements-badge');
-  
-  if (!modal || !content) return;
-  
-  // Clear badge (user has viewed announcements)
-  if (badge) badge.hidden = true;
-  
-  if (!announcements || announcements.length === 0) {
-    content.innerHTML = '<p class="empty-announcements">No announcements yet. Check back later!</p>';
-  } else {
-    let html = '';
-    
-    announcements.forEach(announcement => {
-      const postedDate = new Date(announcement.postedAt).toLocaleDateString('en-ZA', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-      
-      const postedTime = new Date(announcement.postedAt).toLocaleTimeString('en-ZA', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      const authorName = announcement.author?.name || announcement.author?.email || 'Group Admin';
-      
-      html += `
-        <div class="announcement-item">
-          <h3 class="announcement-title">${sanitise(announcement.title)}</h3>
-          <div class="announcement-content">${sanitise(announcement.content)}</div>
-          <div class="announcement-meta">
-            <span class="announcement-author">👤 ${sanitise(authorName)}</span>
-            <span class="announcement-date">📅 ${postedDate} at ${postedTime}</span>
-          </div>
-        </div>
-      `;
-    });
-    
-    content.innerHTML = html;
-  }
-  
-  modal.hidden = false;
-}
-
-async function loadAndShowAnnouncementsModal() {
-  if (!currentGroup || !currentGroup.groupId) {
-    console.error('No group ID found');
-    return;
-  }
-  
-  try {
-    const announcements = await fetchAnnouncements(currentGroup.groupId);
-    displayAnnouncementsModal(announcements);
-    markAnnouncementsAsRead(currentGroup.groupId);
-  } catch (error) {
-    console.error('Error loading announcements:', error);
-    const content = document.getElementById('announcements-content');
-    if (content) {
-      content.innerHTML = '<p class="empty-announcements" style="color:#991b1b;">Failed to load announcements. Please try again.</p>';
-    }
-  }
-}
-
-async function checkNewAnnouncements(groupId) {
-  try {
-    const announcements = await fetchAnnouncements(groupId);
-    const badge = document.getElementById('announcements-badge');
-    
-    if (badge && announcements && announcements.length > 0) {
-      // Check localStorage for last viewed timestamp
-      const lastViewed = localStorage.getItem(`announcements_last_viewed_${groupId}`);
-      const hasNew = !lastViewed || new Date(announcements[0].postedAt) > new Date(lastViewed);
-      
-      if (hasNew) {
-        badge.textContent = announcements.length;
-        badge.hidden = false;
-      } else {
-        badge.hidden = true;
-      }
-    }
-  } catch (error) {
-    console.error('Error checking new announcements:', error);
-  }
-}
-
-function markAnnouncementsAsRead(groupId) {
-  localStorage.setItem(`announcements_last_viewed_${groupId}`, new Date().toISOString());
-}
-
-function setupAnnouncementsModal() {
-  const bellButton = document.getElementById('announcements-bell');
-  const closeBtn = document.getElementById('close-announcements-modal');
-  const modal = document.getElementById('announcements-modal');
-  
-  if (bellButton) {
-    bellButton.addEventListener('click', async () => {
-      await loadAndShowAnnouncementsModal();
+function setupNotificationsBell() {
+  const bell = document.getElementById('announcements-bell');
+  if (bell) {
+    bell.addEventListener('click', () => {
+      if (currentGroup) loadAndShowNotifications(currentGroup.groupId);
     });
   }
-  
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      if (modal) modal.hidden = true;
-    });
-  }
-  
-  if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.hidden = true;
-      }
-    });
-  }
-  
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal && !modal.hidden) {
-      modal.hidden = true;
-    }
-  });
 }
 
 // ─── Contribution history ─────────────────────────────────────────────────────
@@ -1661,25 +1596,12 @@ function renderFooterButtons(group) {
     checkNewNotifications(group.groupId, badgeWrapper);
 }
 
-// Helper to check for the red dot
-async function checkNewNotifications(groupId, wrapper) {
-    try {
-        const meetings = await fetchMeetings(groupId);
-        if (meetings && meetings.length > 0) {
-            wrapper.classList.add('has-notification');
-        }
-    } catch (e) {
-        console.error('Badge check failed', e);
-    }
-}
-
-
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
 function onAuthReady() {
     setAvatar();
     setupEventListeners();
-    setupAnnouncementsModal();
+    setupNotificationsBell();
     loadGroupData();
 }
 

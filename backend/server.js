@@ -236,6 +236,38 @@ app.post('/api/groups/add-member', async (req, res) => {
     }
 });
 
+app.delete('/api/groups/remove-member', requireAuth, async (req, res) => {
+    const { userId, groupId } = req.body;
+ 
+    if (!userId || !groupId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+ 
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: parseInt(userId) }
+        });
+ 
+        if (!membership) {
+            return res.status(404).json({ error: 'Member not found in this group' });
+        }
+ 
+        if (membership.role === 'admin') {
+            return res.status(403).json({ error: 'Cannot remove an admin from the group' });
+        }
+ 
+        await prisma.group_members.delete({
+            where: { group_memberId: membership.group_memberId }
+        });
+ 
+        res.json({ message: 'Member kicked out successfully' });
+    } catch (error) {
+        console.error('Error removing member:', error);
+        res.status(500).json({ error: 'Failed to kick the member', details: error.message });
+    }
+});
+
+
 app.post('/api/contributions', async (req, res) => {
     const { userId, groupId, amount, treasurerId, paidAt } = req.body;
     if (!userId || !groupId || !amount || !treasurerId || !paidAt) {
