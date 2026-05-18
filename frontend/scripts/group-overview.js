@@ -591,7 +591,14 @@ async function loadGroup(groupId) {
     renderFooterButtons(group);
 
     const userId = localStorage.getItem('userId');
-    await checkNewAnnouncements(groupId);
+    // FIX 1: checkNewAnnouncements is not defined in this file — it lives in
+    // notifications.js. Guard the call so a missing definition doesn't throw
+    // a ReferenceError that aborts the entire loadGroup() try-block, which
+    // was preventing renderPaymentCard(), loadSavingsProjection() and
+    // loadPersonalHealthScore() from ever running.
+    if (typeof checkNewAnnouncements === 'function') {
+      await checkNewAnnouncements(groupId);
+    }
     if (userId) {
       const statusData = await fetchPaymentStatus(parseInt(userId), parseInt(groupId));
       renderPaymentCard(statusData);
@@ -838,12 +845,12 @@ document.addEventListener("keydown", (event) => {
 //   }
 // }
 
-// FIX 2: loadSavingsProjection is called in loadGroup() but its full implementation
-// is commented out above (savings-projection feature is disabled). Without this stub
-// the call throws a ReferenceError which is caught by loadGroup()'s catch block,
-// causing execution to stop before loadPersonalHealthScore() is ever reached —
-// so the ML financial health card never loads.
-// Replace this stub with the real implementation when the feature is re-enabled.
+// FIX 2: loadSavingsProjection is called in loadGroup() but the full
+// implementation above is commented out. Without this stub the call throws
+// a ReferenceError which is caught by loadGroup()'s catch block, aborting
+// execution before loadPersonalHealthScore() is reached — so the ML
+// financial health card never loads. Re-enable the full function above
+// (and remove this stub) once the savings-projection feature is ready.
 async function loadSavingsProjection(userId, groupId) {
   const card = document.getElementById('savings-projection-card');
   if (card) card.hidden = true;
