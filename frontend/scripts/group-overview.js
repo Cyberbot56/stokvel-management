@@ -441,7 +441,17 @@ async function loadPersonalHealthScore(userId, groupId) {
                 continue;
             }
 
-            if (!response.ok) throw new Error('Failed to fetch health score');
+            if (response.status === 404) {
+                console.warn('Health scores not available for this group yet');
+                card.hidden = true;
+                return;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch health score: ${response.status} - ${errorText}`);
+            }
+            
             const data = await response.json();
 
             const scoreEl   = document.getElementById('my-health-score');
@@ -469,8 +479,20 @@ async function loadPersonalHealthScore(userId, groupId) {
             return;
 
         } catch (error) {
-            console.error('Personal health score error:', error);
-            if (attempt === 5 && card) card.hidden = true;
+            console.error(`Personal health score error (attempt ${attempt}/5):`, error);
+            if (attempt === 5) {
+                card.hidden = true;
+                // Add a small note to the card showing it's unavailable
+                const parent = card.parentNode;
+                const note = document.createElement('p');
+                note.style.cssText = 'font-size:12px;color:#64748b;text-align:center;padding:1rem;';
+                note.textContent = 'Financial health score temporarily unavailable. Check back later.';
+                if (parent && !parent.querySelector('.health-unavailable-note')) {
+                    note.className = 'health-unavailable-note';
+                    parent.appendChild(note);
+                    setTimeout(() => note.remove(), 10000);
+                }
+            }
         }
     }
 }
@@ -815,6 +837,17 @@ document.addEventListener("keydown", (event) => {
 //     if (card) card.hidden = true;
 //   }
 // }
+
+// FIX 2: loadSavingsProjection is called in loadGroup() but its full implementation
+// is commented out above (savings-projection feature is disabled). Without this stub
+// the call throws a ReferenceError which is caught by loadGroup()'s catch block,
+// causing execution to stop before loadPersonalHealthScore() is ever reached —
+// so the ML financial health card never loads.
+// Replace this stub with the real implementation when the feature is re-enabled.
+async function loadSavingsProjection(userId, groupId) {
+  const card = document.getElementById('savings-projection-card');
+  if (card) card.hidden = true;
+}
 
 
 // ─── View payouts modal ───────────────────────────────────────────────────────
