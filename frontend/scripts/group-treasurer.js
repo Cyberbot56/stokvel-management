@@ -433,7 +433,7 @@ async function loadGroupData() {
         const projUserId = localStorage.getItem('userId');
         if (projUserId) {
             await loadSavingsProjection(parseInt(projUserId), parseInt(groupId));
-            await loadAndRenderHealthScores(parseInt(groupId));
+            await loadPersonalHealthScores(parseInt(groupId));
 
         }
 

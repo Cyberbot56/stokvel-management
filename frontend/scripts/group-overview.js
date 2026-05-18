@@ -1,37 +1,3 @@
-// ─── Mock data ────────────────────────────────────────────────────────────────
-// TODO: remove MOCK_CYCLE and MOCK_NEXT_PAYOUT when Dev 5 adds cycle/payout data
-// TODO: remove MOCK_RULES when GET /api/groups/:id/rules is ready
-const MOCK_CYCLE = {
-  number: 4,
-  total: 10,
-  endDate: "2026-05-31",
-  progressPercent: 45,
-  daysRemaining: 17
-};
-
-const MOCK_NEXT_PAYOUT = {
-  recipientName: "Nompumelelo Mokoena",
-  payoutDate: "2026-05-31",
-  daysRemaining: 17
-};
-
-const MOCK_RULES = {
-  dueDayOfMonth: 1,
-  penaltyRules: "Any member who misses a contribution will be given a 7-day grace period. After that, a penalty of R50 is added for every additional week the contribution remains unpaid.",
-  payoutOrder: [
-    { memberId: 1,  name: "Thabo Nkosi",         payoutDate: "2026-02-28" },
-    { memberId: 2,  name: "Nompumelelo Mokoena",  payoutDate: "2026-03-31" },
-    { memberId: 3,  name: "Sipho Dlamini",        payoutDate: "2026-04-30" },
-    { memberId: 4,  name: "Zanele Khumalo",       payoutDate: "2026-05-31" },
-    { memberId: 5,  name: "Lerato Molefe",        payoutDate: "2026-06-30" },
-    { memberId: 6,  name: "Bongani Sithole",      payoutDate: "2026-07-31" },
-    { memberId: 7,  name: "Nomsa Zulu",           payoutDate: "2026-08-31" },
-    { memberId: 8,  name: "Mpho Radebe",          payoutDate: "2026-09-30" },
-    { memberId: 9,  name: "Thandeka Ndlovu",      payoutDate: "2026-10-31" },
-    { memberId: 10, name: "Lungelo Mthembu",      payoutDate: "2026-11-30" }
-  ]
-};
-
 // FIXED: read real userId from localStorage instead of hardcoded value
 const CURRENT_USER_ID = parseInt(localStorage.getItem('userId')) || null;
 
@@ -1030,120 +996,7 @@ const setAvatar = () => {
   if (avatar) avatar.textContent = initials || '?';
 };
 
-// ─── Announcements Functions ─────────────────────────────────────────────────
-//This is a function to fetch announcements for a group, display them in a modal, and manage the notification badge for new announcements. It includes error handling and ensures that the user is informed if there are issues loading the announcements.
-async function fetchAnnouncements(groupId) {
-  try {
-    const token = await auth0Client.getTokenSilently();
-    const response = await fetch(`${config.apiBase}/api/groups/${groupId}/announcements`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch announcements');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching announcements:', error);
-    return [];
-  }
-}
-
-function displayAnnouncementsModal(announcements) {
-  const modal = document.getElementById('announcements-modal');
-  const content = document.getElementById('announcements-content');
-  const badge = document.getElementById('announcements-badge');
-  
-  if (!modal || !content) return;
-  
-  // Clear badge (user has viewed announcements)
-  if (badge) badge.hidden = true;
-  
-  if (!announcements || announcements.length === 0) {
-    content.innerHTML = '<p class="empty-announcements">No announcements yet. Check back later!</p>';
-  } else {
-    let html = '';
-    
-    announcements.forEach(announcement => {
-      const postedDate = new Date(announcement.postedAt).toLocaleDateString('en-ZA', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-      
-      const postedTime = new Date(announcement.postedAt).toLocaleTimeString('en-ZA', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      const authorName = announcement.author?.name || announcement.author?.email || 'Group Admin';
-      
-      html += `
-        <div class="announcement-item">
-          <h3 class="announcement-title">${escapeHtml(announcement.title)}</h3>
-          <div class="announcement-content">${escapeHtml(announcement.content)}</div>
-          <div class="announcement-meta">
-            <span class="announcement-author">👤 ${escapeHtml(authorName)}</span>
-            <span class="announcement-date">📅 ${postedDate} at ${postedTime}</span>
-          </div>
-        </div>
-      `;
-    });
-    
-    content.innerHTML = html;
-  }
-  
-  modal.hidden = false;
-}
-
-async function loadAndShowAnnouncements() {
-  const groupId = new URLSearchParams(window.location.search).get('groupId');
-  
-  if (!groupId) {
-    console.error('No group ID found');
-    return;
-  }
-  
-  try {
-    const announcements = await fetchAnnouncements(groupId);
-    displayAnnouncementsModal(announcements);
-  } catch (error) {
-    console.error('Error loading announcements:', error);
-    const content = document.getElementById('announcements-content');
-    if (content) {
-      content.innerHTML = '<p class="empty-announcements" style="color:#991b1b;">Failed to load announcements. Please try again.</p>';
-    }
-  }
-}
-
-async function checkNewAnnouncements(groupId) {
-  try {
-    const announcements = await fetchAnnouncements(groupId);
-    const badge = document.getElementById('announcements-badge');
-    
-    if (badge && announcements && announcements.length > 0) {
-      // Check localStorage for last viewed timestamp
-      const lastViewed = localStorage.getItem(`announcements_last_viewed_${groupId}`);
-      const hasNew = !lastViewed || new Date(announcements[0].postedAt) > new Date(lastViewed);
-      
-      if (hasNew) {
-        badge.textContent = announcements.length;
-        badge.hidden = false;
-      } else {
-        badge.hidden = true;
-      }
-    }
-  } catch (error) {
-    console.error('Error checking new announcements:', error);
-  }
-}
-
-function markAnnouncementsAsRead(groupId) {
-  localStorage.setItem(`announcements_last_viewed_${groupId}`, new Date().toISOString());
-}
-
-// Helper function for escaping HTML (add if not already present)
+// escapeHtml is defined in notifications.js — kept here as fallback
 function escapeHtml(str) {
   if (!str) return '';
   return str
@@ -1157,32 +1010,12 @@ function onAuthReady() {
   setAvatar();
   setupPaymentModal();
 
-// Announcements bell click handler
+// Notifications bell — opens unified Meetings + Announcements modal
 const announcementsBell = document.getElementById('announcements-bell');
 if (announcementsBell) {
-  announcementsBell.addEventListener('click', async () => {
+  announcementsBell.addEventListener('click', () => {
     const groupId = new URLSearchParams(window.location.search).get('groupId');
-    await loadAndShowAnnouncements();
-    if (groupId) markAnnouncementsAsRead(groupId);
-  });
-}
-
-// Close announcements modal
-const closeAnnouncementsBtn = document.getElementById('close-announcements-modal');
-if (closeAnnouncementsBtn) {
-  closeAnnouncementsBtn.addEventListener('click', () => {
-    const modal = document.getElementById('announcements-modal');
-    if (modal) modal.hidden = true;
-  });
-}
-
-// Click outside to close
-const announcementsModal = document.getElementById('announcements-modal');
-if (announcementsModal) {
-  announcementsModal.addEventListener('click', (e) => {
-    if (e.target === announcementsModal) {
-      announcementsModal.hidden = true;
-    }
+    if (groupId) loadAndShowNotifications(groupId);
   });
 }
   loadUserGroups();
