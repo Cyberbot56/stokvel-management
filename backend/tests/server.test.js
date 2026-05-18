@@ -110,7 +110,6 @@ jest.mock('../src/middleware/auth', () => ({
 const request = require('supertest');
 const crypto = require('crypto');
 const app = require('../server');
-const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 beforeEach(() => {
