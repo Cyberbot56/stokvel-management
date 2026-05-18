@@ -585,7 +585,10 @@ async function loadPaymentTracking() {
     }
 }
 
-function showFeedback(message, type) {
+// Internal feedback helper for the payment-feedback element only.
+// Named _showPaymentFeedback to avoid colliding with group-treasurer.js's
+// showFeedback(elementId, message, type) which loads on the same page.
+function _showPaymentFeedback(message, type) {
   const el = document.getElementById('payment-feedback');
   if (!el) return;
 
@@ -596,6 +599,13 @@ function showFeedback(message, type) {
   setTimeout(() => {
     el.hidden = true;
   }, 3000);
+}
+
+// Keep the public name working so any other callers in this file still work.
+// group-treasurer.js will overwrite showFeedback with its 3-arg version after
+// this file loads, which is intentional — treasurer page needs the 3-arg form.
+function showFeedback(message, type) {
+  _showPaymentFeedback(message, type);
 }
 
 // ── Record Payment ─────────────────────────────────────────────────────
@@ -810,8 +820,9 @@ async function updateTotalCollected() {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    const result = await res.json();
-    const contributions = result.contributions || result;
+    const raw = await res.json();
+    // The endpoint returns a plain array; guard against future shape changes
+    const contributions = Array.isArray(raw) ? raw : (raw.contributions || []);
 
     const totalCollected = contributions
       .filter(c => c.status === 'paid')

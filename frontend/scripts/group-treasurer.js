@@ -24,6 +24,15 @@ function formatDateTime(iso) {
     });
 }
 
+// NOTE: Missed-contributions.js defines showFeedback(message, type) (2 args).
+// This file needs showFeedback(elementId, message, type) (3 args).
+// We override it here after Missed-contributions.js loads so treasurer-page
+// calls work correctly. Missed-contributions.js uses its own internal calls
+// via the #payment-feedback element which still works because it calls
+// showFeedback(message, type) — but since this 3-arg version is now active,
+// those calls pass the message as elementId and type as message.
+// To avoid any collision we define a separate named function for this file
+// and reassign showFeedback to the 3-arg version for this page.
 function showFeedback(elementId, message, type) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -435,8 +444,11 @@ async function loadGroupData() {
         // Load projected savings growth chart for the treasurer
         const projUserId = localStorage.getItem('userId');
         if (projUserId) {
-            await loadSavingsProjection(parseInt(projUserId), parseInt(groupId));
-            await loadAndRenderHealthScores(parseInt(groupId));  // was: loadPersonalHealthScores (does not exist)
+            // loadSavingsProjection is defined in savings-projection.js — guard in case it isn't loaded
+            if (typeof loadSavingsProjection === 'function') {
+                await loadSavingsProjection(parseInt(projUserId), parseInt(groupId));
+            }
+            await loadAndRenderHealthScores(parseInt(groupId));
         }
 
     } catch (err) {
@@ -865,7 +877,9 @@ function setupNotificationsBell() {
   const bell = document.getElementById('announcements-bell');
   if (bell) {
     bell.addEventListener('click', () => {
-      if (currentGroup) loadAndShowNotifications(currentGroup.groupId);
+      if (currentGroup && typeof loadAndShowNotifications === 'function') {
+        loadAndShowNotifications(currentGroup.groupId);
+      }
     });
   }
 }
@@ -936,7 +950,9 @@ function renderFooterButtons(group) {
   
   viewNotificationsBtn.addEventListener("click", () => {
     badgeWrapper.classList.remove("has-notification");
-    loadAndShowNotifications(group.groupId);
+    if (typeof loadAndShowNotifications === 'function') {
+      loadAndShowNotifications(group.groupId);
+    }
   });
 
   badgeWrapper.appendChild(viewNotificationsBtn);
@@ -946,9 +962,9 @@ function renderFooterButtons(group) {
   checkNewNotifications(group.groupId, badgeWrapper);
 }
 
-// Helper to check for the red dot
 async function checkNewNotifications(groupId, wrapper) {
   try {
+    if (typeof fetchMeetings !== 'function') return;
     const meetings = await fetchMeetings(groupId);
     if (meetings && meetings.length > 0) {
       wrapper.classList.add("has-notification");

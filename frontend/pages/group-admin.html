@@ -603,7 +603,6 @@
   <script src="../scripts/group-analytics.js"></script>
   <script src="../scripts/notifications.js"></script>
   <script src="../scripts/profile-modal.js"></script>
-  <script>
     // Analytics loads only once — avoids repeat API calls on every tab switch
     let analyticsLoaded = false;
 
@@ -654,15 +653,5 @@
     </div>
   </dialog>
 
-  <script src="../scripts/notifications.js"></script>
-  <script>
-    const _bell = document.getElementById('announcements-bell');
-    if (_bell) {
-      _bell.addEventListener('click', () => {
-        const groupId = new URLSearchParams(window.location.search).get('groupId');
-        if (groupId) loadAndShowNotifications(groupId);
-      });
-    }
-  </script>
 </body>
 </html>

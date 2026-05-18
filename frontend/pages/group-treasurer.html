@@ -672,14 +672,5 @@
   </style>
 
   <script src="../scripts/notifications.js"></script>
-  <script>
-    const _bell = document.getElementById('announcements-bell');
-    if (_bell) {
-      _bell.addEventListener('click', () => {
-        const groupId = new URLSearchParams(window.location.search).get('groupId');
-        if (groupId) loadAndShowNotifications(groupId);
-      });
-    }
-  </script>
 </body>
 </html>

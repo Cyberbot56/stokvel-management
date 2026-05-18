@@ -352,7 +352,9 @@ function renderFooterButtons(group) {
 
   viewNotificationsBtn.addEventListener("click", () => {
     badgeWrapper.classList.remove("has-notification");
-    loadAndShowNotifications(group.groupId);
+    if (typeof loadAndShowNotifications === 'function') {
+      loadAndShowNotifications(group.groupId);
+    }
   });
 
   badgeWrapper.appendChild(viewNotificationsBtn);
@@ -363,6 +365,7 @@ function renderFooterButtons(group) {
 
 async function checkNewNotifications(groupId, wrapper) {
   try {
+    if (typeof fetchMeetings !== 'function') return;
     const meetings = await fetchMeetings(groupId);
     if (meetings && meetings.length > 0) {
       wrapper.classList.add("has-notification");
@@ -589,6 +592,11 @@ async function loadAndOpenRules(groupId) {
   try {
     const group = getGroupById(groupId);
     if (!group) throw new Error("Group not found");
+    // fetchRules is defined in rules.js — guard against it not being loaded
+    if (typeof fetchRules !== 'function') {
+      alert('Rules feature is not available on this page.');
+      return;
+    }
     const rules = await fetchRules(groupId);
     openRulesModal(group, rules);
   } catch (error) {
@@ -1158,7 +1166,9 @@ function onAuthReady() {
   if (announcementsBell) {
     announcementsBell.addEventListener('click', () => {
       const groupId = new URLSearchParams(window.location.search).get('groupId');
-      if (groupId) loadAndShowNotifications(groupId);
+      if (groupId && typeof loadAndShowNotifications === 'function') {
+        loadAndShowNotifications(groupId);
+      }
     });
   }
 

@@ -500,7 +500,6 @@ async function loadGroupData() {
             return;
         }
 
-        await checkNewAnnouncements(groupId);
         currentGroup = group;
         renderGroupHeader(group);
         renderMembers(group.members);
@@ -1316,9 +1315,9 @@ async function closeGroup() {
 
         const result = await response.json();
 
-        // Close the modal
+        // close-modal is a <dialog> element — .close() is correct for dialogs
         const modal = document.getElementById('close-modal');
-        if (modal) modal.close();
+        if (modal && typeof modal.close === 'function') modal.close();
 
         // Clear the confirmation input
         const confirmInput = document.getElementById('confirm-name');
@@ -1651,7 +1650,9 @@ function renderFooterButtons(group) {
 
     viewNotificationsBtn.addEventListener('click', () => {
         badgeWrapper.classList.remove('has-notification');
-        loadAndShowNotifications(group.groupId);
+        if (typeof loadAndShowNotifications === 'function') {
+            loadAndShowNotifications(group.groupId);
+        }
     });
 
     badgeWrapper.appendChild(viewNotificationsBtn);
@@ -1664,6 +1665,7 @@ function renderFooterButtons(group) {
 // Helper to check for the red dot
 async function checkNewNotifications(groupId, wrapper) {
     try {
+        if (typeof fetchMeetings !== 'function') return;
         const meetings = await fetchMeetings(groupId);
         if (meetings && meetings.length > 0) {
             wrapper.classList.add('has-notification');

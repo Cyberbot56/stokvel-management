@@ -138,7 +138,7 @@ async function createContributionForNewMember(userId, groupId, role) {
             data: {
                 FKgroupId: parseInt(groupId), FKuserId: parseInt(userId),
                 treasurerId: parseInt(userId), amount: group.contributionAmount,
-                dueDate, paidAt: new Date(), status: "Not Paid", note: null
+                dueDate, paidAt: null, status: "Not Paid", note: null
             }
         });
         console.log(`Contribution record created for user ${userId} in group ${groupId}`);
@@ -343,9 +343,19 @@ app.get('/api/group-members-with-status/:groupId', async (req, res) => {
             cycleEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         }
 
-        const contributions = await prisma.contributions.findMany({ where: { FKgroupId: parseInt(groupId) } });
+        // FIX: order by dueDate desc so the map keeps the LATEST contribution per user
+        const contributions = await prisma.contributions.findMany({
+            where: { FKgroupId: parseInt(groupId) },
+            orderBy: { dueDate: 'desc' }
+        });
         const contributionMap = new Map();
-        contributions.forEach(contrib => contributionMap.set(contrib.FKuserId, contrib));
+        // Iterating desc means the first time we see a userId we get its latest record;
+        // subsequent (older) records for the same user are intentionally skipped.
+        contributions.forEach(contrib => {
+            if (!contributionMap.has(contrib.FKuserId)) {
+                contributionMap.set(contrib.FKuserId, contrib);
+            }
+        });
 
         const membersWithStatus = members.map(member => {
             const contribution = contributionMap.get(member.users.userId);
@@ -494,7 +504,7 @@ app.patch('/api/missed-contributions/:contributionId/flag', async (req, res) => 
  
 
 
-app.post('/api/groups/assign-treasurer', async (req, res) => {
+app.post('/api/groups/assign-treasurer', requireAuth, async (req, res) => {
     const { email, groupId } = req.body;
 
     if (!email || !groupId) {
@@ -507,8 +517,8 @@ app.post('/api/groups/assign-treasurer', async (req, res) => {
     try {
         const parsedGroupId = parseInt(groupId);
 
-        // Logged-in admin from Auth middleware
-        const adminEmail = req.auth?.payload?.email?.toLowerCase();
+        // Logged-in admin from requireAuth middleware (stored on req.user)
+        const adminEmail = req.user?.email?.toLowerCase();
 
         // Prevent self assignment
         if (adminEmail === email.toLowerCase()) {
