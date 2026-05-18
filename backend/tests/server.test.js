@@ -24,10 +24,6 @@ jest.mock('@tensorflow/tfjs', () => {
 
 // ─── BUG FIX 1: announcements added to Prisma mock ───────────────────────────
 jest.mock('@prisma/client', () => {
-  // Singleton: every `new PrismaClient()` (in server.js AND in the test file)
-  // must return the SAME object so mock setups in the test actually affect the
-  // instance the server uses.
-  let instance;
   const mockPrisma = {
     users: {
       findUnique: jest.fn(),
@@ -97,7 +93,7 @@ jest.mock('@prisma/client', () => {
     $transaction: jest.fn(),
     $disconnect: jest.fn()
   };
-  return { PrismaClient: jest.fn(() => { if (!instance) instance = mockPrisma; return instance; }) };
+  return { PrismaClient: jest.fn(() => mockPrisma) };
 });
 
 jest.mock('../src/middleware/auth', () => ({
@@ -110,7 +106,7 @@ jest.mock('../src/middleware/auth', () => ({
 const request = require('supertest');
 const crypto = require('crypto');
 const app = require('../server');
-const prisma = new PrismaClient();
+const prisma = app.prisma;
 
 beforeEach(() => {
   jest.clearAllMocks();
