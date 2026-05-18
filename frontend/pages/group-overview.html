@@ -472,6 +472,7 @@
           <p class="projection-note" id="proj-note"></p>
         </article>
     
+        <button id="view-rules-btn" class="btn-outline" style="margin-bottom: 1rem;">View Group Rules</button>
         <footer class="action-footer">
           <!-- Buttons are injected here by renderFooterButtons() in group-overview.js -->
         </footer>
@@ -585,9 +586,9 @@
   <script src="../scripts/config.js"></script>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script src="../scripts/auth_service.js"></script>
-  <script src="../scripts/savings-projection.js"></script>
-  <script src="../scripts/notifications.js"></script>
+  <script src=""../scripts/savings-projection.js"></script>
   <script src="../scripts/group-overview.js"></script>
+  <script src="../scripts/notifications.js"></script>
   <script src="../scripts/profile-modal.js"></script>
   <script>
     // ── Tab switching ──
@@ -679,6 +680,11 @@
       if (groupId && typeof loadAndShowPayouts === 'function') loadAndShowPayouts(groupId);
     });
   </script>
+  <script>
+    document.getElementById('view-rules-btn')?.addEventListener('click', () => {
+      if (typeof openRules === 'function') openRules();
+    });
+  </script>
 
   <style>
     .avatar[onclick], .header-avatar[onclick] {
@@ -690,6 +696,5 @@
       transform: scale(1.07);
     }
   </style>
-
 </body>
 </html>

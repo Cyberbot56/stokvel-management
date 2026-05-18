@@ -506,7 +506,7 @@
           <p>You have unsaved changes</p>
           <div class="save-bar-actions">
             <button class="btn-outline-sm" onclick="discardChanges()">Discard</button>
-            <button class="btn-cyan-sm" onclick="saveChanges()">Save changes</button>
+            <button class="btn-cyan-sm" onclick="saveGroupSettings()">Save changes</button>
           </div>
         </aside>
         <article class="card">
@@ -603,6 +603,7 @@
   <script src="../scripts/group-analytics.js"></script>
   <script src="../scripts/notifications.js"></script>
   <script src="../scripts/profile-modal.js"></script>
+  <script>
     // Analytics loads only once — avoids repeat API calls on every tab switch
     let analyticsLoaded = false;
 
@@ -653,5 +654,15 @@
     </div>
   </dialog>
 
+  <script src="../scripts/notifications.js"></script>
+  <script>
+    const _bell = document.getElementById('announcements-bell');
+    if (_bell) {
+      _bell.addEventListener('click', () => {
+        const groupId = new URLSearchParams(window.location.search).get('groupId');
+        if (groupId) loadAndShowNotifications(groupId);
+      });
+    }
+  </script>
 </body>
 </html>

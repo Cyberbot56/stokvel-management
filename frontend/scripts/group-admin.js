@@ -462,6 +462,15 @@ async function loadAndRenderHealthScores(groupId) {
     }
 }
 
+async function fetchRules(groupId) {
+  const token = await auth0Client.getTokenSilently();
+  const response = await fetch(`${config.apiBase}/api/groups/${groupId}/rules`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!response.ok) throw new Error('Failed to fetch rules');
+  return await response.json();
+}
+
 // ─── Load group data ──────────────────────────────────────────────────────────
 
 async function loadGroupData() {
@@ -500,6 +509,7 @@ async function loadGroupData() {
             return;
         }
 
+        await checkNewAnnouncements(groupId);
         currentGroup = group;
         renderGroupHeader(group);
         renderMembers(group.members);
@@ -1315,9 +1325,9 @@ async function closeGroup() {
 
         const result = await response.json();
 
-        // close-modal is a <dialog> element — .close() is correct for dialogs
+        // Close the modal
         const modal = document.getElementById('close-modal');
-        if (modal && typeof modal.close === 'function') modal.close();
+        if (modal) modal.close();
 
         // Clear the confirmation input
         const confirmInput = document.getElementById('confirm-name');
@@ -1650,9 +1660,7 @@ function renderFooterButtons(group) {
 
     viewNotificationsBtn.addEventListener('click', () => {
         badgeWrapper.classList.remove('has-notification');
-        if (typeof loadAndShowNotifications === 'function') {
-            loadAndShowNotifications(group.groupId);
-        }
+        loadAndShowNotifications(group.groupId);
     });
 
     badgeWrapper.appendChild(viewNotificationsBtn);
@@ -1665,7 +1673,6 @@ function renderFooterButtons(group) {
 // Helper to check for the red dot
 async function checkNewNotifications(groupId, wrapper) {
     try {
-        if (typeof fetchMeetings !== 'function') return;
         const meetings = await fetchMeetings(groupId);
         if (meetings && meetings.length > 0) {
             wrapper.classList.add('has-notification');
