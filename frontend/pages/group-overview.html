@@ -473,9 +473,7 @@
         </article>
     
         <footer class="action-footer">
-          <button id="view-payouts-btn">View payouts</button>
-          <button id="view-contributions-btn">View contributions</button>
-          <button id="view-notifications-btn">Notifications</button>
+          <!-- Buttons are injected here by renderFooterButtons() in group-overview.js -->
         </footer>
 
       </section>
@@ -669,6 +667,15 @@
       });
       obs.observe(nameEl, { childList: true, characterData: true, subtree: true });
     }
+
+    // Wire up tab-panel footer buttons
+    document.getElementById('tab-view-contributions-btn')?.addEventListener('click', () => {
+      if (typeof loadAndShowContributions === 'function') loadAndShowContributions();
+    });
+    document.getElementById('tab-view-payouts-btn')?.addEventListener('click', () => {
+      const groupId = new URLSearchParams(window.location.search).get('groupId');
+      if (groupId && typeof loadAndShowPayouts === 'function') loadAndShowPayouts(groupId);
+    });
   </script>
 
   <style>

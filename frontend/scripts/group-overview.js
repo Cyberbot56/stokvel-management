@@ -1084,13 +1084,14 @@ function onAuthReady() {
   setAvatar();
   setupPaymentModal();
 
-// Notifications bell — opens unified Meetings + Announcements modal
-const announcementsBell = document.getElementById('announcements-bell');
-if (announcementsBell) {
-  announcementsBell.addEventListener('click', () => {
-    const groupId = new URLSearchParams(window.location.search).get('groupId');
-    if (groupId) loadAndShowNotifications(groupId);
-  });
-}
+  // Notifications bell — opens unified Meetings + Announcements modal
+  const announcementsBell = document.getElementById('announcements-bell');
+  if (announcementsBell) {
+    announcementsBell.addEventListener('click', () => {
+      const groupId = new URLSearchParams(window.location.search).get('groupId');
+      if (groupId) loadAndShowNotifications(groupId);
+    });
+  }
+
   loadUserGroups();
 }

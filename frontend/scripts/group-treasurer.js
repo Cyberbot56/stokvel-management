@@ -1,4 +1,7 @@
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+let currentGroup = null;   // ← declared here so all functions can access it
+
 const sanitise = (str) => {
     const div = document.createElement('div');
     div.textContent = str ?? '';
@@ -433,8 +436,7 @@ async function loadGroupData() {
         const projUserId = localStorage.getItem('userId');
         if (projUserId) {
             await loadSavingsProjection(parseInt(projUserId), parseInt(groupId));
-            await loadPersonalHealthScores(parseInt(groupId));
-
+            await loadAndRenderHealthScores(parseInt(groupId));  // was: loadPersonalHealthScores (does not exist)
         }
 
     } catch (err) {
@@ -892,6 +894,11 @@ function setupEventListeners() {
     const scheduleForm = document.getElementById('schedule-meeting');
     if (scheduleForm) {
         scheduleForm.addEventListener('submit', handleScheduleMeeting);
+    }
+
+    const announcementForm = document.getElementById('make-announcement');
+    if (announcementForm) {
+        announcementForm.addEventListener('submit', handleMakeAnnouncement);
     }
 }
 
