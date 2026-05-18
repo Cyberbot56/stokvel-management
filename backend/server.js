@@ -1153,7 +1153,7 @@ app.get('/api/groups/:groupId/analytics/payouts', requireAuth, async (req, res) 
 });
 
 // ─── ML Financial Health Scoring ─────────────────────────────────────────────
-const tf = require('@tensorflow/tfjs-node');
+const tf = require('@tensorflow/tfjs');
 
  let healthModel = null;
 
