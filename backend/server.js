@@ -260,10 +260,10 @@ app.delete('/api/groups/remove-member', requireAuth, async (req, res) => {
             where: { group_memberId: membership.group_memberId }
         });
  
-        res.json({ message: 'Member kicked out successfully' });
+        res.json({ message: 'Member removed successfully' });
     } catch (error) {
         console.error('Error removing member:', error);
-        res.status(500).json({ error: 'Failed to kick the member', details: error.message });
+        res.status(500).json({ error: 'Failed to remove member', details: error.message });
     }
 });
 
