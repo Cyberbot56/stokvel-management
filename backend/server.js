@@ -236,6 +236,38 @@ app.post('/api/groups/add-member', async (req, res) => {
     }
 });
 
+app.delete('/api/groups/remove-member', requireAuth, async (req, res) => {
+    const { userId, groupId } = req.body;
+ 
+    if (!userId || !groupId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+ 
+    try {
+        const membership = await prisma.group_members.findFirst({
+            where: { FgroupId: parseInt(groupId), SuserId: parseInt(userId) }
+        });
+ 
+        if (!membership) {
+            return res.status(404).json({ error: 'Member not found in this group' });
+        }
+ 
+        if (membership.role === 'admin') {
+            return res.status(403).json({ error: 'Cannot remove an admin from the group' });
+        }
+ 
+        await prisma.group_members.delete({
+            where: { group_memberId: membership.group_memberId }
+        });
+ 
+        res.json({ message: 'Member removed successfully' });
+    } catch (error) {
+        console.error('Error removing member:', error);
+        res.status(500).json({ error: 'Failed to remove member', details: error.message });
+    }
+});
+
+
 app.post('/api/contributions', async (req, res) => {
     const { userId, groupId, amount, treasurerId, paidAt } = req.body;
     if (!userId || !groupId || !amount || !treasurerId || !paidAt) {
@@ -436,12 +468,22 @@ app.patch('/api/missed-contributions/:contributionId/flag', async (req, res) => 
     const contributionId = parseInt(req.params.contributionId);
     const { note } = req.body;
     try {
-        const contribution = await prisma.contributions.findUnique({ where: { contributionsId: contributionId } });
-        if (!contribution) return res.status(404).json({ error: 'Contribution not found' });
-        if (contribution.status === 'paid') return res.status(400).json({ error: 'Cannot flag a paid contribution as missed' });
+        const contribution = await prisma.contributions.findUnique({
+            where: { contributionsId: contributionId }
+        });
+        // null check MUST come before status check to avoid null-dereference 500
+        if (!contribution) {
+            return res.status(404).json({ error: 'Contribution not found' });
+        }
+        if (contribution.status === 'paid') {
+            return res.status(400).json({ error: 'Cannot flag a paid contribution as missed' });
+        }
         const updated = await prisma.contributions.update({
             where: { contributionsId: contributionId },
-            data: { status: 'missed', note: note || `Flagged as missed on ${new Date().toISOString()}` }
+            data: {
+                status: 'missed',
+                note: note || `Flagged as missed on ${new Date().toISOString()}`
+            }
         });
         res.json(updated);
     } catch (error) {
@@ -449,6 +491,8 @@ app.patch('/api/missed-contributions/:contributionId/flag', async (req, res) => 
         res.status(500).json({ error: 'Could not flag contribution' });
     }
 });
+ 
+
 
 app.post('/api/groups/assign-treasurer', async (req, res) => {
     const { email, groupId } = req.body;
@@ -1615,3 +1659,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports.prisma = prisma;

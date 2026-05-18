@@ -56,19 +56,6 @@ async function fetchUserGroups(userId) {
   return await response.json();
 }
 
-function getMockCycleAndPayout() {
-  return {
-    cycle: MOCK_CYCLE,
-    nextPayout: MOCK_NEXT_PAYOUT
-  };
-}
-
-function fetchRules(groupId) {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_RULES), 400);
-  });
-}
-
 // ─── Payment Simulation Functions ─────────────────────────────────────────────
 
 async function fetchPaymentStatus(userId, groupId) {
