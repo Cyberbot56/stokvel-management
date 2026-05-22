@@ -88,7 +88,7 @@
         justify-content: center;
         font-size: 30px;
         font-weight: 700;
-        color: #2dd4bf;
+        color: #242833;
         box-shadow: 0 4px 16px rgba(14,148,144,0.25);
         user-select: none;
       }
