@@ -75,6 +75,8 @@ function renderMembers(members) {
         const roleClass = member.role === 'admin' ? 'admin' : member.role === 'treasurer' ? 'treasurer' : 'member';
         const roleLabel = member.role.charAt(0).toUpperCase() + member.role.slice(1);
 
+        const canKick = member.role !== 'admin';
+
         return `
             <tr>
                 <td>
@@ -88,6 +90,7 @@ function renderMembers(members) {
                 </td>
                 <td><b class="role-badge ${roleClass}">${roleLabel}</b></td>
                 <td class="joined-date">${joined}</td>
+                <td>${canKick ? `<button class="kick-btn" data-userid="${member.userId}" data-name="${sanitise(member.name)}">Remove</button>` : ''}</td>
             </tr>
         `;
     }).join('');
@@ -99,6 +102,7 @@ function renderMembers(members) {
                     <th>Member</th>
                     <th>Role</th>
                     <th>Joined</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -314,9 +318,10 @@ async function assignTreasurer() {
         showFeedback('assign-feedback', 'Please enter a valid email address.', 'error');
         return;
     }
-    if(currentUser?.email?.toLowerCase() === email.toLowerCase()){
+    const myEmail = localStorage.getItem('userEmail') || '';
+    if (myEmail && myEmail.toLowerCase() === email.toLowerCase()) {
         emailInput.classList.add('input-error');
-        showFeedback('assign-feedback','You cannot treasurer yourself', 'error');
+        showFeedback('assign-feedback', 'You cannot assign yourself as treasurer.', 'error');
         return;
     }
 
@@ -360,6 +365,46 @@ function showFeedback(id, message, type) {
     el.textContent = message;
     el.className   = 'form-feedback ' + type;
     el.hidden      = false;
+}
+
+// ─── Remove member ────────────────────────────────────────────────────────────
+
+function openKickModal(userId, name) {
+    const modal   = document.getElementById('kick-modal');
+    const desc    = document.getElementById('kick-modal-desc');
+    const confirm = document.getElementById('kick-confirm-btn');
+    if (!modal || !desc || !confirm) return;
+
+    desc.textContent      = `Are you sure you want to remove ${name} from this group? This cannot be undone.`;
+    confirm.dataset.userid = userId;
+    modal.showModal();
+}
+
+async function removeMember(userId) {
+    if (!currentGroup) {
+        showFeedback('add-feedback', 'No group loaded. Please refresh.', 'error');
+        return;
+    }
+
+    try {
+        const token    = await auth0Client.getTokenSilently();
+        const response = await fetch(`${config.apiBase}/api/groups/remove-member`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ userId: parseInt(userId), groupId: currentGroup.groupId })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showFeedback('add-feedback', 'Member removed successfully.', 'success');
+            await loadGroupData();
+        } else {
+            showFeedback('add-feedback', data.error || 'Failed to remove member.', 'error');
+        }
+    } catch (err) {
+        showFeedback('add-feedback', 'Something went wrong. Please try again.', 'error');
+    }
 }
 
 // ─── ML Financial Health Scores ───────────────────────────────────────────────
@@ -1574,6 +1619,29 @@ function setupEventListeners() {
 
     if (addMemberBtn) addMemberBtn.addEventListener('click', addMember);
     if (memberEmail)  memberEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') addMember(); });
+
+    // Delegated click for Remove buttons inside the members table
+    const membersContainer = document.getElementById('members-container');
+    if (membersContainer) {
+        membersContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.kick-btn');
+            if (!btn) return;
+            openKickModal(btn.dataset.userid, btn.dataset.name);
+        });
+    }
+
+    // Kick modal confirm / cancel
+    const kickConfirm = document.getElementById('kick-confirm-btn');
+    const kickCancel  = document.getElementById('kick-cancel-btn');
+    const kickModal   = document.getElementById('kick-modal');
+    if (kickConfirm) {
+        kickConfirm.addEventListener('click', async () => {
+            const userId = kickConfirm.dataset.userid;
+            kickModal.close();
+            await removeMember(userId);
+        });
+    }
+    if (kickCancel) kickCancel.addEventListener('click', () => kickModal.close());
 
     if (backBtn) backBtn.addEventListener('click', () => {
         window.location.href = '../pages/dashboard.html';
