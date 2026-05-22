@@ -1205,24 +1205,27 @@ function displayContributionsModal(contributions) {
 let originalGroupData = null;
 
 function populateSettings(group) {
-    const sName   = document.getElementById('s-name');
-    const sDesc   = document.getElementById('s-desc');
-    const sAmount = document.getElementById('s-amount');
-    const sCycle  = document.getElementById('s-cycle');
-    const sStart  = document.getElementById('s-start-date');
+    const sName        = document.getElementById('s-name');
+    const sDesc        = document.getElementById('s-desc');
+    const sAmount      = document.getElementById('s-amount');
+    const sCycle       = document.getElementById('s-cycle');
+    const sStart       = document.getElementById('s-start-date');
+    const sPayoutOrder = document.getElementById('s-payout-order');
 
-    if (sName && group.name)               sName.value = group.name;
-    if (sDesc && group.description)        sDesc.value = group.description || '';
+    if (sName && group.name)                 sName.value = group.name;
+    if (sDesc)                               sDesc.value = group.description || '';
     if (sAmount && group.contributionAmount) sAmount.value = group.contributionAmount;
-    if (sCycle && group.cycleType)         sCycle.value = group.cycleType;
-    if (sStart && group.startDate)         sStart.textContent = formatDate(group.startDate);
+    if (sCycle && group.cycleType)           sCycle.value = group.cycleType;
+    if (sStart && group.startDate)           sStart.textContent = formatDate(group.startDate);
+    if (sPayoutOrder && group.payoutOrder)   sPayoutOrder.value = group.payoutOrder;
 
     // Store original data for comparison
     originalGroupData = {
         name: group.name,
         description: group.description || '',
         contributionAmount: group.contributionAmount,
-        cycleType: group.cycleType
+        cycleType: group.cycleType,
+        payoutOrder: group.payoutOrder || 'rotation'
     };
 
     const meta = document.getElementById('sidebar-group-meta');
@@ -1251,17 +1254,19 @@ async function saveGroupSettings() {
         return;
     }
 
-    const sName   = document.getElementById('s-name');
-    const sDesc   = document.getElementById('s-desc');
-    const sAmount = document.getElementById('s-amount');
-    const sCycle  = document.getElementById('s-cycle');
+    const sName        = document.getElementById('s-name');
+    const sDesc        = document.getElementById('s-desc');
+    const sAmount      = document.getElementById('s-amount');
+    const sCycle       = document.getElementById('s-cycle');
+    const sPayoutOrder = document.getElementById('s-payout-order');
 
     const updatedData = {
         groupId: currentGroup.groupId,
         name: sName.value.trim(),
         description: sDesc.value.trim(),
         contributionAmount: parseFloat(sAmount.value),
-        cycleType: sCycle.value
+        cycleType: sCycle.value,
+        payoutOrder: sPayoutOrder ? sPayoutOrder.value : (currentGroup.payoutOrder || 'rotation')
     };
 
     // Validation
@@ -1297,7 +1302,8 @@ async function saveGroupSettings() {
                 name: updatedData.name,
                 description: updatedData.description,
                 contributionAmount: updatedData.contributionAmount,
-                cycleType: updatedData.cycleType
+                cycleType: updatedData.cycleType,
+                payoutOrder: updatedData.payoutOrder
             })
         });
 
@@ -1311,6 +1317,7 @@ async function saveGroupSettings() {
         currentGroup.description = updatedData.description;
         currentGroup.contributionAmount = updatedData.contributionAmount;
         currentGroup.cycleType = updatedData.cycleType;
+        currentGroup.payoutOrder = updatedData.payoutOrder;
 
         // Update UI
         renderGroupHeader(currentGroup);

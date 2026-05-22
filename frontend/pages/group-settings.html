@@ -97,8 +97,17 @@
             <p class="field">
               <label for="s-cycle">Cycle type</label>
               <select id="s-cycle" name="s-cycle" onchange="markDirty()">
-                <option value="monthly" selected></option>
+                <option value="monthly" selected>Monthly</option>
                 <option value="weekly">Weekly</option>
+              </select>
+            </p>
+
+            <p class="field">
+              <label for="s-payout-order">Payout order</label>
+              <select id="s-payout-order" name="s-payout-order" onchange="markDirty()">
+                <option value="rotation">Rotation (ordered)</option>
+                <option value="random">Random</option>
+                <option value="bidding">Bidding</option>
               </select>
             </p>
 
@@ -114,11 +123,6 @@
             <p class="field">
               <span class="field-label">Start date</span>
               <output class="readonly-field"></output>
-            </p>
-
-            <p class="field">
-              <span class="field-label">Payout order</span>
-              <output class="readonly-field">Rotation (ordered)</output>
             </p>
 
           </fieldset>

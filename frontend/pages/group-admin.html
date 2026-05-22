@@ -873,6 +873,14 @@
                 <option value="weekly">Weekly</option>
               </select>
             </div>
+            <div class="settings-field">
+              <label for="s-payout-order">Payout order</label>
+              <select id="s-payout-order" name="s-payout-order" onchange="markDirty()">
+                <option value="rotation">Rotation (ordered)</option>
+                <option value="random">Random</option>
+                <option value="bidding">Bidding</option>
+              </select>
+            </div>
           </fieldset>
           <fieldset class="settings-fieldset">
             <span class="settings-legend">Locked settings</span>
@@ -880,10 +888,6 @@
             <div class="settings-field">
               <label>Start date</label>
               <output class="readonly-field" id="s-start-date"></output>
-            </div>
-            <div class="settings-field">
-              <label>Payout order</label>
-              <output class="readonly-field">Rotation (ordered)</output>
             </div>
           </fieldset>
           <div class="danger-zone">
