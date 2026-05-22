@@ -4,17 +4,21 @@
    ============================================= */
 
 :root {
-    --cyan:       #0e9490;
-    --cyan-dark:  #034e52;
+    --cyan:       #22d3ee;
+    --cyan-dark:  #0e9490;
     --cyan-mid:   #2dd4bf;
-    --cyan-light: #e0f7f6;
-    --bg:         #f0fafa;
-    --black:      #0f172a;
-    --grey:       #64748b;
-    --light-grey: #f0fafa;
-    --border:     rgba(14, 148, 144, 0.15);
-    --white:      #ffffff;
-    --red:        #ef4444;
+    --cyan-light: rgba(34, 211, 238, 0.08);
+    --bg:         #1a1d26;
+    --bg-card:    #242833;
+    --bg-surface: #2d3140;
+    --black:      #cdd1dc;
+    --grey:       #9095a6;
+    --light-grey: #2d3140;
+    --border:     rgba(34, 211, 238, 0.1);
+    --white:      #242833;
+    --red:        #ff4757;
+    --text:       #cdd1dc;
+    --text-bright:#cdd1dc;
 }
 
 * {
@@ -25,23 +29,24 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg);
-    color: var(--black);
+    background: #1a1d26;
+    color: #cdd1dc;
 }
 
 /* ── Nav bar ── */
 nav {
-    background: linear-gradient(120deg, #a8ede8 0%, #3cc8c0 35%, #0e9490 70%, #034e52 100%);
+    background: linear-gradient(120deg, #15171f 0%, #15171f 50%, #242833 100%);
     padding: 0 2rem;
-    height: 64px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 12px rgba(14, 148, 144, 0.25);
+    box-shadow: 0 1px 0 rgba(34, 211, 238, 0.1), 0 4px 20px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(34, 211, 238, 0.08);
 }
 
 .logo {
-    color: white;
+    color: #22d3ee;
     font-weight: 800;
     font-size: 16px;
     letter-spacing: 2px;
@@ -103,11 +108,11 @@ nav {
 
 /* ── Card ── */
 .card {
-    background: var(--white);
-    border: 1px solid var(--border);
+    background: #242833;
+    border: 1px solid rgba(34, 211, 238, 0.08);
     border-radius: 16px;
     padding: 28px 24px;
-    box-shadow: 0 4px 16px rgba(14, 148, 144, 0.08), 0 1px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(34, 211, 238, 0.05) inset;
     position: relative;
     overflow: hidden;
 }
@@ -116,8 +121,8 @@ nav {
     content: '';
     position: absolute;
     top: 0; left: 24px; right: 24px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--cyan-mid), transparent);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.3), transparent);
 }
 
 /* ── Progress pills ── */
@@ -218,13 +223,13 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 .field textarea {
     width: 100%;
     padding: 10px 14px;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid rgba(34, 211, 238, 0.12);
     border-radius: 10px;
     font-size: 14px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     outline: none;
-    background: white;
-    color: var(--black);
+    background: #2d3140;
+    color: #cdd1dc;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -316,16 +321,17 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 }
 
 .btn.cyan {
-    background: linear-gradient(135deg, var(--cyan-mid) 0%, var(--cyan) 100%);
-    border-color: var(--cyan);
-    color: white;
-    box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+    background: linear-gradient(135deg, #22d3ee 0%, #0e9490 100%);
+    border-color: #22d3ee;
+    color: #15171f;
+    box-shadow: 0 2px 12px rgba(34, 211, 238, 0.25);
+    font-weight: 700;
 }
 
 .btn.cyan:hover {
-    background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-dark) 100%);
+    background: linear-gradient(135deg, #2dd4bf 0%, #22d3ee 100%);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
+    box-shadow: 0 6px 20px rgba(34, 211, 238, 0.35);
 }
 
 /* ── Review table ── */
@@ -475,12 +481,14 @@ section.danger-zone p {
 }
 
 dialog {
-    border: 1px solid var(--border);
+    border: 1px solid rgba(34, 211, 238, 0.12);
     border-radius: 16px;
     padding: 28px;
     max-width: 380px;
     width: 90%;
-    box-shadow: 0 8px 32px rgba(14, 148, 144, 0.15);
+    background: #242833;
+    color: #cdd1dc;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
 dialog h2 {
@@ -497,7 +505,8 @@ dialog p {
 }
 
 dialog::backdrop {
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
 }
 
 /* ── Invites ── */
@@ -608,7 +617,7 @@ nav ul.nav-links {
 button.nav-btn {
     background: none;
     border: 1px solid transparent;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.5);
     padding: 5px 12px;
     border-radius: 6px;
     font-size: 13px;
@@ -623,9 +632,9 @@ button.nav-btn:hover {
 }
 
 button.nav-btn.active {
-    color: white;
-    border-color: rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.15);
+    color: #22d3ee;
+    border-color: rgba(34, 211, 238, 0.25);
+    background: rgba(34, 211, 238, 0.08);
 }
 
 section.screen

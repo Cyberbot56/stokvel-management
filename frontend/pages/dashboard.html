@@ -13,7 +13,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
@@ -28,7 +28,7 @@
             visibility: visible;
         }
         .profile-modal {
-            background: white;
+            background: #242833;
             border-radius: 24px;
             width: 90%;
             max-width: 500px;
@@ -39,17 +39,14 @@
             transition: transform 0.25s ease;
         }
         .profile-modal-overlay.active .profile-modal {
-            transform: scale(1);
-        }
-        .profile-card {
-            background: white;
+            background: #242833;
             border-radius: 24px;
             overflow: hidden;
             position: relative;
         }
         .profile-band {
             height: 90px;
-            background: linear-gradient(120deg, #a8ede8 0%, #3cc8c0 35%, #0e9490 70%, #034e52 100%);
+            background: linear-gradient(120deg, #15171f 0%, #15171f 50%, #242833 100%);
             position: relative;
         }
         .modal-close {
@@ -82,14 +79,14 @@
             width: 88px;
             height: 88px;
             border-radius: 50%;
-            background: #034e52;
-            border: 4px solid white;
+            background: #15171f;
+            border: 3px solid #22d3ee;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 30px;
             font-weight: 700;
-            color: #2dd4bf;
+            color: #22d3ee;
             box-shadow: 0 4px 16px rgba(14, 148, 144, 0.25);
         }
         .profile-body {
@@ -102,25 +99,25 @@
         .profile-name {
             font-size: 22px;
             font-weight: 700;
-            color: #034e52;
+            color: #cdd1dc;
             text-align: center;
             margin: 0;
         }
         .profile-email {
             font-size: 14px;
-            color: #64748b;
+            color: #9095a6;
             text-align: center;
             margin: 4px 0 0;
         }
         .profile-since {
             font-size: 12px;
-            color: #94a3b8;
+            color: #7c8195;
             margin-top: 6px;
         }
         .profile-details {
             width: 100%;
             margin-top: 24px;
-            border: 1px solid rgba(14, 148, 144, 0.12);
+            border: 1px solid rgba(34, 211, 238, 0.1);
             border-radius: 12px;
             overflow: hidden;
         }
@@ -129,18 +126,18 @@
             align-items: center;
             justify-content: space-between;
             padding: 14px 18px;
-            border-bottom: 1px solid rgba(14, 148, 144, 0.08);
+            border-bottom: 1px solid rgba(34, 211, 238, 0.06);
             font-size: 13px;
         }
         .detail-row:last-child { border-bottom: none; }
         .detail-label {
-            color: #64748b;
+            color: #9095a6;
             font-weight: 600;
             font-size: 12px;
             text-transform: uppercase;
         }
         .detail-value {
-            color: #0f172a;
+            color: #cdd1dc;
             font-weight: 600;
             text-align: right;
         }
@@ -148,7 +145,7 @@
             margin-top: 28px;
             width: 100%;
             padding: 13px;
-            background: white;
+            background: rgba(255, 71, 87, 0.08);
             color: #ef4444;
             border: 1.5px solid #fecaca;
             border-radius: 12px;
@@ -158,7 +155,7 @@
             transition: background 0.2s ease, transform 0.15s ease;
         }
         .logout-full:hover {
-            background: #fef2f2;
+            background: rgba(255, 71, 87, 0.15);
             transform: translateY(-1px);
         }
         .avatar[onclick], .header-avatar[onclick] {
@@ -166,7 +163,7 @@
             transition: box-shadow 0.2s ease, transform 0.15s ease;
         }
         .avatar[onclick]:hover, .header-avatar[onclick]:hover {
-            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.3);
             transform: scale(1.07);
         }
     </style>

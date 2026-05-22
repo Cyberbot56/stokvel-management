@@ -58,7 +58,7 @@ async function loadAndShowNotifications(groupId) {
 
     // Tab bar
     const tabBar = document.createElement('div');
-    tabBar.style.cssText = 'display:flex;border-bottom:1.5px solid #e0f7f6;padding:0 16px;gap:4px;';
+    tabBar.style.cssText = 'display:flex;border-bottom:1.5px solid rgba(34, 211, 238, 0.15);padding:0 16px;gap:4px;';
 
     function makeTab(label, active) {
         const btn = document.createElement('button');
@@ -68,8 +68,8 @@ async function loadAndShowNotifications(groupId) {
             border:none;background:none;cursor:pointer;
             font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
             border-bottom:2.5px solid transparent;margin-bottom:-1.5px;
-            color:${active ? '#0e9490' : '#64748b'};
-            border-bottom-color:${active ? '#0e9490' : 'transparent'};
+            color:${active ? '#22d3ee' : '#9095a6'};
+            border-bottom-color:${active ? '#22d3ee' : 'transparent'};
             transition:color 0.15s,border-color 0.15s;
         `;
         return btn;
@@ -88,7 +88,7 @@ async function loadAndShowNotifications(groupId) {
     announcementsPane.className = 'modal-section';
     announcementsPane.style.display = 'none';
 
-    const loading = '<p style="text-align:center;padding:1.5rem;color:#64748b;">Loading...</p>';
+    const loading = '<p style="text-align:center;padding:1.5rem;color: #9095a6;">Loading...</p>';
     meetingsPane.innerHTML      = loading;
     announcementsPane.innerHTML = loading;
 
@@ -97,10 +97,10 @@ async function loadAndShowNotifications(groupId) {
         const isMeetings = name === 'meetings';
         meetingsPane.style.display      = isMeetings ? 'block' : 'none';
         announcementsPane.style.display = isMeetings ? 'none'  : 'block';
-        meetingsTab.style.color                   = isMeetings ? '#0e9490' : '#64748b';
-        meetingsTab.style.borderBottomColor       = isMeetings ? '#0e9490' : 'transparent';
-        announcementsTab.style.color              = isMeetings ? '#64748b' : '#0e9490';
-        announcementsTab.style.borderBottomColor  = isMeetings ? 'transparent' : '#0e9490';
+        meetingsTab.style.color                   = isMeetings ? '#22d3ee' : '#9095a6';
+        meetingsTab.style.borderBottomColor       = isMeetings ? '#22d3ee' : 'transparent';
+        announcementsTab.style.color              = isMeetings ? '#9095a6' : '#22d3ee';
+        announcementsTab.style.borderBottomColor  = isMeetings ? 'transparent' : '#22d3ee';
 
         if (!isMeetings) {
             localStorage.setItem(`announcements_last_viewed_${groupId}`, new Date().toISOString());
@@ -126,41 +126,41 @@ async function loadAndShowNotifications(groupId) {
     // Load meetings
     fetchMeetings(groupId).then(meetings => {
         if (!meetings || meetings.length === 0) {
-            meetingsPane.innerHTML = '<p style="text-align:center;padding:2rem;color:#64748b;font-style:italic;">No upcoming meetings scheduled.</p>';
+            meetingsPane.innerHTML = '<p style="text-align:center;padding:2rem;color: #9095a6;font-style:italic;">No upcoming meetings scheduled.</p>';
             return;
         }
         let html = `
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
-                    <tr style="border-bottom:1.5px solid #e0f7f6;">
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Title</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Agenda</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Time</th>
+                    <tr style="border-bottom:1.5px solid rgba(34, 211, 238, 0.15);">
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Title</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Agenda</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Time</th>
                     </tr>
                 </thead><tbody>`;
         meetings.forEach(m => {
             const date   = m.Date ? new Date(m.Date).toLocaleDateString('en-ZA', { day:'numeric', month:'long', year:'numeric' }) : '—';
             html += `
-                <tr style="background:white;border-bottom:1px solid #f0fafa;">
-                    <td style="padding:11px 12px;font-weight:700;color:#0f172a;">${m.title || 'Untitled Meeting'}</td>
-                    <td style="padding:11px 12px;color:#64748b;">${m.agenda || 'No agenda provided'}</td>
-                    <td style="padding:11px 12px;color:#0f172a;">${date}</td>
-                    <td style="padding:11px 12px;color:#0f172a;">
-                        <span style="background:#e0f7f6;color:#034e52;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${m.Time || '—'}</span>
+                <tr style="background: #242833;border-bottom:1px solid rgba(34, 211, 238, 0.06);">
+                    <td style="padding:11px 12px;font-weight:700;color: #e4e7ef;">${m.title || 'Untitled Meeting'}</td>
+                    <td style="padding:11px 12px;color: #9095a6;">${m.agenda || 'No agenda provided'}</td>
+                    <td style="padding:11px 12px;color: #e4e7ef;">${date}</td>
+                    <td style="padding:11px 12px;color: #e4e7ef;">
+                        <span style="background:rgba(34, 211, 238, 0.1);color: #22d3ee;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${m.Time || '—'}</span>
                     </td>
                 </tr>`;
         });
         html += '</tbody></table>';
         meetingsPane.innerHTML = html;
     }).catch(err => {
-        meetingsPane.innerHTML = `<p style="text-align:center;padding:2rem;color:#991b1b;">Could not load meetings: ${err.message}</p>`;
+        meetingsPane.innerHTML = `<p style="text-align:center;padding:2rem;color: #f87171;">Could not load meetings: ${err.message}</p>`;
     });
 
     // Load announcements
     fetchAnnouncements(groupId).then(announcements => {
         if (!announcements || announcements.length === 0) {
-            announcementsPane.innerHTML = '<p style="text-align:center;padding:2rem;color:#64748b;font-style:italic;">No announcements yet.</p>';
+            announcementsPane.innerHTML = '<p style="text-align:center;padding:2rem;color: #9095a6;font-style:italic;">No announcements yet.</p>';
             return;
         }
         let html = '';
@@ -169,15 +169,15 @@ async function loadAndShowNotifications(groupId) {
             const postedTime = new Date(a.postedAt).toLocaleTimeString('en-ZA', { hour:'2-digit', minute:'2-digit' });
             const author     = a.author?.name || a.author?.email || 'Group Admin';
             html += `
-                <div style="padding:14px 16px;border-bottom:1px solid #f0fafa;">
-                    <p style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 4px;">${escapeHtml(a.title)}</p>
-                    <p style="font-size:13px;color:#374151;margin:0 0 8px;">${escapeHtml(a.content)}</p>
-                    <p style="font-size:11px;color:#64748b;margin:0;">👤 ${escapeHtml(author)} &nbsp;·&nbsp; 📅 ${postedDate} at ${postedTime}</p>
+                <div style="padding:14px 16px;border-bottom:1px solid rgba(34, 211, 238, 0.06);">
+                    <p style="font-size:13px;font-weight:700;color: #e4e7ef;margin:0 0 4px;">${escapeHtml(a.title)}</p>
+                    <p style="font-size:13px;color: #c8ccd6;margin:0 0 8px;">${escapeHtml(a.content)}</p>
+                    <p style="font-size:11px;color: #9095a6;margin:0;">👤 ${escapeHtml(author)} &nbsp;·&nbsp; 📅 ${postedDate} at ${postedTime}</p>
                 </div>`;
         });
         announcementsPane.innerHTML = html;
     }).catch(err => {
-        announcementsPane.innerHTML = `<p style="text-align:center;padding:2rem;color:#991b1b;">Could not load announcements: ${err.message}</p>`;
+        announcementsPane.innerHTML = `<p style="text-align:center;padding:2rem;color: #f87171;">Could not load announcements: ${err.message}</p>`;
     });
 }
 

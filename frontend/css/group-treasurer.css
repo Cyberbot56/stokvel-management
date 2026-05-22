@@ -71,7 +71,7 @@
 
     .announcement-item {
       padding: 16px;
-      border-bottom: 1px solid #e0f7f6;
+      border-bottom: 1px solid rgba(34, 211, 238, 0.08);
     }
 
     .announcement-item:last-child {
@@ -81,7 +81,7 @@
     .announcement-title {
       font-size: 16px;
       font-weight: 700;
-      color: #034e52;
+      color: #22d3ee;
       margin: 0 0 8px 0;
       display: flex;
       align-items: center;
@@ -104,18 +104,18 @@
 
     .announcement-meta {
       font-size: 11px;
-      color: #64748b;
+      color: #9095a6;
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 8px;
       padding-top: 8px;
-      border-top: 1px solid #f0fafa;
+      border-top: 1px solid #2d3140;
     }
 
     .announcement-author {
       font-weight: 600;
-      color: #0e9490;
+      color: #22d3ee;
     }
 
     .announcement-date {
@@ -125,7 +125,7 @@
     .empty-announcements {
       text-align: center;
       padding: 2rem;
-      color: #64748b;
+      color: #9095a6;
       font-style: italic;
     }
 
@@ -158,7 +158,7 @@
 .form-group label {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #9095a6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -166,26 +166,26 @@
 .form-group select,
 .form-group input {
   padding: 9px 12px;
-  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border: 1.5px solid rgba(34, 211, 238, 0.20);
   border-radius: 8px;
   font-size: 14px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   outline: none;
-  color: #0f172a;
-  background: white;
+  color: #cdd1dc;
+  background: #242833;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group select:focus,
 .form-group input:focus {
-  border-color: #0e9490;
-  box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
 }
 
 .btn-record {
   align-self: flex-start;
   padding: 9px 24px;
-  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  background: linear-gradient(135deg, #2dd4bf 0%, #22d3ee 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -193,11 +193,11 @@
   font-weight: 700;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.24);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-record:hover    { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4); }
+.btn-record:hover    { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(34, 211, 238, 0.30); }
 .btn-record:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 
@@ -212,25 +212,25 @@
 
 .filter-pill {
   padding: 5px 14px;
-  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border: 1.5px solid rgba(34, 211, 238, 0.20);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: white;
-  color: #64748b;
+  background: #242833;
+  color: #9095a6;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .filter-pill:hover {
-  background: #e0f7f6;
-  color: #034e52;
-  border-color: rgba(14, 148, 144, 0.5);
+  background: rgba(34, 211, 238, 0.08);
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.30);
 }
 
 .filter-pill.active {
-  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  background: linear-gradient(135deg, #2dd4bf 0%, #22d3ee 100%);
   color: white;
   border-color: transparent;
 }
@@ -249,21 +249,21 @@
   padding: 8px 12px;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #9095a6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1.5px solid #e0f7f6;
+  border-bottom: 1.5px solid rgba(34, 211, 238, 0.08);
 }
 
 .members-table td {
   padding: 11px 12px;
-  border-bottom: 1px solid #f0fafa;
-  color: #0f172a;
+  border-bottom: 1px solid #2d3140;
+  color: #cdd1dc;
   vertical-align: middle;
 }
 
 .members-table tr:last-child td { border-bottom: none; }
-.members-table tr:hover td      { background: #f0fafa; }
+.members-table tr:hover td      { background: #2d3140; }
 
 .status-pill {
   display: inline-block;
@@ -277,7 +277,7 @@
 .status-pill.pending   { background: #ff980020; color: #b45309; }
 .status-pill.missed    { background: #f4433620; color: #991b1b; }
 .status-pill.completed { background: #2b7e3a20; color: #2b7e3a; }
-.status-pill.cancelled { background: #94a3b820; color: #64748b; }
+.status-pill.cancelled { background: #94a3b820; color: #9095a6; }
 
 
 /* ── Flag button ── */
@@ -307,7 +307,7 @@ dl.group-stats-strip {
   align-items: center;
   gap: 1.5rem;
   padding: 0.75rem 0;
-  border-top: 1px solid #e0f7f6;
+  border-top: 1px solid rgba(34, 211, 238, 0.08);
   margin-top: 0.75rem;
   flex-wrap: wrap;
 }
@@ -315,7 +315,7 @@ dl.group-stats-strip {
 dl.group-stats-strip dt {
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: #9095a6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -323,7 +323,7 @@ dl.group-stats-strip dt {
 dl.group-stats-strip dd {
   font-size: 15px;
   font-weight: 700;
-  color: #034e52;
+  color: #22d3ee;
   margin-left: 0;
 }
 
@@ -337,7 +337,7 @@ hr.strip-divider {
   width: 1px;
   height: 28px;
   border: none;
-  background: #e0f7f6;
+  background: rgba(34, 211, 238, 0.08);
   margin: 0;
 }
 
@@ -360,7 +360,7 @@ hr.strip-divider {
   text-align: center;
   padding: 2rem;
   font-size: 13px;
-  color: #64748b;
+  color: #9095a6;
   font-style: italic;
 }
 
@@ -369,7 +369,7 @@ hr.strip-divider {
   text-align: center;
   padding: 2rem;
   font-size: 13px;
-  color: #64748b;
+  color: #9095a6;
   font-style: italic;
 }
 
@@ -377,7 +377,7 @@ hr.strip-divider {
   text-align: center;
   padding: 2rem;
   font-size: 13px;
-  color: #64748b;
+  color: #9095a6;
   font-style: italic;
   margin: 0;
 }
@@ -390,7 +390,7 @@ hr.strip-divider {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #0e9490;
+  color: #22d3ee;
   font-weight: 600;
   cursor: pointer;
   background: none;
@@ -401,7 +401,7 @@ hr.strip-divider {
   transition: color 0.2s ease;
 }
 
-.back-link:hover { color: #034e52; }
+.back-link:hover { color: #22d3ee; }
 
 
 /* ── Initiate payout form ── */
@@ -416,7 +416,7 @@ hr.strip-divider {
 .add-member-form label {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #9095a6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -434,12 +434,12 @@ hr.strip-divider {
 .add-member-form input[type="text"] {
   width: 100%;
   padding: 9px 12px;
-  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border: 1.5px solid rgba(34, 211, 238, 0.20);
   border-radius: 8px;
   font-size: 14px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #0f172a;
-  background: white;
+  color: #cdd1dc;
+  background: #242833;
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -448,19 +448,19 @@ hr.strip-divider {
 .add-member-form select:focus,
 .add-member-form input:focus,
 .add-member-form textarea:focus {
-  border-color: #0e9490;
-  box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
 }
 
 .add-member-form textarea {
   width: 100%;
   padding: 9px 12px;
-  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border: 1.5px solid rgba(34, 211, 238, 0.20);
   border-radius: 8px;
   font-size: 14px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #0f172a;
-  background: white;
+  color: #cdd1dc;
+  background: #242833;
   outline: none;
   box-sizing: border-box;
   resize: vertical;
@@ -472,18 +472,18 @@ hr.strip-divider {
 
 .payout-amount-preview {
   font-size: 13px;
-  color: #64748b;
+  color: #9095a6;
   margin: 0;
   padding: 10px 14px;
-  background: #f0fafa;
+  background: #2d3140;
   border-radius: 8px;
-  border: 1px solid #e0f7f6;
+  border: 1px solid rgba(34, 211, 238, 0.08);
 }
 
 .payout-amount-preview strong {
   font-size: 18px;
   font-weight: 700;
-  color: #034e52;
+  color: #22d3ee;
 }
 
 
@@ -492,7 +492,7 @@ hr.strip-divider {
 .btn-add {
   align-self: flex-start;
   padding: 9px 24px;
-  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  background: linear-gradient(135deg, #2dd4bf 0%, #22d3ee 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -500,11 +500,11 @@ hr.strip-divider {
   font-weight: 700;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.24);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-add:hover    { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4); }
+.btn-add:hover    { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(34, 211, 238, 0.30); }
 .btn-add:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 
@@ -544,26 +544,26 @@ hr.strip-divider {
   padding: 8px 12px;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #9095a6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1.5px solid #e0f7f6;
+  border-bottom: 1.5px solid rgba(34, 211, 238, 0.08);
 }
 
 .payouts-table td {
   padding: 11px 12px;
-  border-bottom: 1px solid #f0fafa;
-  color: #0f172a;
+  border-bottom: 1px solid #2d3140;
+  color: #cdd1dc;
   vertical-align: middle;
 }
 
 .payouts-table tr:last-child td { border-bottom: none; }
-.payouts-table tr:hover td      { background: #f0fafa; }
+.payouts-table tr:hover td      { background: #2d3140; }
 
 .ref-text {
   font-size: 11px;
   font-family: 'Courier New', Courier, monospace;
-  color: #64748b;
+  color: #9095a6;
 }
 
 
@@ -604,25 +604,25 @@ hr.strip-divider {
 /* ── Flag as missed dialog ── */
 
 dialog {
-  border: 1px solid rgba(14, 148, 144, 0.2);
+  border: 1px solid rgba(34, 211, 238, 0.16);
   border-radius: 16px;
   padding: 28px;
   max-width: 400px;
   width: 90%;
-  box-shadow: 0 8px 32px rgba(14, 148, 144, 0.15);
-  background: white;
+  box-shadow: 0 8px 32px rgba(34, 211, 238, 0.12);
+  background: #242833;
 }
 
 dialog h2 {
   font-size: 16px;
   font-weight: 700;
-  color: #034e52;
+  color: #22d3ee;
   margin-bottom: 8px;
 }
 
 dialog p {
   font-size: 13px;
-  color: #64748b;
+  color: #9095a6;
   margin-bottom: 18px;
 }
 
@@ -631,7 +631,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 .dialog-label {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #9095a6;
   text-transform: uppercase;
   display: block;
   margin-bottom: 6px;
@@ -640,7 +640,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 .dialog-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  border: 1.5px solid rgba(34, 211, 238, 0.20);
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
@@ -649,8 +649,8 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 }
 
 .dialog-input:focus {
-  border-color: #0e9490;
-  box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
 }
 
 .dialog-actions {
@@ -662,9 +662,9 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 
 .btn-cancel {
   padding: 9px 20px;
-  background: white;
-  color: #64748b;
-  border: 1.5px solid rgba(14, 148, 144, 0.25);
+  background: #242833;
+  color: #9095a6;
+  border: 1.5px solid rgba(34, 211, 238, 0.20);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
@@ -717,16 +717,16 @@ strong.treasurer-badge, strong.badge { font-weight: inherit; }
 /* ── Meeting cards ── */
 
 .meeting-card {
-  border: 1px solid #e0f7f6;
+  border: 1px solid rgba(34, 211, 238, 0.08);
   border-radius: 10px;
   padding: 14px 16px;
   margin-bottom: 12px;
-  background: white;
+  background: #242833;
   transition: box-shadow 0.2s ease;
 }
 
 .meeting-card:hover {
-  box-shadow: 0 2px 12px rgba(14, 148, 144, 0.1);
+  box-shadow: 0 2px 12px rgba(34, 211, 238, 0.08);
 }
 
 .meeting-card-header {
@@ -739,26 +739,26 @@ strong.treasurer-badge, strong.badge { font-weight: inherit; }
 .meeting-card-title {
   font-size: 15px;
   font-weight: 700;
-  color: #034e52;
+  color: #22d3ee;
   margin: 0 0 4px;
 }
 
 .meeting-card-meta {
   font-size: 12px;
-  color: #64748b;
+  color: #9095a6;
   margin: 0 0 4px;
 }
 
 .meeting-card-agenda {
   font-size: 13px;
-  color: #0f172a;
+  color: #cdd1dc;
   margin: 6px 0 0;
 }
 
 .btn-upload-minutes {
   flex-shrink: 0;
   padding: 7px 16px;
-  background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+  background: linear-gradient(135deg, #2dd4bf 0%, #22d3ee 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -767,16 +767,16 @@ strong.treasurer-badge, strong.badge { font-weight: inherit; }
   cursor: pointer;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
+  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.24);
 }
 
 .btn-upload-minutes:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(14, 148, 144, 0.4);
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.30);
 }
 
 .minutes-panel {
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 1px solid #e0f7f6;
+  border-top: 1px solid rgba(34, 211, 238, 0.08);
 }

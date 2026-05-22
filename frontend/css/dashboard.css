@@ -6,19 +6,20 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0fafa;
-    color: #0f172a;
+    background: #1a1d26;
+    color: #cdd1dc;
 }
 
 /* ── Header ── */
 header {
-    background: linear-gradient(120deg, #a8ede8 0%, #3cc8c0 35%, #0e9490 70%, #034e52 100%);
+    background: linear-gradient(120deg, #15171f 0%, #15171f 50%, #242833 100%);
     padding: 0 2rem;
-    height: 64px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 12px rgba(14, 148, 144, 0.25);
+    box-shadow: 0 1px 0 rgba(34, 211, 238, 0.1), 0 4px 20px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(34, 211, 238, 0.08);
 }
 
 .header-logo {
@@ -30,8 +31,8 @@ header {
 .logo-mark {
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    background: rgba(34, 211, 238, 0.12);
+    border: 1.5px solid rgba(34, 211, 238, 0.3);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -43,33 +44,34 @@ header {
     display: block;
     width: 12px;
     height: 12px;
-    border: 2px solid white;
+    border: 2px solid #22d3ee;
     border-radius: 3px;
     transform: rotate(16deg);
 }
 
 header h1 {
-    color: white;
-    font-size: 16px;
+    color: #22d3ee;
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 1.5px;
+    letter-spacing: 2.5px;
 }
 
 .header-title {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.4);
     font-size: 13px;
+    font-weight: 500;
 }
 
 .avatar {
     width: 34px;
     height: 34px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    background: rgba(34, 211, 238, 0.12);
+    border: 1.5px solid rgba(34, 211, 238, 0.25);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #22d3ee;
     font-size: 12px;
     font-weight: 700;
 }
@@ -77,8 +79,8 @@ header h1 {
 
 /* ── Welcome banner ── */
 .welcome-banner {
-    background: white;
-    border-bottom: 1px solid rgba(14, 148, 144, 0.1);
+    background: #15171f;
+    border-bottom: 1px solid rgba(34, 211, 238, 0.08);
     padding: 1.25rem 2rem;
     display: flex;
     align-items: center;
@@ -88,13 +90,13 @@ header h1 {
 .welcome-greeting {
     font-size: 18px;
     font-weight: 800;
-    color: #034e52;
+    color: #22d3ee;
     margin-bottom: 3px;
 }
 
 .welcome-sub {
     font-size: 13px;
-    color: #64748b;
+    color: #9095a6;
     font-weight: 400;
 }
 
@@ -110,7 +112,7 @@ header h1 {
     border-radius: 0;
     border: none;
     background: transparent;
-    color: #64748b;
+    color: #9095a6;
     font-size: 13px;
     font-weight: 600;
     padding: 0.55rem 1.1rem;
@@ -120,7 +122,7 @@ header h1 {
 }
 
 .toggle-group button:first-child {
-    border-right: 1px solid rgba(14, 148, 144, 0.15);
+    border-right: 1px solid rgba(34, 211, 238, 0.12);
 }
 
 .toggle-group button svg {
@@ -131,12 +133,12 @@ header h1 {
 
 .toggle-group button:hover {
     background: #f0fafa;
-    color: #0e9490;
+    color: #22d3ee;
     transform: none;
 }
 
 .toggle-group button.active {
-    background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
+    background: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
     color: white;
 }
 
@@ -160,10 +162,10 @@ header h1 {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     cursor: pointer;
     border: none;
-    background: linear-gradient(135deg, #2dd4bf 0%, #0e9490 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(14, 148, 144, 0.3);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    background: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    color: #15171f;
+    box-shadow: 0 2px 12px rgba(34, 211, 238, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 #buttonCreateGroup svg {
@@ -173,9 +175,9 @@ header h1 {
 }
 
 #buttonCreateGroup:hover {
-    background: linear-gradient(135deg, #0e9490 0%, #034e52 100%);
+    background: linear-gradient(135deg, #67e8f9 0%, #22d3ee 100%);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(14, 148, 144, 0.4);
+    box-shadow: 0 6px 20px rgba(34, 211, 238, 0.35);
 }
 
 /* ── Main ── */
@@ -191,7 +193,7 @@ main {
     margin: 4rem auto;
     font-size: 0.95rem;
     font-style: italic;
-    color: #64748b;
+    color: #9095a6;
 }
 
 /* ── Grid ── */
@@ -204,12 +206,12 @@ main {
 
 /* ── Card ── */
 .group-card {
-    background: white;
+    background: #242833;
     border-radius: 14px;
     padding: 1.25rem;
-    border: 1px solid rgba(14, 148, 144, 0.12);
-    box-shadow: 0 4px 16px rgba(14, 148, 144, 0.08), 0 1px 4px rgba(0,0,0,0.04);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(34, 211, 238, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease;
     position: relative;
     overflow: hidden;
     display: flex;
@@ -221,15 +223,16 @@ main {
     content: '';
     position: absolute;
     top: 0; left: 20px; right: 20px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #2dd4bf, transparent);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #22d3ee, transparent);
     opacity: 0;
     transition: opacity 0.2s ease;
 }
 
 .group-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(14, 148, 144, 0.16), 0 4px 10px rgba(0,0,0,0.06);
+    box-shadow: 0 12px 40px rgba(34, 211, 238, 0.1), 0 4px 10px rgba(0,0,0,0.3);
+    border-color: rgba(34, 211, 238, 0.2);
 }
 
 .group-card:hover::before {
@@ -238,14 +241,10 @@ main {
 
 
 /* Semantic resets for dynamically generated card elements */
-figure.card-icon { margin: 0; }
-dl.card-meta { margin: 0; padding: 0; }
-dl.card-meta dt, dl.card-meta dd { margin: 0; padding: 0; }
-
-.card-icon {
+figure.card-icon {
     width: 38px;
     height: 38px;
-    background: #e0f7f6;
+    background: rgba(34, 211, 238, 0.1);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -261,13 +260,13 @@ dl.card-meta dt, dl.card-meta dd { margin: 0; padding: 0; }
 .group-card h2 {
     font-size: 14px;
     font-weight: 700;
-    color: #034e52;
+    color: #cdd1dc;
     margin: 0;
 }
 
 .group-desc {
     font-size: 12px;
-    color: #64748b;
+    color: #9095a6;
     line-height: 1.5;
     flex: 1;
 }
@@ -277,17 +276,17 @@ dl.card-meta dt, dl.card-meta dd { margin: 0; padding: 0; }
     justify-content: space-between;
     align-items: center;
     padding-top: 10px;
-    border-top: 1px solid #e0f7f6;
+    border-top: 1px solid rgba(34, 211, 238, 0.08);
     font-size: 11px;
 }
 
 .meta-members {
-    color: #64748b;
+    color: #9095a6;
 }
 
 .meta-amount {
     font-weight: 700;
-    color: #0e9490;
+    color: #22d3ee;
 }
 
 .btnViewGroup {
@@ -297,23 +296,23 @@ dl.card-meta dt, dl.card-meta dd { margin: 0; padding: 0; }
     align-items: center;
     margin-top: 4px;
     padding: 8px;
-    background: #f0fafa;
-    color: #0e9490;
-    border: 1.5px solid rgba(14, 148, 144, 0.25);
+    background: rgba(34, 211, 238, 0.06);
+    color: #22d3ee;
+    border: 1.5px solid rgba(34, 211, 238, 0.15);
     border-radius: 8px;
     font-size: 12px;
     font-weight: 600;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     cursor: pointer;
     box-shadow: none;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .btnViewGroup:hover {
-    background: #e0f7f6;
-    border-color: #0e9490;
+    background: rgba(34, 211, 238, 0.12);
+    border-color: #22d3ee;
     transform: none;
-    box-shadow: none;
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.15);
 }
 
 
@@ -327,15 +326,15 @@ dl.card-meta dt, dl.card-meta dd { margin: 0; padding: 0; }
 .logout-btn {
     height: 30px;
     padding: 0 12px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    background: rgba(34, 211, 238, 0.08);
+    border: 1.5px solid rgba(34, 211, 238, 0.15);
     border-radius: 8px;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.6);
     font-size: 12px;
     font-weight: 600;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     gap: 5px;
@@ -367,16 +366,16 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 
 /* ── Ticker bar ─────────────────────────────────────────────── */
 .rates-ticker {
-  background: #034e52;
+  background: #15171f;
   padding: 6px 2rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  border-bottom: 0.5px solid rgba(45, 212, 191, 0.2);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.08);
 }
 
 .ticker-label {
-  color: #2dd4bf;
+  color: #22d3ee;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.8px;
@@ -392,12 +391,12 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 }
 
 .ticker-item {
-  color: #e0f7f6;
+  color: #9095a6;
   font-size: 12px;
 }
 
 .ticker-item strong {
-  color: #2dd4bf;
+  color: #22d3ee;
   font-weight: 600;
 }
 
@@ -415,13 +414,13 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 
 /* ── Rates card (sits in .groups-grid) ──────────────────────── */
 .rates-card-special {
-  border-color: rgba(14, 148, 144, 0.25) !important;
-  background: linear-gradient(160deg, #ffffff 60%, #e0f7f6 100%);
+  border-color: rgba(34, 211, 238, 0.15) !important;
+  background: linear-gradient(160deg, #242833 60%, #141f22 100%);
 }
 
 /* Top accent line — override the transparent default */
 .rates-card-special::before {
-  background: linear-gradient(90deg, #2dd4bf, #0e9490) !important;
+  background: linear-gradient(90deg, #22d3ee, #0891b2) !important;
   opacity: 1 !important;
 }
 
@@ -436,19 +435,19 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(14, 148, 144, 0.1);
-  color: #0e9490;
+  background: rgba(34, 211, 238, 0.08);
+  color: #22d3ee;
   font-size: 10px;
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 20px;
-  border: 0.5px solid rgba(14, 148, 144, 0.3);
+  border: 0.5px solid rgba(34, 211, 238, 0.2);
 }
 
 .live-dot {
   width: 6px;
   height: 6px;
-  background: #0e9490;
+  background: #22d3ee;
   border-radius: 50%;
   animation: livePulse 2s ease-in-out infinite;
 }
@@ -464,7 +463,7 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
   align-items: center;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 0.5px solid rgba(14, 148, 144, 0.1);
+  border-bottom: 0.5px solid rgba(34, 211, 238, 0.08);
   margin: 0;
 }
 
@@ -474,7 +473,7 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 
 .rate-tag {
   font-size: 10px;
-  color: #64748b;
+  color: #9095a6;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 2px;
@@ -483,7 +482,7 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 .rate-name {
   font-size: 13px;
   font-weight: 600;
-  color: #034e52;
+  color: #22d3ee;
 }
 
 .rate-big-value {
@@ -492,14 +491,14 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
   line-height: 1;
 }
 
-.rate-repo  { color: #0e9490; }
-.rate-prime { color: #2dd4bf; }
+.rate-repo  { color: #22d3ee; }
+.rate-prime { color: #22d3ee; }
 
 /* ── Note and source line ───────────────────────────────────── */
 .rates-note {
   font-size: 11px !important;
-  color: #64748b !important;
-  background: rgba(14, 148, 144, 0.06);
+  color: #9095a6 !important;
+  background: rgba(34, 211, 238, 0.04);
   border-radius: 7px;
   padding: 8px 10px;
   line-height: 1.6 !important;
@@ -508,7 +507,7 @@ b.badge, b.admin-badge, b.avatar, b.radio-pill { font-weight: inherit; }
 
 .rates-src-line {
   font-size: 10px;
-  color: #64748b;
+  color: #9095a6;
   text-align: center;
   margin-top: 6px;
   opacity: 0.75;

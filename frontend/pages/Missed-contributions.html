@@ -18,18 +18,24 @@
       border-radius: 20px;
       font-size: 12px;
       font-weight: 700;
-      border: 1.5px solid rgba(14, 148, 144, 0.25);
-      background: white;
-      color: #64748b;
+      border: 1.5px solid rgba(34, 211, 238, 0.2);
+      background: rgba(34, 211, 238, 0.04);
+      color: #9095a6;
       cursor: pointer;
       font-family: inherit;
       transition: all 0.15s ease;
     }
 
+    .filter-pill:hover {
+      background: rgba(34, 211, 238, 0.12);
+      border-color: rgba(34, 211, 238, 0.4);
+      color: #22d3ee;
+    }
+
     .filter-pill.active {
-      background: #034e52;
-      color: #2dd4bf;
-      border-color: #034e52;
+      background: rgba(34, 211, 238, 0.18);
+      color: #22d3ee;
+      border-color: #22d3ee;
     }
 
     .contributions-table {
@@ -123,35 +129,38 @@
     }
 
     dialog {
-      border: 1px solid rgba(14, 148, 144, 0.2);
+      border: 1px solid rgba(34, 211, 238, 0.15);
       border-radius: 16px;
       padding: 28px;
       max-width: 400px;
       width: 90%;
-      box-shadow: 0 8px 32px rgba(14, 148, 144, 0.15);
+      background: #242833;
+      color: #cdd1dc;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
     }
 
     dialog h2 {
       font-size: 16px;
       font-weight: 700;
-      color: #034e52;
+      color: #e4e7ef;
       margin-bottom: 8px;
     }
 
     dialog p {
       font-size: 13px;
-      color: #64748b;
+      color: #9095a6;
       margin-bottom: 18px;
     }
 
     dialog::backdrop {
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
     }
 
     .dialog-label {
       font-size: 11px;
       font-weight: 700;
-      color: #64748b;
+      color: #9095a6;
       text-transform: uppercase;
       display: block;
       margin-bottom: 6px;
@@ -160,17 +169,20 @@
     .dialog-input {
       width: 100%;
       padding: 10px 12px;
-      border: 1.5px solid rgba(14, 148, 144, 0.25);
+      border: 1.5px solid rgba(34, 211, 238, 0.2);
       border-radius: 8px;
       font-size: 14px;
       font-family: inherit;
+      background: #2d3140;
+      color: #cdd1dc;
       outline: none;
       box-sizing: border-box;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .dialog-input:focus {
-      border-color: #0e9490;
-      box-shadow: 0 0 0 3px rgba(14, 148, 144, 0.1);
+      border-color: #22d3ee;
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
     }
 
     .dialog-actions {
@@ -182,14 +194,22 @@
 
     .btn-cancel {
       padding: 9px 20px;
-      background: white;
-      color: #64748b;
-      border: 1.5px solid rgba(14, 148, 144, 0.25);
+      background: rgba(34, 211, 238, 0.04);
+      color: #c8ccd6;
+      border: 1.5px solid rgba(34, 211, 238, 0.2);
       border-radius: 8px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancel:hover {
+      background: rgba(34, 211, 238, 0.12);
+      border-color: rgba(34, 211, 238, 0.4);
+      color: #e4e7ef;
+      transform: translateY(-1px);
     }
 
     .btn-confirm-flag {

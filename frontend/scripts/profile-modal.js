@@ -37,7 +37,7 @@
         visibility: visible;
       }
       .pm-modal {
-        background: white;
+        background: #242833;
         border-radius: 24px;
         width: 90%;
         max-width: 460px;
@@ -50,7 +50,7 @@
       .profile-modal-overlay.active .pm-modal { transform: scale(1); }
       .pm-band {
         height: 90px;
-        background: linear-gradient(120deg,#a8ede8 0%,#3cc8c0 35%,#0e9490 70%,#034e52 100%);
+        background: linear-gradient(135deg, #0891b2 0%, #06b6d4 40%, #22d3ee 75%, #67e8f9 100%);
         position: relative;
         border-radius: 24px 24px 0 0;
       }
@@ -81,7 +81,7 @@
       .pm-avatar {
         width: 88px; height: 88px;
         border-radius: 50%;
-        background: #034e52;
+        background: #22d3ee;
         border: 4px solid white;
         display: flex;
         align-items: center;
@@ -89,7 +89,7 @@
         font-size: 30px;
         font-weight: 700;
         color: #2dd4bf;
-        box-shadow: 0 4px 16px rgba(14,148,144,0.25);
+        box-shadow: 0 4px 16px rgba(34, 211, 238, 0.2);
         user-select: none;
       }
       .pm-body {
@@ -102,25 +102,25 @@
       .pm-name {
         font-size: 20px;
         font-weight: 700;
-        color: #034e52;
+        color: #22d3ee;
         margin: 0;
         text-align: center;
       }
       .pm-email {
         font-size: 13px;
-        color: #64748b;
+        color: #9095a6;
         margin: 2px 0 0;
         text-align: center;
       }
       .pm-since {
         font-size: 11px;
-        color: #94a3b8;
+        color: #9095a6;
         margin-top: 4px;
       }
       .pm-details {
         width: 100%;
         margin-top: 20px;
-        border: 1px solid rgba(14,148,144,0.12);
+        border: 1px solid rgba(34, 211, 238, 0.1);
         border-radius: 12px;
         overflow: hidden;
       }
@@ -136,13 +136,13 @@
       .pm-label {
         font-size: 11px;
         font-weight: 700;
-        color: #64748b;
+        color: #9095a6;
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
       .pm-value {
         font-weight: 600;
-        color: #0f172a;
+        color: #e4e7ef;
         text-align: right;
         max-width: 60%;
         word-break: break-all;
@@ -151,9 +151,9 @@
         margin-top: 24px;
         width: 100%;
         padding: 13px;
-        background: white;
-        color: #ef4444;
-        border: 1.5px solid #fecaca;
+        background: #242833;
+        color: #f87171;
+        border: 1.5px solid rgba(239, 68, 68, 0.3);
         border-radius: 12px;
         font-size: 14px;
         font-weight: 700;
@@ -161,10 +161,10 @@
         transition: background 0.2s, transform 0.15s;
         font-family: inherit;
       }
-      .pm-logout:hover { background: #fef2f2; transform: translateY(-1px); }
+      .pm-logout:hover { background: rgba(239, 68, 68, 0.1); transform: translateY(-1px); }
       .pm-modal::-webkit-scrollbar { width: 6px; }
-      .pm-modal::-webkit-scrollbar-track { background: #f0fafa; border-radius: 10px; }
-      .pm-modal::-webkit-scrollbar-thumb { background: #0e9490; border-radius: 10px; }
+      .pm-modal::-webkit-scrollbar-track { background: rgba(34, 211, 238, 0.06); border-radius: 10px; }
+      .pm-modal::-webkit-scrollbar-thumb { background: #22d3ee; border-radius: 10px; }
     </style>
 
     <div id="profileModal" class="profile-modal-overlay" role="dialog" aria-modal="true" aria-label="User profile">

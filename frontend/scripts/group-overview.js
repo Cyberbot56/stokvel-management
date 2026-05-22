@@ -468,10 +468,10 @@ async function loadPersonalHealthScore(userId, groupId) {
 
             if (labelEl) {
                 labelEl.textContent = data.label;
-                if (data.score >= 80)      labelEl.style.color = '#034e52';
+                if (data.score >= 80)      labelEl.style.color = '#22d3ee';
                 else if (data.score >= 60) labelEl.style.color = '#b45309';
                 else if (data.score >= 40) labelEl.style.color = '#c2410c';
-                else                       labelEl.style.color = '#991b1b';
+                else                       labelEl.style.color = '#f87171';
             }
             if (riskEl) riskEl.textContent = data.risk;
 
@@ -485,7 +485,7 @@ async function loadPersonalHealthScore(userId, groupId) {
                 // Add a small note to the card showing it's unavailable
                 const parent = card.parentNode;
                 const note = document.createElement('p');
-                note.style.cssText = 'font-size:12px;color:#64748b;text-align:center;padding:1rem;';
+                note.style.cssText = 'font-size:12px;color: #9095a6;text-align:center;padding:1rem;';
                 note.textContent = 'Financial health score temporarily unavailable. Check back later.';
                 if (parent && !parent.querySelector('.health-unavailable-note')) {
                     note.className = 'health-unavailable-note';
@@ -745,12 +745,12 @@ function renderSavingsProjection(data) {
         {
           label: 'Cumulative Contributions',
           data: contributedData,
-          borderColor: '#0e9490',
+          borderColor: '#22d3ee',
           backgroundColor: 'rgba(14, 148, 144, 0.1)',
           fill: true,
           tension: 0.3,
           pointRadius: contributedRadius,
-          pointBackgroundColor: '#0e9490',
+          pointBackgroundColor: '#22d3ee',
           borderWidth: 2
         },
         {
@@ -795,7 +795,7 @@ function renderSavingsProjection(data) {
           }
         },
         tooltip: {
-          backgroundColor: '#034e52',
+          backgroundColor: '#22d3ee',
           titleFont: { size: 12, family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
           bodyFont: { size: 12, family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
           padding: 10,
@@ -817,13 +817,13 @@ function renderSavingsProjection(data) {
       scales: {
         x: {
           grid: { display: false },
-          ticks: { font: { size: 10 }, color: '#64748b' }
+          ticks: { font: { size: 10 }, color: '#9095a6' }
         },
         y: {
           grid: { color: 'rgba(14, 148, 144, 0.08)' },
           ticks: {
             font: { size: 10 },
-            color: '#64748b',
+            color: '#9095a6',
             callback: function(value) { return 'R' + value.toLocaleString(); }
           }
         }
@@ -892,25 +892,25 @@ async function loadAndShowPayouts(groupId) {
 
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
-    content.innerHTML = '<p style="text-align:center;padding:1.5rem;color:#64748b;">Loading...</p>';
+    content.innerHTML = '<p style="text-align:center;padding:1.5rem;color: #9095a6;">Loading...</p>';
     modal.hidden = false;
 
     try {
         const payouts = await fetchPayouts(groupId);
 
         if (!payouts || payouts.length === 0) {
-            content.innerHTML = '<p style="text-align:center;padding:2rem;color:#64748b;font-style:italic;">No payouts recorded for this group yet.</p>';
+            content.innerHTML = '<p style="text-align:center;padding:2rem;color: #9095a6;font-style:italic;">No payouts recorded for this group yet.</p>';
             return;
         }
 
         let html = `
             <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
-                    <tr style="border-bottom:1.5px solid #e0f7f6;">
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Member</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Amount</th>
-                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Status</th>
+                    <tr style="border-bottom:1.5px solid rgba(34, 211, 238, 0.15);">
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Member</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Amount</th>
+                        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color: #9095a6;text-transform:uppercase;letter-spacing:0.5px;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -924,17 +924,17 @@ async function loadAndShowPayouts(groupId) {
                 : '—';
             const amount    = new Intl.NumberFormat('en-ZA', { style:'currency', currency:'ZAR', minimumFractionDigits:2 }).format(p.amount);
             const statusTxt = p.status.charAt(0).toUpperCase() + p.status.slice(1);
-            const rowBg     = isMe ? 'background:#e0f7f6;' : 'background:white;';
+            const rowBg     = isMe ? 'background:rgba(34, 211, 238, 0.1);' : 'background: #242833;';
 
-            let statusBg = '#e0f7f6', statusColor = '#034e52';
-            if (p.status === 'pending')   { statusBg = '#fef3c7'; statusColor = '#b45309'; }
-            if (p.status === 'cancelled') { statusBg = '#fef2f2'; statusColor = '#991b1b'; }
+            let statusBg = 'rgba(34, 211, 238, 0.1)', statusColor = '#22d3ee';
+            if (p.status === 'pending')   { statusBg = 'rgba(245, 158, 11, 0.15)'; statusColor = '#b45309'; }
+            if (p.status === 'cancelled') { statusBg = 'rgba(239, 68, 68, 0.08)'; statusColor = '#f87171'; }
 
             html += `
-                <tr style="${rowBg}border-bottom:1px solid #f0fafa;">
-                    <td style="padding:11px 12px;font-weight:${isMe ? '700' : '400'};color:#0f172a;">${name}</td>
-                    <td style="padding:11px 12px;color:#0f172a;">${date}</td>
-                    <td style="padding:11px 12px;color:#0f172a;">${amount}</td>
+                <tr style="${rowBg}border-bottom:1px solid rgba(34, 211, 238, 0.06);">
+                    <td style="padding:11px 12px;font-weight:${isMe ? '700' : '400'};color: #e4e7ef;">${name}</td>
+                    <td style="padding:11px 12px;color: #e4e7ef;">${date}</td>
+                    <td style="padding:11px 12px;color: #e4e7ef;">${amount}</td>
                     <td style="padding:11px 12px;">
                         <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${statusTxt}</span>
                     </td>
@@ -946,7 +946,7 @@ async function loadAndShowPayouts(groupId) {
         content.innerHTML = html;
 
     } catch (error) {
-        content.innerHTML = `<p style="text-align:center;padding:2rem;color:#991b1b;">Could not load payouts: ${error.message}</p>`;
+        content.innerHTML = `<p style="text-align:center;padding:2rem;color: #f87171;">Could not load payouts: ${error.message}</p>`;
     }
 }
 
@@ -1109,14 +1109,14 @@ window.loadMemberMinutes = async function(groupId) {
   const container = document.getElementById('minutes-list-container');
   if (!container) return;
 
-  container.innerHTML = '<p style="color:#64748b;font-size:13px;">Loading meeting minutes...</p>';
+  container.innerHTML = '<p style="color: #9095a6;font-size:13px;">Loading meeting minutes...</p>';
 
   try {
     const token = await auth0Client.getTokenSilently();
     const meetings = await fetchMeetings(groupId);
 
     if (!meetings || meetings.length === 0) {
-      container.innerHTML = '<p style="color:#64748b;font-size:13px;font-style:italic;">No meetings have been scheduled for this group yet.</p>';
+      container.innerHTML = '<p style="color: #9095a6;font-size:13px;font-style:italic;">No meetings have been scheduled for this group yet.</p>';
       return;
     }
 
@@ -1185,7 +1185,7 @@ window.loadMemberMinutes = async function(groupId) {
     container.innerHTML = html;
   } catch (err) {
     console.error('Error loading meeting minutes:', err);
-    container.innerHTML = `<p style="color:#991b1b;font-size:13px;">Could not load meeting minutes: ${err.message}</p>`;
+    container.innerHTML = `<p style="color: #f87171;font-size:13px;">Could not load meeting minutes: ${err.message}</p>`;
   }
 };
 

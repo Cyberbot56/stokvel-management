@@ -1770,45 +1770,6 @@ window.loadAdminMeetingsWithMinutes = async function(groupId) {
 };
 
 
-window.loadAdminAnnouncementsList = async function(groupId) {
-    const container = document.getElementById('admin-announcements-list');
-    if (!container) return;
-
-    container.innerHTML = '<p style="color:#64748b;font-size:13px;">Loading announcements...</p>';
-
-    try {
-        const token = await auth0Client.getTokenSilently();
-        const resp = await fetch(`${config.apiBase}/api/groups/${groupId}/announcements`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!resp.ok) throw new Error('Failed to fetch announcements');
-        const announcements = await resp.json();
-
-        if (!announcements || announcements.length === 0) {
-            container.innerHTML = '<p style="color:#64748b;font-size:13px;font-style:italic;">No announcements yet.</p>';
-            return;
-        }
-
-        let html = '';
-        announcements.forEach(a => {
-            const postedDate = new Date(a.postedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
-            const postedTime = new Date(a.postedAt).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
-            const author = a.author?.name || a.author?.email || 'Admin';
-            html += `
-                <div style="padding:14px 0;border-bottom:1px solid #f0fafa;">
-                    <p style="font-size:14px;font-weight:700;color:#0f172a;margin:0 0 4px;">${sanitise(a.title)}</p>
-                    <p style="font-size:13px;color:#374151;margin:0 0 8px;line-height:1.6;">${sanitise(a.content)}</p>
-                    <p style="font-size:11px;color:#94a3b8;margin:0;">👤 ${sanitise(author)} · 📅 ${postedDate} at ${postedTime}</p>
-                </div>`;
-        });
-        container.innerHTML = html;
-    } catch (err) {
-        console.error('Error loading announcements list:', err);
-        container.innerHTML = `<p style="color:#991b1b;font-size:13px;">Could not load announcements: ${err.message}</p>`;
-    }
-};
-
-
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
 function onAuthReady() {
