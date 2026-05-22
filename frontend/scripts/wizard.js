@@ -203,3 +203,6 @@ async function submitGroup() {
     alert('Error creating group. Please try again.');
   }
 }
+document.getElementById('back-btn').addEventListener('click', function () {
+  window.location.href = 'dashboard.html';
+});

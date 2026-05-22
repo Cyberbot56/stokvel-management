@@ -21,6 +21,27 @@
     --text-bright:#cdd1dc;
 }
 
+/* ── Back link button ── */
+.back-link {
+    background: none;
+    border: none;
+    color: var(--grey);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--cyan);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
